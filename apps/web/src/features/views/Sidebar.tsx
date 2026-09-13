@@ -23,7 +23,10 @@ function withArtwork(view: View, backdrops: Awaited<ReturnType<typeof loadMediaB
 }
 
 async function ViewList() {
-  const [views, backdrops] = await Promise.all([loadSidebarViews(), loadMediaBackdrops()]);
+  // Sequential on purpose: the views loader waits for the request, which keeps the cached
+  // backdrop lookup (and its Seerr calls) out of the build-time prerender.
+  const views = await loadSidebarViews();
+  const backdrops = await loadMediaBackdrops();
 
   return (
     <ul className={styles.viewList}>

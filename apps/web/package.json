@@ -1,0 +1,40 @@
+{
+  "name": "@disco/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --hostname localhost --port 3000",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --list-different .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "start": "next start",
+    "test:e2e": "playwright test",
+    "test:e2e:changed": "playwright test --only-changed --pass-with-no-tests -x",
+    "test:e2e:last": "playwright test --last-failed -x",
+    "test:unit": "vitest run",
+    "test:unit:changed": "vitest run --changed HEAD --bail=1 --passWithNoTests",
+    "typecheck": "next typegen && tsc --noEmit",
+    "typecheck:source": "tsc --noEmit"
+  },
+  "dependencies": {
+    "effect": "catalog:",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@typescript/native": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "browserslist": [
+    "baseline 2024 with downstream"
+  ]
+}

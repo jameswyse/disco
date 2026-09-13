@@ -1,0 +1,233 @@
+.trigger {
+  background: transparent;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius);
+  color: var(--color-text-dim);
+  flex: none;
+  font-size: 13px;
+  height: 56px;
+}
+
+.trigger:hover {
+  border-color: var(--color-text-dim);
+  color: var(--color-text-muted);
+}
+
+.dialog {
+  background: var(--color-background-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-large);
+  box-shadow: 0 40px 120px rgb(0 0 0 / 70%);
+  color: var(--color-text);
+  height: 760px;
+  max-height: calc(100vh - 48px);
+  max-width: calc(100vw - 48px);
+  overflow: hidden;
+  padding: 0;
+  width: 1120px;
+}
+
+.dialog::backdrop {
+  backdrop-filter: blur(6px);
+  background: rgb(2 6 23 / 70%);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  height: 100%;
+}
+
+.sidebarPane {
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  padding: 20px 18px;
+}
+
+.paneHeading {
+  font-size: 16px;
+  margin: 0 0 2px;
+}
+
+.paneNote {
+  color: var(--color-text-dim);
+  font-size: 12.5px;
+  margin: 0 0 10px;
+}
+
+.viewList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.viewItem {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+}
+
+.grip {
+  color: var(--color-text-dim);
+  font-size: 14px;
+  letter-spacing: -2px;
+}
+
+.viewItemLabel {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.viewItemEdit {
+  color: var(--color-text-dim);
+  font-size: 12px;
+}
+
+.libraryPane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.libraryHeader {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  padding: 18px 22px 0;
+}
+
+.libraryHeading {
+  font-size: 18px;
+  margin: 0;
+}
+
+.librarySource {
+  color: var(--color-text-dim);
+  font-size: 13px;
+}
+
+.closeForm {
+  margin-left: auto;
+}
+
+.close {
+  background: transparent;
+  border: 0;
+  color: var(--color-text-dim);
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px;
+}
+
+.close:hover {
+  color: var(--color-text);
+}
+
+.search {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font: inherit;
+  margin: 14px 22px 0;
+  padding: 9px 12px;
+}
+
+.search::placeholder {
+  color: var(--color-text-dim);
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 12px 22px 0;
+}
+
+.category,
+.activeCategory {
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  padding: 4px 12px;
+}
+
+.activeCategory {
+  background: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-background);
+  font-weight: 600;
+}
+
+.library {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  overflow: auto;
+  padding: 16px 22px 24px;
+}
+
+.sectionHeading {
+  color: var(--color-text-dim);
+  display: flex;
+  font-size: 12px;
+  font-weight: 600;
+  justify-content: space-between;
+  letter-spacing: 0.1em;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+
+.sectionHeading small {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sectionPlaceholder {
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius);
+  color: var(--color-text-dim);
+  font-size: 13px;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+}
+
+.footer {
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 22px;
+}
+
+.button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9px;
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+.primaryButton {
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+  color: #fff;
+}

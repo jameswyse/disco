@@ -1,0 +1,15 @@
+services:
+  disco:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+      args:
+        APPLICATION_VERSION: ${APPLICATION_VERSION:-development}
+    image: disco:${APPLICATION_VERSION:-development}
+    container_name: disco
+    restart: unless-stopped
+    ports:
+      - "${DISCO_PORT:-3000}:3000"
+    environment:
+      SEERR_URL: ${SEERR_URL:?Set SEERR_URL to your Seerr origin, for example https://request.example.com}
+      SEERR_API_KEY: ${SEERR_API_KEY:?Set SEERR_API_KEY from Seerr → Settings → General}

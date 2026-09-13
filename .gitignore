@@ -1,0 +1,15 @@
+.DS_Store
+.env*
+!.env.example
+!**/.env.example
+node_modules/
+.turbo/
+.pnpm-store/
+.playwright-cli/
+/apps/web/.next/
+/apps/web/.next-dev/
+/apps/web/coverage/
+/apps/web/next-env.d.ts
+/apps/web/tests/results/
+/packages/*/dist/
+.next

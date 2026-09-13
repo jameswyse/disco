@@ -1,0 +1,23 @@
+.notFound {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 40px 26px;
+}
+
+.heading {
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.body {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.link {
+  color: var(--color-accent-soft);
+  font-weight: 500;
+  margin-top: 8px;
+}

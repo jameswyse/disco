@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [master]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: Static / ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Format
+            command: pnpm format:check
+          - name: Lint
+            command: pnpm lint
+          - name: Types
+            command: pnpm typecheck
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup
+      - name: Run ${{ matrix.name }}
+        run: ${{ matrix.command }}
+
+  unit:
+    name: Unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup
+      - run: pnpm test:unit
+
+  e2e:
+    name: Browser / E2E
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup
+      - name: Install Chromium
+        run: pnpm --filter @disco/web exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          if-no-files-found: ignore
+          name: browser-${{ github.sha }}
+          path: apps/web/tests/results
+          retention-days: 14
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Build image
+        run: docker build --file deploy/Dockerfile --build-arg APPLICATION_VERSION=${{ github.sha }} --tag disco:ci .
+      - name: Start container
+        run: |
+          docker run --detach --name disco --publish 3000:3000 \
+            --env SEERR_URL=https://seerr.validation.invalid \
+            --env SEERR_API_KEY=ci-not-a-real-key \
+            disco:ci
+      - name: Check health
+        run: |
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs disco
+          exit 1
+
+  required:
+    name: CI / Required
+    if: always()
+    needs: [static, unit, e2e, docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm required jobs passed
+        env:
+          DOCKER_RESULT: ${{ needs.docker.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+          STATIC_RESULT: ${{ needs.static.result }}
+          UNIT_RESULT: ${{ needs.unit.result }}
+        run: |
+          for result in "$STATIC_RESULT" "$UNIT_RESULT" "$E2E_RESULT" "$DOCKER_RESULT"; do
+            test "$result" = success
+          done

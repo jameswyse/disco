@@ -1,0 +1,66 @@
+{
+  "name": "@disco/monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/turbo.mjs run build",
+    "check": "node scripts/turbo.mjs run format:check lint typecheck:source '//#format:check:root' '//#lint:root' '//#typecheck:tooling' --continue=always",
+    "clean": "node scripts/clean.mjs",
+    "dev": "DISCO_HUMAN_OUTPUT=1 node scripts/turbo.mjs run dev --ui=stream",
+    "fix": "node scripts/turbo.mjs run lint:fix '//#lint:fix:root'",
+    "format": "node scripts/turbo.mjs run format '//#format:root'",
+    "format:check": "node scripts/turbo.mjs run format:check '//#format:check:root'",
+    "format:check:root": "oxfmt --list-different '*.md' 'docs/**/*.md' 'tools/**/*.ts' 'scripts/**/*.mjs' 'deploy/**/*.{mjs,yaml,yml}' compose.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.json tsconfig.base.json tsconfig.tooling.json oxfmt.config.ts oxlint.config.ts '.github/**/*.{json,yaml,yml}'",
+    "format:root": "oxfmt '*.md' 'docs/**/*.md' 'tools/**/*.ts' 'scripts/**/*.mjs' 'deploy/**/*.{mjs,yaml,yml}' compose.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.json tsconfig.base.json tsconfig.tooling.json oxfmt.config.ts oxlint.config.ts '.github/**/*.{json,yaml,yml}'",
+    "format:staged": "lint-staged.sh \"oxfmt --list-different --no-error-on-unmatched-pattern\" \"*.js\" \"*.[cm]js\" \"*.jsx\" \"*.ts\" \"*.[cm]ts\" \"*.tsx\" \"*.css\" \"*.html\" \"*.json\" \"*.jsonc\" \"*.md\" \"*.mdx\" \"*.yaml\" \"*.yml\"",
+    "lint": "node scripts/turbo.mjs run lint '//#lint:root'",
+    "lint:fix": "node scripts/turbo.mjs run lint:fix '//#lint:fix:root'",
+    "lint:fix:root": "oxlint --fix tools/vitest scripts deploy oxfmt.config.ts oxlint.config.ts",
+    "lint:root": "oxlint tools/vitest scripts deploy oxfmt.config.ts oxlint.config.ts",
+    "lint:staged": "lint-staged.sh \"oxlint --no-error-on-unmatched-pattern\" \"*.js\" \"*.[cm]js\" \"*.jsx\" \"*.ts\" \"*.[cm]ts\" \"*.tsx\"",
+    "precommit": "pnpm format:staged; staged_format_exit=$?; pnpm lint:staged; staged_lint_exit=$?; pnpm typecheck:source; source_typecheck_exit=$?; test $staged_format_exit -eq 0 && test $staged_lint_exit -eq 0 && test $source_typecheck_exit -eq 0",
+    "prepare": "node scripts/installHooks.mjs",
+    "test:e2e": "node scripts/turbo.mjs run test:e2e --filter=@disco/web",
+    "test:e2e:changed": "node scripts/turbo.mjs run test:e2e:changed --filter=@disco/web",
+    "test:e2e:last": "node scripts/turbo.mjs run test:e2e:last --filter=@disco/web",
+    "test:unit": "node scripts/turbo.mjs run test:unit",
+    "test:unit:changed": "node scripts/turbo.mjs run test:unit:changed",
+    "typecheck": "node scripts/turbo.mjs run typecheck '//#typecheck:tooling'",
+    "typecheck:source": "node scripts/turbo.mjs run typecheck:source '//#typecheck:tooling'",
+    "typecheck:tooling": "tsc --noEmit --project tsconfig.tooling.json",
+    "verify": "node scripts/turbo.mjs run format:check lint typecheck build test:unit '//#format:check:root' '//#lint:root' '//#typecheck:tooling' --continue=always",
+    "verify:full": "pnpm verify '@disco/web#test:e2e'",
+    "verify:uncached": "pnpm verify --force"
+  },
+  "devDependencies": {
+    "@e18e/eslint-plugin": "0.8.0",
+    "@oxlint/plugins": "catalog:",
+    "@stylistic/eslint-plugin": "5.10.0",
+    "@types/node": "catalog:",
+    "@typescript/native": "catalog:",
+    "eslint-plugin-react-you-might-not-need-an-effect": "1.0.2",
+    "husky": "9.1.7",
+    "lint-staged.sh": "0.6.9",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "7.0.2001",
+    "turbo": "2.10.12",
+    "typescript": "catalog:"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.4.1"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "24.21.0",
+      "onFail": "download"
+    }
+  },
+  "engines": {
+    "node": "24.21.0"
+  },
+  "packageManager": "pnpm@12.4.1"
+}

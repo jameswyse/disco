@@ -6,10 +6,11 @@ import { Effect, Schema } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
-import { appRuntime } from "@/platform/runtime";
+import { runAuthenticated } from "@/platform/auth/session";
 
 import type { CreateRequestBody } from "@/integrations/seerr/client";
 import type { SeerrError } from "@/integrations/seerr/errors";
+import type { SeerrIdentity } from "@/integrations/seerr/identity";
 
 const MediaTypeInput = Schema.Literal("movie", "tv");
 const TmdbId = Schema.NumberFromString.pipe(Schema.int(), Schema.positive());
@@ -33,10 +34,10 @@ const decodeWatchlist = Schema.decodeUnknownSync(WatchlistInput);
 export type ActionResult = Readonly<{ ok: true }> | Readonly<{ ok: false; message: string }>;
 
 function run(
-  program: Effect.Effect<unknown, SeerrError, SeerrClient>,
+  program: Effect.Effect<unknown, SeerrError, SeerrClient | SeerrIdentity>,
   paths: readonly string[],
 ): Promise<ActionResult> {
-  return appRuntime.runPromise(
+  return runAuthenticated(
     program.pipe(
       Effect.tapError((error) => Effect.logError("Seerr action failed", error)),
       Effect.map((): ActionResult => ({ ok: true })),

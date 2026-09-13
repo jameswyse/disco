@@ -3,9 +3,12 @@ import { cacheLife } from "next/cache";
 import { Effect } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
+import { SeerrIdentity } from "@/integrations/seerr/identity";
+import { requireSession } from "@/platform/auth/session";
 import { appRuntime } from "@/platform/runtime";
 
 import type { MediaType } from "@/integrations/seerr/client";
+import type { SeerrUserId } from "@/integrations/seerr/schemas";
 
 import type { Title } from "./title";
 
@@ -36,11 +39,24 @@ const factsProgram = (mediaType: MediaType, id: number) =>
  * Runtime and season count for one title. Cached for as long as Next allows: these change so
  * rarely that a stale value is better than a details request per card on every browse.
  */
-export async function loadTitleFacts(mediaType: MediaType, id: number): Promise<TitleFacts> {
+
+async function cachedTitleFacts(
+  mediaType: MediaType,
+  id: number,
+  userId: SeerrUserId,
+): Promise<TitleFacts> {
   "use cache";
   cacheLife("max");
 
-  return appRuntime.runPromise(factsProgram(mediaType, id));
+  return appRuntime.runPromise(
+    factsProgram(mediaType, id).pipe(Effect.provideService(SeerrIdentity, { userId })),
+  );
+}
+
+export async function loadTitleFacts(mediaType: MediaType, id: number): Promise<TitleFacts> {
+  const { user } = await requireSession();
+
+  return cachedTitleFacts(mediaType, id, user.id);
 }
 
 /** Attach facts to each title; a title whose details fail keeps its list data. */

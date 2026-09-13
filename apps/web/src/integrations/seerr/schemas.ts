@@ -159,21 +159,58 @@ export const RequestCount = Schema.Struct({
 });
 export type RequestCount = typeof RequestCount.Type;
 
+export const SeerrUserId = Schema.Number.pipe(
+  Schema.int(),
+  Schema.positive(),
+  Schema.brand("SeerrUserId"),
+);
+export type SeerrUserId = typeof SeerrUserId.Type;
+
 export const CurrentUser = Schema.Struct({
-  id: Schema.Number,
+  id: SeerrUserId,
   displayName: Schema.String,
   avatar: OptionalText,
 });
 export type CurrentUser = typeof CurrentUser.Type;
 
+export const LoginSettings = Schema.Union(
+  Schema.Struct({
+    localLogin: Schema.Literal(true),
+    mediaServerLogin: Schema.Boolean,
+    mediaServerType: Schema.Literal(1, 2, 3, 4),
+  }),
+  Schema.Struct({
+    localLogin: Schema.Literal(false),
+    mediaServerLogin: Schema.Literal(true),
+    mediaServerType: Schema.Literal(1, 2, 3, 4),
+  }),
+);
+export type LoginSettings = typeof LoginSettings.Type;
+
+const ApplicationUrl = Schema.String.pipe(
+  Schema.filter((value) => {
+    if (value === "") {
+      return true;
+    }
+
+    try {
+      const url = new URL(value);
+
+      return url.protocol === "https:" || url.protocol === "http:";
+    } catch {
+      return false;
+    }
+  }),
+);
+
 export const PublicSettings = Schema.Struct({
   applicationTitle: Schema.String,
-  applicationUrl: OptionalText,
+  applicationUrl: Schema.optional(Schema.NullOr(ApplicationUrl)),
   discoverRegion: OptionalText,
   streamingRegion: OptionalText,
   hideAvailable: Schema.optional(Schema.Boolean),
   partialRequestsEnabled: Schema.optional(Schema.Boolean),
-});
+}).pipe(Schema.extend(LoginSettings));
 export type PublicSettings = typeof PublicSettings.Type;
 
 export const Status = Schema.Struct({ version: Schema.String });

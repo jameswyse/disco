@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./authenticatedTest";
 
 test("the root redirects to the first view and renders titles from Seerr", async ({ page }) => {
   await page.goto("/");

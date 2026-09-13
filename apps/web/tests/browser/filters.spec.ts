@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./authenticatedTest";
 
 test("the media type filter narrows mixed views and is kept in the URL", async ({ page }) => {
   await page.goto("/netflix?list=popular");

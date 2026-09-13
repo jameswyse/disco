@@ -5,13 +5,14 @@ import { Effect } from "effect";
 import { titleFromResult } from "@/features/browse/title";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
-import { appRuntime } from "@/platform/runtime";
+import { runAuthenticated } from "@/platform/auth/session";
 
 import { titleDetailsFromMovie, titleDetailsFromTv } from "./titleDetails";
 
 import type { GenreNames, Title } from "@/features/browse/title";
 import type { MediaType } from "@/integrations/seerr/client";
 import type { SeerrError } from "@/integrations/seerr/errors";
+import type { SeerrIdentity } from "@/integrations/seerr/identity";
 
 import type { TitleDetails } from "./titleDetails";
 
@@ -29,13 +30,13 @@ export type TitleDetailsResult =
 function detailsProgram(
   mediaType: MediaType,
   id: number,
-): Effect.Effect<TitleDetailsResult, SeerrError, SeerrClient> {
+): Effect.Effect<TitleDetailsResult, SeerrError, SeerrClient | SeerrIdentity> {
   return Effect.gen(function* () {
     const client = yield* SeerrClient;
     const settings = yield* client.publicSettings();
     const region = settings.streamingRegion || settings.discoverRegion || "US";
     const today = new Date().toISOString().slice(0, 10);
-    const ratingsOrNothing = <A>(ratings: Effect.Effect<A, SeerrError>) =>
+    const ratingsOrNothing = <A>(ratings: Effect.Effect<A, SeerrError, SeerrIdentity>) =>
       ratings.pipe(Effect.catchAll(() => Effect.succeed(undefined)));
 
     const [details, recommendations, movieGenres, tvGenres] = yield* Effect.all(
@@ -77,7 +78,7 @@ export async function loadTitleDetails(
 ): Promise<TitleDetailsResult> {
   await connection();
 
-  return appRuntime.runPromise(
+  return runAuthenticated(
     detailsProgram(mediaType, id).pipe(
       Effect.catchTag("SeerrRejected", (error) =>
         error.status === 404

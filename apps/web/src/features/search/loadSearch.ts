@@ -5,7 +5,7 @@ import { Effect } from "effect";
 import { titleFromResult } from "@/features/browse/title";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
-import { appRuntime } from "@/platform/runtime";
+import { runAuthenticated } from "@/platform/auth/session";
 
 import type { GenreNames, Title } from "@/features/browse/title";
 import type { MediaResult, MovieResult, TvResult } from "@/integrations/seerr/schemas";
@@ -47,7 +47,7 @@ const searchProgram = (query: string, page: number) =>
 export async function loadSearch(query: string, page: number): Promise<SearchResult> {
   await connection();
 
-  return appRuntime.runPromise(
+  return runAuthenticated(
     searchProgram(query, page).pipe(
       Effect.tapError((error) => Effect.logError("Seerr search request failed", error)),
       Effect.catchAll((error) =>

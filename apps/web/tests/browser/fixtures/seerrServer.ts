@@ -1,7 +1,8 @@
 /**
  * Minimal stand-in for the Seerr API used by browser tests. It serves deterministic fixtures for
- * the endpoints Disco reads, records mutations, and rejects requests without the fixture API key.
+ * the endpoints Disco reads, records mutations by user, and enforces session or explicit API-key user authentication.
  */
+import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 
 import { Schema } from "effect";
@@ -171,8 +172,42 @@ type MutationBody = typeof MutationBody.Type;
 const decodeMutationBody = Schema.decodeUnknownSync(Schema.parseJson(MutationBody));
 
 /** Mutations recorded for assertions, exposed at `/__fixture/requests`. */
-const recordedRequests: MutationBody[] = [];
-const recordedWatchlist: (MutationBody | Readonly<{ removed: string }>)[] = [];
+const recordedRequests: (MutationBody & { userId: number })[] = [];
+const recordedWatchlist: ((MutationBody | Readonly<{ removed: string }>) & { userId: number })[] =
+  [];
+const users = [
+  { id: 2, displayName: "Fixture User", email: "fixture@example.test", avatar: null },
+  { id: 3, displayName: "Second User", email: "second@example.test", avatar: null },
+];
+const sessions = new Map<string, number>();
+const rejectedLogouts = new Set<string>();
+const csrfCookie = "fixture-csrf-secret";
+const csrfToken = "fixture-csrf-token";
+const LoginBody = Schema.Struct({
+  email: Schema.optional(Schema.String),
+  password: Schema.optional(Schema.String),
+  authToken: Schema.optional(Schema.String),
+});
+
+function cookie(request: IncomingMessage, name: string): string | undefined {
+  const pair = request.headers.cookie
+    ?.split(";")
+    .map((entry) => entry.trim())
+    .find((entry) => entry.startsWith(`${name}=`));
+
+  return pair === undefined ? undefined : decodeURIComponent(pair.slice(name.length + 1));
+}
+
+function issueCsrf(response: ServerResponse) {
+  response.setHeader("set-cookie", [
+    `_csrf=${csrfCookie}; Path=/; HttpOnly`,
+    `XSRF-TOKEN=${csrfToken}; Path=/`,
+  ]);
+}
+
+function hasCsrf(request: IncomingMessage) {
+  return cookie(request, "_csrf") === csrfCookie && request.headers["x-xsrf-token"] === csrfToken;
+}
 
 const staticRoutes = {
   "/api/v1/status": { version: "3.4.1" },
@@ -182,8 +217,10 @@ const staticRoutes = {
     discoverRegion: "AU",
     streamingRegion: "AU",
     hideAvailable: true,
+    localLogin: true,
+    mediaServerLogin: true,
+    mediaServerType: 1,
   },
-  "/api/v1/auth/me": { id: 1, displayName: "Fixture User", avatar: null },
   "/api/v1/request/count": { total: 5, pending: 1, approved: 4, processing: 2, available: 2 },
   "/api/v1/genres/movie": [
     { id: 28, name: "Action" },
@@ -277,7 +314,7 @@ function send(response: ServerResponse, status: number, body: unknown) {
   response.end(JSON.stringify(body));
 }
 
-function readBody(request: IncomingMessage): Promise<MutationBody> {
+function readRawBody(request: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let raw = "";
     request.setEncoding("utf8");
@@ -286,7 +323,7 @@ function readBody(request: IncomingMessage): Promise<MutationBody> {
     });
     request.on("end", () => {
       try {
-        resolve(decodeMutationBody(raw));
+        resolve(raw);
       } catch (error) {
         reject(error instanceof Error ? error : new Error(String(error)));
       }
@@ -304,30 +341,140 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
     return;
   }
 
-  if (request.headers["x-api-key"] !== seerrFixtureApiKey) {
-    send(response, 401, { message: "Unauthorized" });
+  if (url.pathname === "/api/v1/settings/public" || url.pathname === "/api/v1/status") {
+    if (request.headers["x-api-key"] !== undefined) {
+      send(response, 400, { message: "Public endpoints must not receive an API key" });
+
+      return;
+    }
+
+    issueCsrf(response);
+    send(response, 200, fixtureFor(url.pathname));
+
+    return;
+  }
+
+  if (url.pathname === "/api/v1/auth/local" || url.pathname === "/api/v1/auth/plex") {
+    if (
+      request.method !== "POST" ||
+      request.headers["x-api-key"] !== undefined ||
+      !hasCsrf(request)
+    ) {
+      send(response, 403, { message: "Invalid authentication request" });
+
+      return;
+    }
+
+    const credentials = Schema.decodeUnknownSync(Schema.parseJson(LoginBody))(
+      await readRawBody(request),
+    );
+    const plexUser = credentials.authToken === "fixture-plex-token" ? users[0] : undefined;
+    const user = url.pathname.endsWith("/local")
+      ? users.find(
+          (candidate) =>
+            candidate.email === credentials.email && credentials.password === "fixture-password",
+        )
+      : plexUser;
+
+    if (user === undefined) {
+      send(response, 403, { message: "Invalid credentials" });
+
+      return;
+    }
+
+    const session = `s:${randomUUID()}.fixture-signature`;
+    sessions.set(session, user.id);
+    response.setHeader(
+      "set-cookie",
+      `connect.sid=${encodeURIComponent(session)}; Path=/; HttpOnly; Expires=Wed, 01 Jan 2031 00:00:00 GMT`,
+    );
+    send(response, 200, user);
+
+    return;
+  }
+
+  const session = cookie(request, "connect.sid");
+  const sessionUserId = session === undefined ? undefined : sessions.get(session);
+
+  if (url.pathname === "/__fixture/expire") {
+    if (session !== undefined) {
+      sessions.delete(session);
+    }
+
+    send(response, 200, {});
+
+    return;
+  }
+
+  if (url.pathname === "/__fixture/reject-logout") {
+    if (session !== undefined) {
+      rejectedLogouts.add(session);
+    }
+
+    send(response, 200, {});
+
+    return;
+  }
+
+  const userId =
+    request.headers["x-api-key"] === seerrFixtureApiKey
+      ? Number(request.headers["x-api-user"])
+      : sessionUserId;
+  const user = users.find((candidate) => candidate.id === userId);
+
+  if (user === undefined) {
+    send(response, 403, { message: "Unauthorized" });
+
+    return;
+  }
+
+  if (url.pathname === "/api/v1/auth/me") {
+    issueCsrf(response);
+    send(response, 200, user);
+
+    return;
+  }
+
+  if (request.method !== "GET" && !hasCsrf(request)) {
+    send(response, 403, { message: "Invalid CSRF token" });
+
+    return;
+  }
+
+  if (url.pathname === "/api/v1/auth/logout" && request.method === "POST") {
+    if (session !== undefined && rejectedLogouts.has(session)) {
+      send(response, 403, { message: "Logout rejected" });
+
+      return;
+    }
+
+    if (session !== undefined) {
+      sessions.delete(session);
+    }
+
+    send(response, 200, { status: "ok" });
 
     return;
   }
 
   if (request.method === "POST" && url.pathname === "/api/v1/request") {
-    const body = await readBody(request);
-    recordedRequests.push(body);
+    const body = decodeMutationBody(await readRawBody(request));
+    recordedRequests.push({ ...body, userId: user.id });
     send(response, 201, { id: 1000 + recordedRequests.length, status: 2 });
 
     return;
   }
 
   if (request.method === "POST" && url.pathname === "/api/v1/watchlist") {
-    const body = await readBody(request);
-    recordedWatchlist.push(body);
+    const body = decodeMutationBody(await readRawBody(request));
+    recordedWatchlist.push({ ...body, userId: user.id });
     send(response, 200, body);
 
     return;
   }
 
   if (request.method === "DELETE" && url.pathname.startsWith("/api/v1/watchlist/")) {
-    recordedWatchlist.push({ removed: url.pathname.split("/").at(-1) ?? "" });
+    recordedWatchlist.push({ removed: url.pathname.split("/").at(-1) ?? "", userId: user.id });
     send(response, 204, null);
 
     return;

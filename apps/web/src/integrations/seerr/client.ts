@@ -10,6 +10,7 @@ import { Effect, Redacted } from "effect";
 import { seerrEnvironmentConfig } from "@/platform/configuration/seerrEnvironment";
 
 import { SeerrMalformed, SeerrRejected, SeerrUnavailable } from "./errors";
+import { SeerrIdentity, csrfHeaders } from "./identity";
 import {
   CombinedRatings,
   Company,
@@ -124,7 +125,7 @@ function translateHttpError(path: string, error: HttpClientError.HttpClientError
     return new SeerrRejected({ path, status: error.response.status });
   }
 
-  return new SeerrUnavailable({ path, cause: error.cause });
+  return new SeerrUnavailable({ path, cause: error.reason });
 }
 
 function translateParseError(path: string, error: ParseResult.ParseError): SeerrMalformed {
@@ -136,10 +137,16 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
   effect: Effect.gen(function* () {
     const environment = yield* seerrEnvironmentConfig;
     const apiBase = new URL("api/v1/", environment.origin);
-    const httpClient = (yield* HttpClient.HttpClient).pipe(
-      HttpClient.filterStatusOk,
-      HttpClient.mapRequest(
-        HttpClientRequest.setHeader("X-Api-Key", Redacted.value(environment.apiKey)),
+    const httpClient = (yield* HttpClient.HttpClient).pipe(HttpClient.filterStatusOk);
+    const userClient = Effect.map(SeerrIdentity, (identity) =>
+      httpClient.pipe(
+        HttpClient.mapRequest(
+          HttpClientRequest.setHeaders({
+            ...csrfHeaders(identity.csrf),
+            "X-Api-Key": Redacted.value(environment.apiKey),
+            "X-API-User": String(identity.userId),
+          }),
+        ),
       ),
     );
 
@@ -168,31 +175,43 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
       path: string,
       schema: Schema.Schema<A, I>,
       parameters: QueryParameters = {},
-    ): Effect.Effect<A, SeerrError> =>
-      httpClient
-        .get(new URL(path, apiBase), { urlParams: definedParameters(parameters) })
-        .pipe(decode(path, schema));
+    ): Effect.Effect<A, SeerrError, SeerrIdentity> =>
+      Effect.flatMap(userClient, (client) =>
+        client
+          .get(new URL(path, apiBase), { urlParams: definedParameters(parameters) })
+          .pipe(decode(path, schema)),
+      );
 
     const post = <A, I>(
       path: string,
       schema: Schema.Schema<A, I>,
       body: unknown,
-    ): Effect.Effect<A, SeerrError> =>
-      httpClient
-        .post(new URL(path, apiBase), { body: HttpBody.unsafeJson(body) })
-        .pipe(decode(path, schema));
+    ): Effect.Effect<A, SeerrError, SeerrIdentity> =>
+      Effect.flatMap(userClient, (client) =>
+        client
+          .post(new URL(path, apiBase), { body: HttpBody.unsafeJson(body) })
+          .pipe(decode(path, schema)),
+      );
 
-    const del = (path: string, parameters: QueryParameters = {}): Effect.Effect<void, SeerrError> =>
-      httpClient.del(new URL(path, apiBase), { urlParams: definedParameters(parameters) }).pipe(
-        Effect.mapError((error) => translateHttpError(path, error)),
-        Effect.asVoid,
+    const del = (
+      path: string,
+      parameters: QueryParameters = {},
+    ): Effect.Effect<void, SeerrError, SeerrIdentity> =>
+      Effect.flatMap(userClient, (client) =>
+        client.del(new URL(path, apiBase), { urlParams: definedParameters(parameters) }).pipe(
+          Effect.mapError((error) => translateHttpError(path, error)),
+          Effect.asVoid,
+        ),
       );
 
     return {
       /** Public origin of the Seerr instance, for linking into its UI. */
       origin: environment.origin,
-      status: () => get("status", Status),
-      publicSettings: () => get("settings/public", PublicSettings),
+      status: () => httpClient.get(new URL("status", apiBase)).pipe(decode("status", Status)),
+      publicSettings: () =>
+        httpClient
+          .get(new URL("settings/public", apiBase))
+          .pipe(decode("settings/public", PublicSettings)),
       currentUser: () => get("auth/me", CurrentUser),
       requestCount: () => get("request/count", RequestCount),
       requests: (query: RequestListQuery) =>

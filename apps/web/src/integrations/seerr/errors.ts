@@ -26,7 +26,7 @@ export function describeSeerrError(error: SeerrError): string {
       return `Seerr could not be reached (${error.path}).`;
     case "SeerrRejected":
       return error.status === 401 || error.status === 403
-        ? "Seerr rejected the API key."
+        ? "Seerr did not allow this action for your account."
         : `Seerr responded with status ${error.status} (${error.path}).`;
     case "SeerrMalformed":
       return `Seerr returned an unexpected response (${error.path}).`;

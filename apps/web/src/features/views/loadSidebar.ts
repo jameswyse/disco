@@ -4,7 +4,7 @@ import { Effect } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
-import { appRuntime } from "@/platform/runtime";
+import { runAuthenticated } from "@/platform/auth/session";
 
 import { loadViews } from "./loadViews";
 
@@ -42,7 +42,7 @@ export async function loadSidebarViews(): Promise<readonly View[]> {
 export async function loadAccount(): Promise<SeerrAccount> {
   await connection();
 
-  return appRuntime.runPromise(
+  return runAuthenticated(
     accountProgram.pipe(
       Effect.tapError((error) => Effect.logError("Seerr account request failed", error)),
       Effect.catchAll((error) =>

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { Effect, Schema } from "effect";
 
-import { appRuntime } from "@/platform/runtime";
+import { runAuthenticated } from "@/platform/auth/session";
 
 import { PreviewMode } from "./settings";
 import { SettingsStore } from "./settingsStore";
@@ -25,7 +25,7 @@ const decodeUpdate = Schema.decodeUnknownSync(UpdateSettingsInput);
 export async function updateSettings(formData: FormData): Promise<void> {
   const input = decodeUpdate(Object.fromEntries(formData));
 
-  await appRuntime.runPromise(
+  await runAuthenticated(
     Effect.flatMap(SettingsStore, (store) =>
       store.update((settings) => {
         const next: MutableSettings = { ...settings };

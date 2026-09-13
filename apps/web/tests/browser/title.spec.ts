@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "./authenticatedTest";
 import { seerrFixtureOrigin } from "./browserTestEnvironment";
 
 import type { APIRequestContext } from "@playwright/test";
@@ -36,7 +35,7 @@ test("requesting a film posts to Seerr and shows the requested state", async ({
 
   await expect(page.getByText("✓ Requested")).toBeVisible();
   await expectRecorded(request, {
-    requests: expect.arrayContaining([{ mediaType: "movie", mediaId: 102 }]),
+    requests: expect.arrayContaining([{ mediaType: "movie", mediaId: 102, userId: 2 }]),
   });
 });
 
@@ -53,7 +52,7 @@ test("series show seasons with their status and per-season requests", async ({ p
 
   await expect(seasonTwo.getByText("✓ Requested")).toBeVisible();
   await expectRecorded(request, {
-    requests: expect.arrayContaining([{ mediaType: "tv", mediaId: 201, seasons: [2] }]),
+    requests: expect.arrayContaining([{ mediaType: "tv", mediaId: 201, seasons: [2], userId: 2 }]),
   });
 });
 
@@ -64,7 +63,7 @@ test("the watchlist button toggles through Seerr", async ({ page, request }) => 
   await expect(page.getByRole("button", { name: "Remove from watchlist" })).toBeVisible();
   await expectRecorded(request, {
     watchlist: expect.arrayContaining([
-      { tmdbId: 102, mediaType: "movie", title: "Fixture Film Two" },
+      { tmdbId: 102, mediaType: "movie", title: "Fixture Film Two", userId: 2 },
     ]),
   });
 });

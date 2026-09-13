@@ -30,8 +30,13 @@ pnpm dev
 ```
 
 Set `SEERR_URL` and `SEERR_API_KEY` in `apps/web/.env` (Seerr → Settings → General → API Key). The
-shell renders without them but shows a Seerr error; `/api/health` reports `misconfigured` until
-both parse. Saved views are written to `apps/web/data/` (override with `DISCO_DATA_DIR`).
+`/api/health` endpoint reports `misconfigured` until both parse. Saved views are written to `apps/web/data/` (override with `DISCO_DATA_DIR`).
+
+Sign in with an existing Seerr account. Disco shows Plex and email/password options according to
+Seerr's enabled login methods. Seerr validates credentials and owns sessions, permissions, requests
+and watchlists. Disabling both login methods is invalid configuration. Account creation and password
+resets stay in Seerr. User actions carry the verified Seerr user ID alongside the server-only API key;
+an expired session cannot fall back to the administrator account.
 
 | Local service | URL                     | Command    |
 | ------------- | ----------------------- | ---------- |

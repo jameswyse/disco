@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { Effect, Schema } from "effect";
 
-import { appRuntime } from "@/platform/runtime";
+import { runAuthenticated } from "@/platform/auth/session";
 
 import { sameSource, uniqueViewId, ViewSource } from "./views";
 import { ViewStore } from "./viewStore";
@@ -28,7 +28,7 @@ const decodeMove = Schema.decodeUnknownSync(MoveViewInput);
 const decodeRemove = Schema.decodeUnknownSync(RemoveViewInput);
 
 async function updateViews(update: (views: readonly View[]) => readonly View[]): Promise<void> {
-  await appRuntime.runPromise(Effect.flatMap(ViewStore, (store) => store.update(update)));
+  await runAuthenticated(Effect.flatMap(ViewStore, (store) => store.update(update)));
   revalidatePath("/", "layout");
 }
 

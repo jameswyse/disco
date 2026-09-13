@@ -1,0 +1,94 @@
+.page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.card {
+  width: min(100%, 380px);
+  padding: 32px;
+  box-sizing: border-box;
+  background: var(--color-background-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+}
+.card h1 {
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+.brand {
+  color: var(--color-accent-soft);
+  font-weight: 700;
+  font-size: 16px;
+  margin: 0 0 24px;
+}
+.note {
+  color: var(--color-text-muted);
+  margin: 0 0 24px;
+}
+.form {
+  display: grid;
+  gap: 8px;
+}
+.form label {
+  font-weight: 500;
+}
+.form input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font: inherit;
+  min-height: 44px;
+  padding: 0 12px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+.button {
+  background: var(--color-accent-strong);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--color-text);
+  padding: 11px 16px;
+  min-height: 44px;
+  width: 100%;
+  font-weight: 600;
+}
+.button:hover {
+  background: var(--color-accent);
+}
+.button:disabled,
+.signOut:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.divider {
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 20px 0;
+}
+.error {
+  color: var(--color-warning);
+  margin: 8px 0 16px;
+  font-size: 13px;
+}
+.link {
+  display: block;
+  margin-top: 24px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.link:hover {
+  color: var(--color-text);
+}
+.signOut {
+  background: transparent;
+  border: 0;
+  padding: 8px 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}

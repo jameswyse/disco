@@ -6,7 +6,7 @@ reason it changes:
 | Area           | Owner                                                                                  |
 | -------------- | -------------------------------------------------------------------------------------- |
 | `app`          | Thin routes, layouts, route handlers and metadata. Pages parse URL input and delegate. |
-| `features`     | Bounded user contexts: `browse`, `title`, `views`, `search`, `requests`.               |
+| `features`     | Bounded user contexts: `auth`, `browse`, `title`, `views`, `search`, `requests`.       |
 | `integrations` | Reusable external-system mechanics: the Seerr client, schemas and image URLs.          |
 | `platform`     | Application-wide behaviour: configuration and the Effect runtime.                      |
 
@@ -17,15 +17,40 @@ reason it changes:
 - `schemas.ts` declares Effect `Schema`s for the response bodies Disco reads. Decoding happens
   once, in the client; unknown fields are ignored so Seerr upgrades do not break parsing.
 - `client.ts` is an `Effect.Service` (`SeerrClient`) that reads `seerrEnvironmentConfig`, adds the
-  `X-Api-Key` header and translates failures into `SeerrUnavailable` (transport), `SeerrRejected`
+  `X-Api-Key` and mandatory `X-API-User` headers from a request-scoped `SeerrIdentity`, and translates failures into `SeerrUnavailable` (transport), `SeerrRejected`
   (non-2xx) and `SeerrMalformed` (schema) tagged errors. It covers discover, search, details,
   ratings, recommendations, requests (list and create), watchlist and the catalogue endpoints
   (providers, networks, studios, genres, languages, keywords).
-- `platform/runtime.ts` holds one `ManagedRuntime` per process with `SeerrClient` and `ViewStore`.
-  Loaders (`features/*/load*.ts`) run their Effect programs through it, log failures, and return
+- `platform/runtime.ts` holds one `ManagedRuntime` per process with `SeerrClient`, `SeerrAuth`, `ViewStore` and `SettingsStore`. User identity is never stored in that runtime.
+  Loaders (`features/*/load*.ts`) use `runAuthenticated` to verify the Seerr session before running their Effect programs, log failures, and return
   plain discriminated results (`{ kind: "ok" } | { kind: "error" }`) that React can render.
 - Posters and logos are TMDB paths; `images.ts` builds CDN URLs and `next/image` is used
   `unoptimized` so the browser loads them directly, as Seerr's own UI does.
+
+## Authentication
+
+- `features/auth` renders `/login` from Seerr's anonymous `/settings/public` response. `LoginSettings`
+  admits local sign-in, media-server sign-in, or both. Disabling both fails boundary decoding.
+  Plex is shown only when media-server sign-in is enabled and `mediaServerType` is Plex.
+- `integrations/plex/signIn.ts` opens Plex's authorisation window and polls its strong PIN until
+  completion, expiry or cancellation. The browser sends the resulting token to a server action.
+- `integrations/seerr/auth.ts` delegates local credentials and Plex tokens to Seerr's login APIs.
+  It forwards Seerr's CSRF cookie/token pair when present. Login, logout and session verification
+  use no API key. Credentials and upstream request errors are not logged.
+- `platform/auth/session.ts` carries Seerr's signed session in Disco's host-only, HttpOnly,
+  SameSite=Lax `disco_session` cookie, marked Secure on HTTPS. Seerr remains the session authority.
+  `readSession` verifies `/auth/me` using only that cookie, deduplicated within a React request.
+  Expired or rejected sessions cannot fall back to API-key authentication.
+- `runAuthenticated` provides the verified user ID and CSRF credentials to each Effect operation.
+  All API-key requests require that identity; public status and settings calls use no credentials.
+  User IDs supplied by browser headers or form fields are never used for attribution.
+- `app/(authenticated)` owns the browsing shell. Each data loader and server action also checks
+  the session at its operation boundary. The title-preview route returns 401 without a valid session
+  and marks responses `private, no-store`.
+- Cached catalogue, backdrop and title-fact reads verify the session before entering the cache.
+  Cache keys include the verified user ID; session and CSRF secrets are never cached by Next.
+- Sign-out invalidates the upstream Seerr session before clearing Disco's cookie. Account creation
+  and password resets stay in Seerr. Saved views and Disco preferences remain instance-wide files.
 
 ## Views
 
@@ -90,7 +115,7 @@ A browse screen is `(view, list, filters, page)`:
   component.
 - Loaders call `connection()` before running Effect programs so the runtime's clock access is
   request-time rather than a prerender error. Request-time parts of the sidebar sit inside
-  `Suspense` boundaries; `app/loading.tsx` covers pages.
+  `Suspense` boundaries; `app/(authenticated)/loading.tsx` covers browsing pages.
 - Configuration is parsed once with Effect `Config` in `platform/configuration`. `/api/health`
   returns `503 misconfigured` until it parses, so the Docker health check reflects configuration.
 - Use relative imports within a feature and `@/` when crossing into another area.
@@ -101,5 +126,6 @@ A browse screen is `(view, list, filters, page)`:
   and the client's request construction and error translation (with a stub `HttpClient`).
 - Browser tests run against `tests/browser/fixtures/seerrServer.ts`, a small Node server that
   serves deterministic Seerr responses, records request and watchlist mutations at
-  `/__fixture/requests`, and rejects requests without the fixture API key. Saved views are written
-  to `tests/results/data`, which the fixture command clears before each run.
+  `/__fixture/requests`, and rejects API-key calls without an explicit user ID. The fixture also models Seerr sessions,
+  CSRF protection and per-user watchlists. Browser tests sign in through the real login screen.
+  Saved views use a fresh temporary data directory for each test run.

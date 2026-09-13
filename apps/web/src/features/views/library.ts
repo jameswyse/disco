@@ -4,7 +4,11 @@ import { Effect } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
+import { SeerrIdentity } from "@/integrations/seerr/identity";
+import { requireSession, runAuthenticated } from "@/platform/auth/session";
 import { appRuntime } from "@/platform/runtime";
+
+import type { SeerrUserId } from "@/integrations/seerr/schemas";
 
 import type { ViewSource } from "./views";
 
@@ -154,16 +158,24 @@ const libraryProgram = (region: string) =>
   });
 
 /** The catalogue changes rarely and costs dozens of Seerr calls, so it is cached for a day. */
-export async function loadLibrary(region: string): Promise<Library> {
+
+async function cachedLibrary(region: string, userId: SeerrUserId): Promise<Library> {
   "use cache";
   cacheLife("days");
 
   return appRuntime.runPromise(
     libraryProgram(region).pipe(
+      Effect.provideService(SeerrIdentity, { userId }),
       Effect.tapError((error) => Effect.logError("Seerr catalogue request failed", error)),
       Effect.mapError((error) => new Error(describeSeerrError(error))),
     ),
   );
+}
+
+export async function loadLibrary(region: string): Promise<Library> {
+  const { user } = await requireSession();
+
+  return cachedLibrary(region, user.id);
 }
 
 export function isFeaturedLanguage(entry: LibraryEntry): boolean {
@@ -171,7 +183,7 @@ export function isFeaturedLanguage(entry: LibraryEntry): boolean {
 }
 
 export async function searchKeywords(query: string): Promise<readonly LibraryEntry[]> {
-  const page = await appRuntime.runPromise(
+  const page = await runAuthenticated(
     Effect.flatMap(SeerrClient, (client) => client.searchKeywords(query)),
   );
 

@@ -1,9 +1,6 @@
-import { Sidebar } from "@/features/views/Sidebar";
-
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
-import styles from "./layout.module.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,12 +20,7 @@ type RootLayoutProperties = Readonly<{ children: ReactNode }>;
 export default function RootLayout({ children }: RootLayoutProperties) {
   return (
     <html lang="en">
-      <body>
-        <div className={styles.app}>
-          <Sidebar />
-          <main className={styles.main}>{children}</main>
-        </div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

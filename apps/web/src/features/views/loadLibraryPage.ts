@@ -4,7 +4,7 @@ import { Effect } from "effect";
 
 import { loadSettings } from "@/features/settings/loadSettings";
 import { SeerrClient } from "@/integrations/seerr/client";
-import { appRuntime } from "@/platform/runtime";
+import { runAuthenticated } from "@/platform/auth/session";
 
 import { isFeaturedLanguage, loadLibrary, searchKeywords } from "./library";
 import { loadViews } from "./loadViews";
@@ -130,7 +130,7 @@ export async function loadLibraryPage(
   const [views, settings] = await Promise.all([loadViews(), loadSettings()]);
 
   try {
-    const region = await appRuntime.runPromise(
+    const region = await runAuthenticated(
       Effect.flatMap(SeerrClient, (client) => client.publicSettings()).pipe(
         Effect.map((seerr) => seerr.streamingRegion || seerr.discoverRegion || "US"),
       ),

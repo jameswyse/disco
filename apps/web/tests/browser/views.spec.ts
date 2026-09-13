@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./authenticatedTest";
 
 // The view store is shared by every test in the run, so these tests run in order and restore it.
 test.describe.configure({ mode: "serial" });

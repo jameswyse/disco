@@ -4,13 +4,14 @@ import { Effect } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
-import { appRuntime } from "@/platform/runtime";
+import { runAuthenticated } from "@/platform/auth/session";
 
 import { planBrowseSources } from "./browsePlan";
 import { titleFromResult } from "./title";
 
 import type { View } from "@/features/views/views";
 import type { SeerrError } from "@/integrations/seerr/errors";
+import type { SeerrIdentity } from "@/integrations/seerr/identity";
 import type { Genre, MediaResult, MovieResult, TvResult } from "@/integrations/seerr/schemas";
 
 import type { BrowseSource } from "./browsePlan";
@@ -50,7 +51,7 @@ function fetchSourcePage(
   client: SeerrClient,
   source: BrowseSource,
   page: number,
-): Effect.Effect<SourcePage, SeerrError> {
+): Effect.Effect<SourcePage, SeerrError, SeerrIdentity> {
   switch (source.kind) {
     case "trending":
       return client.trending({ page, mediaType: source.mediaType });
@@ -73,7 +74,7 @@ function fetchSource(
   client: SeerrClient,
   source: BrowseSource,
   browsePage: number,
-): Effect.Effect<SourcePage, SeerrError> {
+): Effect.Effect<SourcePage, SeerrError, SeerrIdentity> {
   const firstSeerrPage = (browsePage - 1) * seerrPagesPerBrowsePage + 1;
   const seerrPages = Array.from(
     { length: seerrPagesPerBrowsePage },
@@ -143,7 +144,7 @@ function browseProgram(
   list: DiscoverListId,
   filters: BrowseFilters,
   page: number,
-): Effect.Effect<BrowseResult, SeerrError, SeerrClient> {
+): Effect.Effect<BrowseResult, SeerrError, SeerrClient | SeerrIdentity> {
   return Effect.gen(function* () {
     const client = yield* SeerrClient;
     const settings = yield* client.publicSettings();
@@ -196,7 +197,7 @@ export async function loadBrowse(
   // of the static prerender.
   await connection();
 
-  return appRuntime.runPromise(
+  return runAuthenticated(
     browseProgram(view, list, filters, page).pipe(
       Effect.tapError((error) => Effect.logError("Seerr browse request failed", error)),
       Effect.catchAll((error) =>

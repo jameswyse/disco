@@ -1,3 +1,7 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { defineConfig, devices } from "@playwright/test";
 
 import {
@@ -46,17 +50,19 @@ export default defineConfig({
   },
   webServer: [
     {
-      // Saved views live in the data directory; clear it so every run starts from the defaults.
-      command: "rm -rf tests/results/data && node tests/browser/fixtures/seerrServer.ts",
+      command: "node tests/browser/fixtures/seerrServer.ts",
       reuseExistingServer: false,
       timeout: 30_000,
-      // The fixture rejects unauthenticated requests, so a 401 also proves it is listening.
+      // Seerr exposes status without authentication.
       url: `${seerrFixtureOrigin}/api/v1/status`,
       ignoreHTTPSErrors: false,
     },
     {
       command: `pnpm start --hostname 127.0.0.1 --port ${browserTestPort}`,
-      env: browserTestEnvironment,
+      env: {
+        ...browserTestEnvironment,
+        DISCO_DATA_DIR: mkdtempSync(join(tmpdir(), "disco-browser-")),
+      },
       reuseExistingServer: false,
       timeout: 120_000,
       url: `http://127.0.0.1:${browserTestPort}/api/health`,

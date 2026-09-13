@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { Suspense } from "react";
 
+import { LogoutButton } from "@/features/auth/LogoutButton";
+
 import { loadAccount, loadSidebarViews } from "./loadSidebar";
 import { loadMediaBackdrops } from "./loadViewBackdrops";
 import { ViewLink } from "./ViewLink";
@@ -71,6 +73,7 @@ async function Account() {
           {openRequests === 1 ? "1 open request" : `${openRequests} open requests`}
           {requests.pending > 0 ? ` · ${requests.pending} pending approval` : ""}
         </Link>
+        <LogoutButton />
       </span>
     </>
   );

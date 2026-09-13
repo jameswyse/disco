@@ -83,33 +83,6 @@ export function sameSource(a: ViewSource, b: ViewSource): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-export function viewDescription(view: View): string | undefined {
-  switch (view.source.kind) {
-    case "media":
-      return view.source.mediaType === "movie"
-        ? "Everything · all platforms"
-        : "Everything · all networks";
-    case "provider":
-      return "Streaming service";
-    case "network":
-      return "Network";
-    case "studio":
-      return "Studio";
-    case "genre":
-      return "Genre";
-    case "language":
-      return "Language";
-    case "keyword":
-      return "Keyword";
-
-    default: {
-      const unsupportedSource: never = view.source;
-
-      return unsupportedSource;
-    }
-  }
-}
-
 const slugPattern = /[^a-z0-9]+/g;
 
 export function slugify(label: string): string {

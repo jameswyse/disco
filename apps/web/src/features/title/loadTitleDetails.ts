@@ -34,6 +34,7 @@ function detailsProgram(
     const client = yield* SeerrClient;
     const settings = yield* client.publicSettings();
     const region = settings.streamingRegion || settings.discoverRegion || "US";
+    const today = new Date().toISOString().slice(0, 10);
     const ratingsOrNothing = <A>(ratings: Effect.Effect<A, SeerrError>) =>
       ratings.pipe(Effect.catchAll(() => Effect.succeed(undefined)));
 
@@ -41,10 +42,12 @@ function detailsProgram(
       [
         mediaType === "movie"
           ? Effect.all([client.movie(id), ratingsOrNothing(client.movieRatings(id))]).pipe(
-              Effect.map(([movie, ratings]) => titleDetailsFromMovie(movie, ratings, region)),
+              Effect.map(([movie, ratings]) =>
+                titleDetailsFromMovie(movie, ratings, region, today),
+              ),
             )
           : Effect.all([client.tv(id), ratingsOrNothing(client.tvRatings(id))]).pipe(
-              Effect.map(([tv, ratings]) => titleDetailsFromTv(tv, ratings, region)),
+              Effect.map(([tv, ratings]) => titleDetailsFromTv(tv, ratings, region, today)),
             ),
         client.recommendations(mediaType, id),
         client.genres("movie"),

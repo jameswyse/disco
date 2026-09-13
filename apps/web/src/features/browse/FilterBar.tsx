@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { browseHref } from "./browseHref";
-import { ratingOptions } from "./filters";
+import { anyLanguage, ratingOptions } from "./filters";
 
 import type { Genre } from "@/integrations/seerr/schemas";
 
@@ -92,14 +92,19 @@ export function FilterBar({ location, genres, mixedMedia }: FilterBarProperties)
         aria-label="Language"
         className={styles.dropdown}
         onChange={(event) =>
-          navigate({ language: event.target.value === "" ? undefined : event.target.value })
+          navigate({
+            language: event.target.value === anyLanguage ? undefined : event.target.value,
+          })
         }
-        value={filters.language ?? ""}
+        value={filters.language ?? anyLanguage}
       >
-        <option value="">Language</option>
+        <option value={anyLanguage}>
+          {location.defaultLanguage === undefined ? "Language" : "Any language"}
+        </option>
         {languageOptions.map((language) => (
           <option key={language.code} value={language.code}>
             {language.label}
+            {language.code === location.defaultLanguage ? " (default)" : ""}
           </option>
         ))}
       </select>

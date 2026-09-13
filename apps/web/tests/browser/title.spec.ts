@@ -46,7 +46,7 @@ test("series show seasons with their status and per-season requests", async ({ p
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Fixture Series One");
   await expect(page.getByText("Limited series")).toBeVisible();
   await expect(page.getByRole("heading", { name: /Request status/ })).toBeVisible();
-  await expect(page.getByRole("list").getByText("Searching indexers")).toBeVisible();
+  await expect(page.getByRole("list").getByText("Searching", { exact: true })).toBeVisible();
 
   const seasonTwo = page.getByRole("listitem").filter({ hasText: "Season 2" });
   await seasonTwo.getByRole("button", { name: "Request" }).click();
@@ -59,9 +59,9 @@ test("series show seasons with their status and per-season requests", async ({ p
 
 test("the watchlist button toggles through Seerr", async ({ page, request }) => {
   await page.goto("/title/movie/102");
-  await page.getByRole("button", { name: "＋ Watchlist" }).click();
+  await page.getByRole("button", { name: "Add to watchlist" }).click();
 
-  await expect(page.getByRole("button", { name: "✓ Watchlisted" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remove from watchlist" })).toBeVisible();
   await expectRecorded(request, {
     watchlist: expect.arrayContaining([
       { tmdbId: 102, mediaType: "movie", title: "Fixture Film Two" },

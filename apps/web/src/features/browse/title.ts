@@ -22,6 +22,9 @@ export type Title = Readonly<{
   backdropPath: string | undefined;
   genres: readonly string[];
   availability: Availability;
+  /** Filled in from the details endpoints by `withTitleFacts`; list results omit them. */
+  runtimeMinutes: number | undefined;
+  seasonCount: number | undefined;
 }>;
 
 export type GenreNames = ReadonlyMap<number, string>;
@@ -70,6 +73,8 @@ export function titleFromResult(result: MovieResult | TvResult, genreNames: Genr
       return name === undefined ? [] : [name];
     }),
     availability: availabilityFromStatus(result.mediaInfo?.status),
+    runtimeMinutes: undefined,
+    seasonCount: undefined,
   };
 
   return result.mediaType === "movie"

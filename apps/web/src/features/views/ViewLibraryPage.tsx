@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { PreferencesForm } from "@/features/settings/PreferencesForm";
 import { tmdbImageUrl, tmdbWordmarkUrl } from "@/integrations/seerr/images";
 
 import { addView, moveView, removeView } from "./actions";
@@ -169,6 +170,14 @@ export async function ViewLibraryPage({ category, query }: ViewLibraryPageProper
               <SidebarItem count={data.views.length} index={index} key={view.id} view={view} />
             ))}
           </ul>
+          <PreferencesForm
+            className={styles.preferences}
+            labelClassName={styles.preference}
+            languages={data.languages}
+            noteClassName={styles.preferenceNote}
+            selectClassName={styles.preferenceSelect}
+            settings={data.settings}
+          />
         </section>
 
         <section className={styles.libraryPane}>

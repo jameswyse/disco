@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import { withTitleFacts } from "@/features/browse/titleFacts";
 import { TitleGrid } from "@/features/browse/TitleGrid";
+import { loadSettings } from "@/features/settings/loadSettings";
+import { defaultPreviewMode } from "@/features/settings/settings";
 
 import { loadSearch } from "./loadSearch";
 import { SearchBox } from "./SearchBox";
@@ -20,7 +23,11 @@ function searchHref(query: string, page: number): `/search${string}` {
 }
 
 export async function SearchPage({ query, page }: SearchPageProperties) {
-  const result = query === "" ? undefined : await loadSearch(query, page);
+  const [result, settings] = await Promise.all([
+    query === "" ? undefined : loadSearch(query, page),
+    loadSettings(),
+  ]);
+  const titles = result?.kind === "ok" ? await withTitleFacts(result.titles) : [];
 
   return (
     <>
@@ -46,7 +53,11 @@ export async function SearchPage({ query, page }: SearchPageProperties) {
             <b>{result.totalResults.toLocaleString("en-AU")}</b> results for “{query}” · page{" "}
             {result.page} of {Math.max(1, result.totalPages)}
           </p>
-          <TitleGrid label="Search results" titles={result.titles} />
+          <TitleGrid
+            label="Search results"
+            previewMode={settings.previewMode ?? defaultPreviewMode}
+            titles={titles}
+          />
           <nav aria-label="Pages" className={browseStyles.pagination}>
             {result.page > 1 ? (
               <Link className={browseStyles.pageLink} href={searchHref(query, page - 1)}>

@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { RequestButton } from "@/features/title/RequestButton";
 import { titleHref } from "@/features/title/titleRoute";
+import { WatchlistButton } from "@/features/title/WatchlistButton";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
 import type { TitlePreview } from "@/features/title/titlePreview";
@@ -23,6 +24,7 @@ type TitleHoverCardProperties = Readonly<{
   title: Title;
   preview: PreviewState;
   side: "right" | "left";
+  onClose: () => void;
 }>;
 
 const availabilityLabels = {
@@ -71,7 +73,7 @@ function Scores({ details }: Readonly<{ details: TitlePreview }>) {
   );
 }
 
-export function TitleHoverCard({ title, preview, side }: TitleHoverCardProperties) {
+export function TitleHoverCard({ title, preview, side, onClose }: TitleHoverCardProperties) {
   const details = preview.kind === "ready" ? preview.preview : undefined;
   const meta = details
     ? [
@@ -87,7 +89,19 @@ export function TitleHoverCard({ title, preview, side }: TitleHoverCardPropertie
   const canRequest = title.availability === "not-in-library";
 
   return (
-    <div className={side === "left" ? `${styles.card} ${styles.left}` : styles.card} role="dialog">
+    <div
+      aria-label={`${title.name} quick info`}
+      className={side === "left" ? `${styles.card} ${styles.left}` : styles.card}
+      role="dialog"
+    >
+      <button
+        aria-label="Close quick info"
+        className={styles.close}
+        onClick={onClose}
+        type="button"
+      >
+        ✕
+      </button>
       <div className={styles.backdrop}>
         {(details?.backdropPath ?? title.backdropPath) ? (
           <Image
@@ -167,6 +181,16 @@ export function TitleHoverCard({ title, preview, side }: TitleHoverCardPropertie
           <Link className={styles.action} href={titleHref(title.mediaType, title.id)}>
             Details
           </Link>
+          {details ? (
+            <WatchlistButton
+              className={`${styles.action} ${styles.iconAction}`}
+              id={title.id}
+              mediaType={title.mediaType}
+              onWatchlist={details.onWatchlist}
+              title={title.name}
+              compact
+            />
+          ) : null}
         </div>
       </div>
     </div>

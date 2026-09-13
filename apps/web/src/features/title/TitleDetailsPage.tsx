@@ -2,6 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { TitleCard } from "@/features/browse/TitleCard";
+import { withTitleFacts } from "@/features/browse/titleFacts";
+import { loadSettings } from "@/features/settings/loadSettings";
+import { defaultPreviewMode } from "@/features/settings/settings";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
 import { RequestButton } from "./RequestButton";
@@ -258,7 +261,7 @@ function SeasonRow({
   );
 }
 
-export function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
+export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
   if (result.kind === "error") {
     return (
       <section className={styles.errorState}>
@@ -271,7 +274,9 @@ export function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
     );
   }
 
-  const { details, related, region, seerrOrigin } = result;
+  const { details, region, seerrOrigin } = result;
+  const [related, settings] = await Promise.all([withTitleFacts(result.related), loadSettings()]);
+  const previewMode = settings.previewMode ?? defaultPreviewMode;
   const timeline = requestTimeline(details);
   const statusLabel = availabilityLabels[details.availability];
 
@@ -418,7 +423,11 @@ export function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
                 <h2 className={styles.sectionHeading}>More like this</h2>
                 <ul className={styles.related}>
                   {related.map((title) => (
-                    <TitleCard key={`${title.mediaType}-${title.id}`} title={title} />
+                    <TitleCard
+                      key={`${title.mediaType}-${title.id}`}
+                      previewMode={previewMode}
+                      title={title}
+                    />
                   ))}
                 </ul>
               </section>

@@ -7,6 +7,8 @@ export type BrowseLocation = Readonly<{
   viewId: string;
   listId: DiscoverListId;
   filters: BrowseFilters;
+  /** Saved preference; the URL only names a language when it differs from this. */
+  defaultLanguage: string | undefined;
   page: number;
 }>;
 
@@ -18,7 +20,7 @@ export function browseHref(location: BrowseLocation): `/${string}` {
     entries.push(["list", location.listId]);
   }
 
-  entries.push(...filterEntries(location.filters));
+  entries.push(...filterEntries(location.filters, location.defaultLanguage));
 
   if (location.page > 1) {
     entries.push(["page", String(location.page)]);

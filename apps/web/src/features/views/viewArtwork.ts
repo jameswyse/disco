@@ -1,4 +1,4 @@
-import { tmdbImageUrl } from "@/integrations/seerr/images";
+import { tmdbDuotoneBackdropUrl, tmdbImageUrl } from "@/integrations/seerr/images";
 
 import type { View, ViewSource } from "./views";
 
@@ -21,12 +21,27 @@ const tones = {
   keyword: "linear-gradient(135deg, #312e81, #0f172a)",
 } satisfies Record<ViewSource["kind"] | "movie" | "tv", string>;
 
+/** Duotone colour pairs for the Movies and TV Shows cards, as in the approved mockup. */
+const duotones = {
+  movie: { dark: "0b1a3f", light: "3b82f6" },
+  tv: { dark: "2e1065", light: "a855f7" },
+} satisfies Record<"movie" | "tv", Readonly<{ dark: string; light: string }>>;
+
 export function viewArtwork(view: View): ViewArtwork {
   const { source } = view;
 
+  if (view.backdropPath && source.kind === "media") {
+    const { dark, light } = duotones[source.mediaType];
+
+    return {
+      background: `linear-gradient(90deg, rgb(0 0 0 / 45%), transparent 70%), url("${tmdbDuotoneBackdropUrl(view.backdropPath, dark, light)}") center / cover`,
+      logo: "none",
+    };
+  }
+
   if (view.backdropPath) {
     return {
-      background: `linear-gradient(90deg, rgb(0 0 0 / 65%), rgb(0 0 0 / 25%)), url(${tmdbImageUrl("w780", view.backdropPath)}) center / cover`,
+      background: `linear-gradient(90deg, rgb(0 0 0 / 65%), rgb(0 0 0 / 25%)), url("${tmdbImageUrl("w780", view.backdropPath)}") center / cover`,
       logo: "none",
     };
   }

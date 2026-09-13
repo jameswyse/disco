@@ -14,6 +14,8 @@ type WatchlistButtonProperties = Readonly<{
   title: string;
   onWatchlist: boolean;
   className: string | undefined;
+  /** Icon-only rendering for tight spaces such as the quick-info card. */
+  compact?: boolean;
 }>;
 
 export function WatchlistButton({
@@ -22,6 +24,7 @@ export function WatchlistButton({
   title,
   onWatchlist,
   className,
+  compact = false,
 }: WatchlistButtonProperties) {
   const [result, submit, pending] = useActionState<ActionResult | undefined, FormData>(
     toggleWatchlist,
@@ -29,6 +32,8 @@ export function WatchlistButton({
   );
   // The server re-renders with the new state after a successful toggle; until then flip locally.
   const listed = result?.ok ? !onWatchlist : onWatchlist;
+  const fullLabel = listed ? "✓ Watchlisted" : "＋ Watchlist";
+  const compactLabel = listed ? "✓" : "＋";
 
   return (
     <form action={submit} style={{ display: "contents" }}>
@@ -36,8 +41,14 @@ export function WatchlistButton({
       <input name="id" type="hidden" value={id} />
       <input name="title" type="hidden" value={title} />
       <input name="action" type="hidden" value={listed ? "remove" : "add"} />
-      <button aria-pressed={listed} className={className} disabled={pending} type="submit">
-        {listed ? "✓ Watchlisted" : "＋ Watchlist"}
+      <button
+        aria-label={listed ? "Remove from watchlist" : "Add to watchlist"}
+        aria-pressed={listed}
+        className={className}
+        disabled={pending}
+        type="submit"
+      >
+        {compact ? compactLabel : fullLabel}
       </button>
       {result && !result.ok ? (
         <span role="alert" style={{ color: "var(--color-warning)", fontSize: 12 }}>

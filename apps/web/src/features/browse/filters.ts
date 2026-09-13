@@ -37,15 +37,35 @@ function positiveInteger(value: string | undefined): number | undefined {
 
 const languagePattern = /^[a-z]{2}$/;
 
-export function parseBrowseFilters(query: SearchParameters): BrowseFilters {
+/** Value of `lang` that switches the language filter off despite a saved default. */
+export const anyLanguage = "any";
+
+function resolveLanguage(
+  value: string | undefined,
+  defaultLanguage: string | undefined,
+): string | undefined {
+  if (value === undefined) {
+    return defaultLanguage;
+  }
+
+  if (value === anyLanguage) {
+    return undefined;
+  }
+
+  return languagePattern.test(value) ? value : defaultLanguage;
+}
+
+export function parseBrowseFilters(
+  query: SearchParameters,
+  defaultLanguage: string | undefined,
+): BrowseFilters {
   const mediaType = first(query.type);
-  const language = first(query.lang);
   const rating = positiveInteger(first(query.rating));
 
   return {
     mediaType: mediaType === "movie" || mediaType === "tv" ? mediaType : "all",
     genreId: positiveInteger(first(query.genre)),
-    language: language !== undefined && languagePattern.test(language) ? language : undefined,
+    language: resolveLanguage(first(query.lang), defaultLanguage),
     ratingAtLeast:
       rating !== undefined && ratingOptions.some((option) => option === rating)
         ? rating
@@ -54,8 +74,11 @@ export function parseBrowseFilters(query: SearchParameters): BrowseFilters {
   };
 }
 
-/** Query-string entries for the active filters only. */
-export function filterEntries(filters: BrowseFilters): [string, string][] {
+/** Query-string entries for filters that differ from the defaults. */
+export function filterEntries(
+  filters: BrowseFilters,
+  defaultLanguage: string | undefined,
+): [string, string][] {
   const entries: [string, string][] = [];
 
   if (filters.mediaType !== "all") {
@@ -66,8 +89,8 @@ export function filterEntries(filters: BrowseFilters): [string, string][] {
     entries.push(["genre", String(filters.genreId)]);
   }
 
-  if (filters.language !== undefined) {
-    entries.push(["lang", filters.language]);
+  if (filters.language !== defaultLanguage) {
+    entries.push(["lang", filters.language ?? anyLanguage]);
   }
 
   if (filters.ratingAtLeast !== undefined) {

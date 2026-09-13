@@ -1,5 +1,6 @@
 import { Layer, ManagedRuntime } from "effect";
 
+import { SettingsStore } from "@/features/settings/settingsStore";
 import { ViewStore } from "@/features/views/viewStore";
 import { SeerrClient } from "@/integrations/seerr/client";
 
@@ -8,5 +9,5 @@ import { SeerrClient } from "@/integrations/seerr/client";
  * handlers. Configuration is read from the process environment when the layer is first built.
  */
 export const appRuntime = ManagedRuntime.make(
-  Layer.mergeAll(SeerrClient.Default, ViewStore.Default),
+  Layer.mergeAll(SeerrClient.Default, ViewStore.Default, SettingsStore.Default),
 );

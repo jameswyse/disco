@@ -2,11 +2,15 @@ import { connection } from "next/server";
 
 import { Effect } from "effect";
 
+import { loadSettings } from "@/features/settings/loadSettings";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { appRuntime } from "@/platform/runtime";
 
 import { isFeaturedLanguage, loadLibrary, searchKeywords } from "./library";
 import { loadViews } from "./loadViews";
+
+import type { LanguageOption } from "@/features/settings/PreferencesForm";
+import type { Settings } from "@/features/settings/settings";
 
 import type { Library, LibraryEntry, LibrarySection } from "./library";
 import type { View } from "./views";
@@ -38,9 +42,24 @@ export type LibraryGroup = Readonly<{
 
 export type LibraryPageData = Readonly<{
   views: readonly View[];
+  settings: Settings;
+  /** Languages offered as the default filter: the featured set plus the current default. */
+  languages: readonly LanguageOption[];
   groups: readonly LibraryGroup[];
   error: string | undefined;
 }>;
+
+function languageOptions(library: Library, settings: Settings): LanguageOption[] {
+  return library.languages
+    .filter(
+      (entry) =>
+        isFeaturedLanguage(entry) ||
+        (entry.source.kind === "language" && entry.source.language === settings.defaultLanguage),
+    )
+    .flatMap((entry) =>
+      entry.source.kind === "language" ? [{ code: entry.source.language, label: entry.label }] : [],
+    );
+}
 
 const sectionLabels = {
   streaming: "Streaming services",
@@ -108,12 +127,12 @@ export async function loadLibraryPage(
 ): Promise<LibraryPageData> {
   await connection();
 
-  const views = await loadViews();
+  const [views, settings] = await Promise.all([loadViews(), loadSettings()]);
 
   try {
     const region = await appRuntime.runPromise(
       Effect.flatMap(SeerrClient, (client) => client.publicSettings()).pipe(
-        Effect.map((settings) => settings.streamingRegion || settings.discoverRegion || "US"),
+        Effect.map((seerr) => seerr.streamingRegion || seerr.discoverRegion || "US"),
       ),
     );
     const [library, keywords] = await Promise.all([
@@ -128,11 +147,19 @@ export async function loadLibraryPage(
       groups.push({ section: "keywords", label: "Keywords", note: undefined, entries: keywords });
     }
 
-    return { views, groups, error: undefined };
+    return {
+      views,
+      settings,
+      languages: languageOptions(library, settings),
+      groups,
+      error: undefined,
+    };
   } catch (error) {
     // Failures are logged where they happen (see `library.ts`); the page only needs a summary.
     return {
       views,
+      settings,
+      languages: [],
       groups: [],
       error: `The Seerr catalogue could not be loaded${error instanceof Error && error.message ? `: ${error.message}` : "."}`,
     };

@@ -18,6 +18,7 @@ export const TitlePreview = Schema.Struct({
   originalLanguage: OptionalText,
   country: OptionalText,
   genres: Schema.Array(Schema.String),
+  onWatchlist: Schema.Boolean,
   cast: Schema.Array(
     Schema.Struct({ id: Schema.Number, name: Schema.String, profilePath: OptionalText }),
   ),
@@ -51,6 +52,7 @@ export function titlePreviewFromDetails(details: TitleDetails): TitlePreview {
     originalLanguage: details.originalLanguage,
     country: details.countries[0],
     genres: details.genres,
+    onWatchlist: details.onWatchlist,
     cast: details.cast.slice(0, 4).map((person) => ({
       id: person.id,
       name: person.name,

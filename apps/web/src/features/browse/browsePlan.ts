@@ -23,10 +23,11 @@ export type BrowseContext = Readonly<{
 
 type DiscoverConstraints = Omit<DiscoverQuery, "page" | "sortBy">;
 
-const recentWindowDays = 90;
+/** Recently released reaches back half a year so narrow views (one network, one studio) still fill. */
+const recentWindowDays = 180;
 const trendingWindowDays = 365;
 /** Keeps very obscure releases out of date-sorted lists. */
-const minimumVotes = 10;
+const minimumVotes = 5;
 /** A rating floor is only meaningful once enough people have voted. */
 const minimumVotesForRatingFilter = 50;
 

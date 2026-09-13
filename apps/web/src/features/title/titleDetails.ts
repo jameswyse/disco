@@ -58,6 +58,19 @@ export type SeasonSummary = Readonly<{
 
 export type ExternalLink = Readonly<{ label: string; url: string }>;
 
+/**
+ * Whether the title exists somewhere a download client could find it. Films count once a digital
+ * or physical release date has passed (matching Radarr's "released" availability); series once
+ * their first episode has aired.
+ */
+export type Release = Readonly<{
+  /** Cinema or first-air date. */
+  premiere: string | undefined;
+  /** Earliest digital or physical release date across regions (films only). */
+  home: string | undefined;
+  released: boolean;
+}>;
+
 /** Everything the details screen and hover preview show for one movie or series. */
 export type TitleDetails = Readonly<{
   id: number;
@@ -78,6 +91,7 @@ export type TitleDetails = Readonly<{
   seasonCount: number | undefined;
   seriesType: string | undefined;
   certification: string | undefined;
+  release: Release;
   scores: Scores;
   cast: readonly Person[];
   creators: readonly string[];
@@ -224,6 +238,40 @@ function sharedDetails(details: MovieDetails | TvDetails, region: string) {
   };
 }
 
+/** TMDB release types: 1 premiere, 2 limited theatrical, 3 theatrical, 4 digital, 5 physical, 6 TV. */
+const homeReleaseTypes = new Set([4, 5]);
+
+function isoDate(value: string | null | undefined): string | undefined {
+  return value ? value.slice(0, 10) : undefined;
+}
+
+function movieRelease(details: MovieDetails, today: string): Release {
+  const homeDates = (details.releases?.results ?? [])
+    .flatMap((entry) => entry.release_dates)
+    .filter(
+      (date) => date.type !== null && date.type !== undefined && homeReleaseTypes.has(date.type),
+    )
+    .flatMap((date) => {
+      const iso = isoDate(date.release_date);
+
+      return iso === undefined ? [] : [iso];
+    })
+    .sort();
+  const home = homeDates[0];
+
+  return {
+    premiere: isoDate(details.releaseDate),
+    home,
+    released: home !== undefined && home <= today,
+  };
+}
+
+function tvRelease(details: TvDetails, today: string): Release {
+  const premiere = isoDate(details.firstAirDate);
+
+  return { premiere, home: undefined, released: premiere !== undefined && premiere <= today };
+}
+
 function movieCertification(details: MovieDetails, region: string): string | undefined {
   const release = details.releases?.results.find((entry) => entry.iso_3166_1 === region);
 
@@ -234,6 +282,7 @@ export function titleDetailsFromMovie(
   details: MovieDetails,
   ratings: CombinedRatings | undefined,
   region: string,
+  today: string,
 ): TitleDetails {
   const imdbId = text(details.imdbId) ?? text(details.externalIds?.imdbId);
 
@@ -247,6 +296,7 @@ export function titleDetailsFromMovie(
     seasonCount: undefined,
     seriesType: undefined,
     certification: movieCertification(details, region),
+    release: movieRelease(details, today),
     scores: scores(details, ratings?.rt, ratings?.imdb),
     creators: [],
     networks: [],
@@ -264,6 +314,7 @@ export function titleDetailsFromTv(
   details: TvDetails,
   ratings: RottenTomatoesRating | undefined,
   region: string,
+  today: string,
 ): TitleDetails {
   const imdbId = text(details.externalIds?.imdbId);
   const tvdbId = details.externalIds?.tvdbId ?? undefined;
@@ -283,6 +334,7 @@ export function titleDetailsFromTv(
     certification: text(
       details.contentRatings?.results.find((entry) => entry.iso_3166_1 === region)?.rating,
     ),
+    release: tvRelease(details, today),
     scores: scores(details, ratings, undefined),
     creators: (details.createdBy ?? []).map((creator) => creator.name),
     networks: (details.networks ?? []).map((network) => ({

@@ -39,16 +39,16 @@ describe("planBrowseSources", () => {
     ]);
   });
 
-  it("bounds recent releases to the last 90 days with a vote floor", () => {
+  it("bounds recent releases to the last 180 days with a vote floor", () => {
     expect(planBrowseSources(moviesView, "recent", noFilters, context)).toEqual([
       {
         kind: "discover",
         mediaType: "movie",
         query: {
           sortBy: "primary_release_date.desc",
-          releasedAfter: "2026-06-15",
+          releasedAfter: "2026-03-17",
           releasedBefore: "2026-09-13",
-          voteCountAtLeast: 10,
+          voteCountAtLeast: 5,
         },
       },
     ]);

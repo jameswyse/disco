@@ -7,8 +7,10 @@ import { browseHref } from "./browseHref";
 import { discoverListIds, discoverListLabels } from "./discoverLists";
 import { FilterBar } from "./FilterBar";
 import { loadBrowse } from "./loadBrowse";
+import { withTitleFacts } from "./titleFacts";
 import { TitleGrid } from "./TitleGrid";
 
+import type { PreviewMode } from "@/features/settings/settings";
 import type { View } from "@/features/views/views";
 
 import type { BrowseLocation } from "./browseHref";
@@ -22,6 +24,8 @@ type BrowsePageProperties = Readonly<{
   view: View;
   listId: DiscoverListId;
   filters: BrowseFilters;
+  defaultLanguage: string | undefined;
+  previewMode: PreviewMode;
   page: number;
 }>;
 
@@ -50,9 +54,17 @@ function Summary({
   );
 }
 
-export async function BrowsePage({ view, listId, filters, page }: BrowsePageProperties) {
+export async function BrowsePage({
+  view,
+  listId,
+  filters,
+  defaultLanguage,
+  previewMode,
+  page,
+}: BrowsePageProperties) {
   const result = await loadBrowse(view, listId, filters, page);
-  const location: BrowseLocation = { viewId: view.id, listId, filters, page };
+  const titles = result.kind === "ok" ? await withTitleFacts(result.titles) : [];
+  const location: BrowseLocation = { viewId: view.id, listId, filters, defaultLanguage, page };
 
   return (
     <>
@@ -85,7 +97,11 @@ export async function BrowsePage({ view, listId, filters, page }: BrowsePageProp
 
       {result.kind === "ok" ? (
         <>
-          <TitleGrid label={`${discoverListLabels[listId]} titles`} titles={result.titles} />
+          <TitleGrid
+            label={`${discoverListLabels[listId]} titles`}
+            previewMode={previewMode}
+            titles={titles}
+          />
           <nav aria-label="Pages" className={styles.pagination}>
             {result.page > 1 ? (
               <Link className={styles.pageLink} href={browseHref({ ...location, page: page - 1 })}>

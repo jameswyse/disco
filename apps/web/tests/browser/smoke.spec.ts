@@ -47,3 +47,11 @@ test("health endpoint reports ok when Seerr is configured", async ({ request }) 
   expect(response.status()).toBe(200);
   expect(await response.json()).toEqual({ status: "ok" });
 });
+
+test("cards show runtime for films and season counts for series", async ({ page }) => {
+  await page.goto("/netflix?list=popular");
+
+  const grid = page.getByRole("list", { name: "Popular titles" });
+  await expect(grid.getByRole("link", { name: /Fixture Film One/ })).toContainText("1h 58m");
+  await expect(grid.getByRole("link", { name: /Fixture Series One/ })).toContainText("2 seasons");
+});

@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { tmdbImageUrl, tmdbWordmarkUrl } from "@/integrations/seerr/images";
 
 import { viewArtwork } from "./viewArtwork";
-import { viewDescription } from "./views";
 
 import type { View } from "./views";
 
@@ -28,14 +27,7 @@ export function ViewLink({ view }: ViewLinkProperties) {
     classNames.push(styles.activeCard);
   }
 
-  const label = (
-    <span className={styles.viewLabel}>
-      {view.label}
-      {view.source.kind === "media" ? (
-        <small className={styles.viewDescription}>{viewDescription(view)}</small>
-      ) : null}
-    </span>
-  );
+  const label = <span className={styles.viewLabel}>{view.label}</span>;
 
   return (
     <li>
@@ -50,20 +42,20 @@ export function ViewLink({ view }: ViewLinkProperties) {
           <Image
             alt=""
             className={styles.wordmark}
-            height={60}
+            height={80}
             src={tmdbWordmarkUrl(view.logoPath)}
             unoptimized
-            width={154}
+            width={200}
           />
         ) : null}
         {artwork.logo === "icon" && view.logoPath ? (
           <Image
             alt=""
             className={styles.logo}
-            height={36}
+            height={44}
             src={tmdbImageUrl("w154", view.logoPath)}
             unoptimized
-            width={36}
+            width={44}
           />
         ) : null}
         {artwork.logo === "wordmark" ? null : label}

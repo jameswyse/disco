@@ -1,7 +1,7 @@
 import type { TitleDetails } from "./titleDetails";
 
 export type TimelineStep = Readonly<{
-  id: "requested" | "searching" | "downloading" | "available" | "declined";
+  id: "requested" | "waiting" | "searching" | "downloading" | "available" | "declined";
   label: string;
   detail: string | undefined;
   state: "done" | "active" | "pending";
@@ -15,6 +15,14 @@ function formatWhen(iso: string): string {
     : date.toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
 }
 
+function formatDay(iso: string): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+
+  return Number.isNaN(date.getTime())
+    ? iso
+    : date.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+
 function stepState(done: boolean, active: boolean): TimelineStep["state"] {
   if (done) {
     return "done";
@@ -23,8 +31,24 @@ function stepState(done: boolean, active: boolean): TimelineStep["state"] {
   return active ? "active" : "pending";
 }
 
+function waitingDetail(details: TitleDetails): string {
+  const { release } = details;
+
+  if (details.mediaType === "tv") {
+    return release.premiere ? `Airs ${formatDay(release.premiere)}` : "No air date yet";
+  }
+
+  if (release.home) {
+    return `Digital release ${formatDay(release.home)}`;
+  }
+
+  return release.premiere
+    ? `In cinemas ${formatDay(release.premiere)} · no digital release date yet`
+    : "No release date yet";
+}
+
 /**
- * The request → Sonarr/Radarr → Plex journey as shown in the details side panel. Empty when the
+ * The request → Radarr/Sonarr → Plex journey as shown in the details side panel. Empty when the
  * title has never been requested and is not in the library.
  */
 export function requestTimeline(details: TitleDetails): readonly TimelineStep[] {
@@ -49,7 +73,8 @@ export function requestTimeline(details: TitleDetails): readonly TimelineStep[] 
   }
 
   const downloading = details.downloads.length > 0;
-  const searching = !available && !downloading && details.availability === "processing";
+  const released = details.release.released || available || downloading;
+  const processing = details.availability === "processing";
   const awaitingApproval = latest?.status === "pending";
   const requestedDetail = latest
     ? [
@@ -79,10 +104,16 @@ export function requestTimeline(details: TitleDetails): readonly TimelineStep[] 
       state: awaitingApproval ? "active" : "done",
     },
     {
+      id: "waiting",
+      label: "Waiting for release",
+      detail: released ? undefined : waitingDetail(details),
+      state: stepState(released, processing && !awaitingApproval),
+    },
+    {
       id: "searching",
-      label: "Searching indexers",
+      label: "Searching",
       detail: details.mediaType === "movie" ? "Radarr" : "Sonarr",
-      state: stepState(available || downloading, searching),
+      state: stepState(available || downloading, processing && released),
     },
     {
       id: "downloading",
@@ -95,7 +126,7 @@ export function requestTimeline(details: TitleDetails): readonly TimelineStep[] 
       label:
         details.availability === "partially-available" ? "Partly in Plex" : "Available in Plex",
       detail: available ? undefined : "You'll see it here once Plex has it",
-      state: available ? "done" : "pending",
+      state: stepState(available, false),
     },
   ];
 }

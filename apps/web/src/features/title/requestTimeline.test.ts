@@ -22,6 +22,7 @@ const base: TitleDetails = {
   seasonCount: undefined,
   seriesType: undefined,
   certification: undefined,
+  release: { premiere: "2026-01-01", home: "2026-03-01", released: true },
   scores: { tmdb: undefined, rottenTomatoes: undefined, imdb: undefined },
   cast: [],
   creators: [],
@@ -56,13 +57,45 @@ describe("requestTimeline", () => {
     expect(requestTimeline(base)).toEqual([]);
   });
 
-  it("marks searching as active once a request is processing without downloads", () => {
+  it("marks searching as active once a released request is processing without downloads", () => {
     expect(states({ ...base, availability: "processing", requests: [approved] })).toEqual([
       "requested:done",
+      "waiting:done",
       "searching:active",
       "downloading:pending",
       "available:pending",
     ]);
+  });
+
+  it("waits for release while a requested film has no past digital release", () => {
+    const steps = requestTimeline({
+      ...base,
+      availability: "processing",
+      requests: [approved],
+      release: { premiere: "2026-12-17", home: undefined, released: false },
+    });
+
+    expect(steps.map((step) => `${step.id}:${step.state}`)).toEqual([
+      "requested:done",
+      "waiting:active",
+      "searching:pending",
+      "downloading:pending",
+      "available:pending",
+    ]);
+    expect(steps[1]?.detail).toBe("In cinemas 17 Dec 2026 · no digital release date yet");
+  });
+
+  it("describes when a series will air", () => {
+    const steps = requestTimeline({
+      ...base,
+      mediaType: "tv",
+      availability: "processing",
+      requests: [approved],
+      release: { premiere: "2027-02-01", home: undefined, released: false },
+    });
+
+    expect(steps[1]?.detail).toBe("Airs 1 Feb 2027");
+    expect(steps[2]?.detail).toBe("Sonarr");
   });
 
   it("moves to downloading when the download client reports progress", () => {
@@ -73,14 +106,14 @@ describe("requestTimeline", () => {
       downloads: [{ title: "Film.2026.1080p", progress: 0.4, timeLeft: "00:10:00" }],
     });
 
-    expect(steps.map((step) => step.state)).toEqual(["done", "done", "active", "pending"]);
-    expect(steps[2]?.detail).toBe("Film.2026.1080p · 40%");
+    expect(steps.map((step) => step.state)).toEqual(["done", "done", "done", "active", "pending"]);
+    expect(steps[3]?.detail).toBe("Film.2026.1080p · 40%");
   });
 
   it("completes every step for titles already in Plex, even without a Seerr request", () => {
     const steps = requestTimeline({ ...base, availability: "available" });
 
-    expect(steps.map((step) => step.state)).toEqual(["done", "done", "done", "done"]);
+    expect(steps.map((step) => step.state)).toEqual(["done", "done", "done", "done", "done"]);
     expect(steps[0]?.detail).toBe("Added to Plex outside Seerr");
   });
 
@@ -96,6 +129,7 @@ describe("requestTimeline", () => {
       states({ ...base, availability: "pending", requests: [{ ...approved, status: "pending" }] }),
     ).toEqual([
       "requested:active",
+      "waiting:done",
       "searching:pending",
       "downloading:pending",
       "available:pending",

@@ -41,6 +41,13 @@ A view is a saved filter shown in the sidebar (`features/views`):
 - `/views` is the library screen. Add, remove and reorder are server actions in `actions.ts`
   that validate `FormData` with Effect `Schema` and revalidate the layout.
 
+## Settings
+
+`features/settings` persists user preferences (`settings.json` in the data directory) through the
+same `platform/jsonFile` helpers as views: a default original-language filter (URLs only name a
+language when it differs; `lang=any` clears it) and whether the poster quick-info card opens on
+hover or via an explicit ⓘ button. Preferences save on change from the `/views` screen.
+
 ## Browse
 
 A browse screen is `(view, list, filters, page)`:
@@ -55,9 +62,11 @@ A browse screen is `(view, list, filters, page)`:
   comparable across media types) and applies the hide-in-Plex filter locally.
 - `title.ts` maps Seerr results to the `Title` shown on cards; Seerr `MediaInfo.status` becomes
   `Availability`. Ratings with fewer than 10 votes are hidden.
-- `TitleCard` is a client component: hovering for 350 ms fetches `/api/titles/[mediaType]/[id]`
-  (a `TitlePreview` validated with `Schema` on the client) and shows the preview card with a
-  request button.
+- `TitleCard` is a client component: hovering for 350 ms (or pressing ⓘ, per the preference)
+  fetches `/api/titles/[mediaType]/[id]` (a `TitlePreview` validated with `Schema` on the client)
+  and shows the preview card with request, details and watchlist actions.
+- `titleFacts.ts` fetches runtime and season count per title through `"use cache"` with the
+  longest cache life, since list endpoints omit them; cards show them once known.
 
 ## Title details
 
@@ -66,8 +75,9 @@ A browse screen is `(view, list, filters, page)`:
 - `titleDetails.ts` maps Seerr's movie and series payloads plus Rotten Tomatoes / IMDb ratings
   into one `TitleDetails` model (scores, cast, seasons with availability, providers for the
   region, requests, downloads, external links).
-- `requestTimeline.ts` derives the request → Sonarr/Radarr → Plex steps from media status,
-  requests and download progress.
+- `requestTimeline.ts` derives the request → Radarr/Sonarr → Plex steps (including "Waiting for
+  release", from digital/physical release dates or first-air dates) from media status, requests
+  and download progress.
 - `actions.ts` exposes `requestTitle` (film, whole series or one season) and `toggleWatchlist`
   as server actions used by `RequestButton` and `WatchlistButton` through `useActionState`.
 

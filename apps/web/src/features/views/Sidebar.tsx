@@ -4,17 +4,31 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { loadAccount, loadSidebarViews } from "./loadSidebar";
+import { loadMediaBackdrops } from "./loadViewBackdrops";
 import { ViewLink } from "./ViewLink";
+
+import type { View } from "./views";
 
 import styles from "./Sidebar.module.css";
 
+/** Media views without saved artwork borrow a backdrop from this week's trending titles. */
+function withArtwork(view: View, backdrops: Awaited<ReturnType<typeof loadMediaBackdrops>>): View {
+  if (view.source.kind !== "media" || view.backdropPath !== undefined) {
+    return view;
+  }
+
+  const backdropPath = backdrops[view.source.mediaType];
+
+  return backdropPath === undefined ? view : { ...view, backdropPath };
+}
+
 async function ViewList() {
-  const views = await loadSidebarViews();
+  const [views, backdrops] = await Promise.all([loadSidebarViews(), loadMediaBackdrops()]);
 
   return (
     <ul className={styles.viewList}>
       {views.map((view) => (
-        <ViewLink key={view.id} view={view} />
+        <ViewLink key={view.id} view={withArtwork(view, backdrops)} />
       ))}
     </ul>
   );

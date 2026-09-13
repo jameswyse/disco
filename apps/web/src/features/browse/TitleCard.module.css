@@ -3,6 +3,7 @@
 }
 
 .hoverArea {
+  container-type: inline-size;
   position: relative;
 }
 
@@ -23,11 +24,11 @@
     box-shadow 150ms ease-out;
 }
 
-.hovered {
+.open {
   z-index: 10;
 }
 
-.hovered .poster,
+.open .poster,
 .link:hover .poster {
   box-shadow: 0 18px 40px rgb(0 0 0 / 50%);
   outline: 2px solid var(--color-accent);
@@ -48,6 +49,42 @@
   .link:hover .poster {
     transform: none;
   }
+}
+
+.infoButton {
+  align-items: center;
+  background: rgb(15 23 42 / 75%);
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  font: 700 12px/1 var(--font-mono);
+  height: 26px;
+  justify-content: center;
+  opacity: 0;
+  position: absolute;
+  right: 8px;
+  /* Bottom-right corner of the 2:3 poster, whose height is 150% of the card width. */
+  top: calc(150cqw - 34px);
+  transition: opacity 120ms ease-out;
+  width: 26px;
+}
+
+.hoverArea:hover .infoButton,
+.infoButton:focus-visible,
+.infoButton[aria-expanded="true"] {
+  opacity: 1;
+}
+
+/* Touch screens have no hover, so the button is always available there. */
+@media (hover: none) {
+  .infoButton {
+    opacity: 1;
+  }
+}
+
+.infoButton:hover {
+  border-color: rgb(255 255 255 / 60%);
 }
 
 .tvBadge,

@@ -4,7 +4,10 @@ Media discovery for a [Seerr](https://github.com/seerr-team/seerr) instance. See
 content catalogue, metadata and the request → Radarr/Sonarr → Plex pipeline; Disco provides a
 simpler, user-controlled browsing UI on top of it.
 
-Phase 1 delivers the repository foundations and a static UI shell. The Seerr integration follows.
+The browse screen reads live data from Seerr: hard-coded sidebar views (Movies, TV Shows, Netflix,
+Disney+), discover lists (Upcoming, Recently released, Trending, Popular), availability badges from
+Seerr's media status, and links into Seerr for each title. Filters, search, title details and
+editable views are placeholders for later phases.
 
 ## Quick start
 
@@ -18,7 +21,8 @@ pnpm dev
 ```
 
 Set `SEERR_URL` and `SEERR_API_KEY` in `apps/web/.env` (Seerr → Settings → General → API Key). The
-UI renders without them; `/api/health` reports `misconfigured` until both parse.
+shell renders without them but shows a Seerr error; `/api/health` reports `misconfigured` until
+both parse.
 
 | Local service | URL                     | Command    |
 | ------------- | ----------------------- | ---------- |
@@ -89,7 +93,7 @@ docker run --detach --publish 3000:3000 \
 
 - Turborepo monorepo, pnpm workspaces with a version catalog
 - Next.js 16 (App Router, Cache Components, Turbopack, React Compiler) and React 19
-- Effect for configuration and, later, the Seerr client
+- Effect (`effect`, `@effect/platform`) for configuration and the Seerr client
 - TypeScript 7 for type checking (`@typescript/native`); TypeScript 6 remains installed for tooling
   that still needs the JavaScript compiler API
 - Oxlint (type-aware, with a local `anti-slop` plugin) and Oxfmt

@@ -1,8 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import type { ReporterDescription } from "@playwright/test";
+import {
+  browserTestEnvironment,
+  browserTestPort,
+  seerrFixtureOrigin,
+} from "./tests/browser/browserTestEnvironment";
 
-const browserTestPort = 3100;
+import type { ReporterDescription } from "@playwright/test";
 
 function testReporters(): ReporterDescription[] {
   if (process.env.DISCO_HUMAN_OUTPUT === "1") {
@@ -31,6 +35,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
   testDir: "./tests/browser",
+  testIgnore: ["fixtures/**"],
   timeout: 30_000,
   workers: process.env.CI ? 1 : "25%",
   use: {
@@ -39,14 +44,21 @@ export default defineConfig({
     trace: "retain-on-failure",
     video: "off",
   },
-  webServer: {
-    command: `pnpm start --hostname 127.0.0.1 --port ${browserTestPort}`,
-    env: {
-      SEERR_API_KEY: "browser-fixture-not-a-real-key",
-      SEERR_URL: `http://127.0.0.1:${browserTestPort}/seerr-fixture`,
+  webServer: [
+    {
+      command: "node tests/browser/fixtures/seerrServer.ts",
+      reuseExistingServer: false,
+      timeout: 30_000,
+      // The fixture rejects unauthenticated requests, so a 401 also proves it is listening.
+      url: `${seerrFixtureOrigin}/api/v1/status`,
+      ignoreHTTPSErrors: false,
     },
-    reuseExistingServer: false,
-    timeout: 120_000,
-    url: `http://127.0.0.1:${browserTestPort}/api/health`,
-  },
+    {
+      command: `pnpm start --hostname 127.0.0.1 --port ${browserTestPort}`,
+      env: browserTestEnvironment,
+      reuseExistingServer: false,
+      timeout: 120_000,
+      url: `http://127.0.0.1:${browserTestPort}/api/health`,
+    },
+  ],
 });

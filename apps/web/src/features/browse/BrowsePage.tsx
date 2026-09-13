@@ -1,20 +1,55 @@
 import Link from "next/link";
 
 import { discoverListIds, discoverListLabels } from "./discoverLists";
-import { placeholderTitles } from "./placeholderTitles";
+import { loadBrowse } from "./loadBrowse";
 import { TitleCard } from "./TitleCard";
 
+import type { View } from "@/features/views/views";
+
 import type { DiscoverListId } from "./discoverLists";
+import type { BrowseResult } from "./loadBrowse";
 
 import styles from "./BrowsePage.module.css";
 
-type BrowsePageProperties = Readonly<{ listId: DiscoverListId }>;
+type BrowsePageProperties = Readonly<{ view: View; listId: DiscoverListId; page: number }>;
 
 const mediaFilters = ["All", "Movies", "TV"] as const;
 const filterMenus = ["Genre", "Language", "Rating"] as const;
 
-export function BrowsePage({ listId }: BrowsePageProperties) {
-  const activeListLabel = discoverListLabels[listId];
+function browseHref(view: View, listId: DiscoverListId, page: number): `/${string}` {
+  const query = new URLSearchParams({ list: listId });
+
+  if (page > 1) {
+    query.set("page", String(page));
+  }
+
+  return `/${view.id}?${query.toString()}`;
+}
+
+function Summary({
+  view,
+  listId,
+  result,
+}: Readonly<{ view: View; listId: DiscoverListId; result: BrowseResult }>) {
+  if (result.kind === "error") {
+    return (
+      <p className={styles.summary} role="alert">
+        {result.message}
+      </p>
+    );
+  }
+
+  return (
+    <p className={styles.summary}>
+      {discoverListLabels[listId]} on <b>{view.label}</b> ·{" "}
+      {result.totalResults.toLocaleString("en-AU")} titles · page {result.page} of{" "}
+      {result.totalPages.toLocaleString("en-AU")}
+    </p>
+  );
+}
+
+export async function BrowsePage({ view, listId, page }: BrowsePageProperties) {
+  const result = await loadBrowse(view, listId, page);
 
   return (
     <>
@@ -24,11 +59,10 @@ export function BrowsePage({ listId }: BrowsePageProperties) {
             <Link
               aria-current={id === listId ? "page" : undefined}
               className={id === listId ? styles.activeTab : styles.tab}
-              href={`/?list=${id}`}
+              href={browseHref(view, id, 1)}
               key={id}
             >
               {discoverListLabels[id]}
-              <small className={styles.tabCount}>{placeholderTitles.length}</small>
             </Link>
           ))}
         </nav>
@@ -42,9 +76,16 @@ export function BrowsePage({ listId }: BrowsePageProperties) {
           />
           <kbd className={styles.searchShortcut}>/</kbd>
         </label>
-        <button className={styles.requestsButton} disabled type="button">
-          Requests
-        </button>
+        {result.kind === "ok" ? (
+          <a
+            className={styles.requestsButton}
+            href={`${result.seerrOrigin}/requests`}
+            rel="noreferrer"
+            target="_blank"
+          >
+            Requests
+          </a>
+        ) : null}
       </header>
 
       <div className={styles.filters}>
@@ -68,21 +109,40 @@ export function BrowsePage({ listId }: BrowsePageProperties) {
         ))}
         <label className={styles.toggle}>
           Hide what's already in Plex
-          <input className={styles.toggleInput} defaultChecked disabled type="checkbox" />
+          <input className={styles.toggleInput} disabled type="checkbox" />
           <span aria-hidden="true" className={styles.toggleTrack} />
         </label>
       </div>
 
-      <p className={styles.summary}>
-        {activeListLabel} on <b>Netflix</b> · {placeholderTitles.length} placeholder titles until
-        Seerr is connected
-      </p>
+      <Summary listId={listId} result={result} view={view} />
 
-      <ul aria-label={`${activeListLabel} titles`} className={styles.grid}>
-        {placeholderTitles.map((title) => (
-          <TitleCard key={`${title.mediaType}-${title.id}`} title={title} />
-        ))}
-      </ul>
+      {result.kind === "ok" ? (
+        <>
+          <ul aria-label={`${discoverListLabels[listId]} titles`} className={styles.grid}>
+            {result.titles.map((title) => (
+              <TitleCard
+                key={`${title.mediaType}-${title.id}`}
+                seerrOrigin={result.seerrOrigin}
+                title={title}
+              />
+            ))}
+          </ul>
+          <nav aria-label="Pages" className={styles.pagination}>
+            {result.page > 1 ? (
+              <Link className={styles.pageLink} href={browseHref(view, listId, result.page - 1)}>
+                ← Previous
+              </Link>
+            ) : (
+              <span />
+            )}
+            {result.page < result.totalPages ? (
+              <Link className={styles.pageLink} href={browseHref(view, listId, result.page + 1)}>
+                Next →
+              </Link>
+            ) : null}
+          </nav>
+        </>
+      ) : null}
     </>
   );
 }

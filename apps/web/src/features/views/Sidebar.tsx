@@ -1,64 +1,69 @@
-import Link from "next/link";
+import Image from "next/image";
 
 import { AddViewDialog } from "./AddViewDialog";
-import { placeholderActiveViewId, placeholderSidebarViews } from "./sidebarViews";
+import { ViewLink } from "./ViewLink";
+import { views } from "./views";
 
-import type { SidebarView } from "./sidebarViews";
+import type { SidebarData } from "./loadSidebar";
 
 import styles from "./Sidebar.module.css";
 
-function viewCardClassName(view: SidebarView): string {
-  const classNames = [styles.viewCard];
+type SidebarProperties = Readonly<{
+  /** Undefined while Seerr data is still loading. */
+  data: SidebarData | undefined;
+}>;
 
-  if (view.kind === "media") {
-    classNames.push(styles.mediaCard);
+function Footer({ data }: SidebarProperties) {
+  if (data === undefined) {
+    return <span className={styles.footerNote}>Connecting to Seerr…</span>;
   }
 
-  if (view.id === placeholderActiveViewId) {
-    classNames.push(styles.activeCard);
+  if (data.kind === "error") {
+    return (
+      <span className={styles.footerNote} role="alert">
+        {data.message}
+      </span>
+    );
   }
 
-  return classNames.join(" ");
-}
+  const openRequests = data.requests.pending + data.requests.processing;
 
-function ViewCard({ view }: Readonly<{ view: SidebarView }>) {
   return (
-    <li>
-      <Link
-        aria-current={view.id === placeholderActiveViewId ? "page" : undefined}
-        className={viewCardClassName(view)}
-        href="/"
-        style={{ background: view.tone }}
-      >
-        <span className={styles.viewLabel}>
-          {view.label}
-          {view.kind === "media" ? (
-            <small className={styles.viewDescription}>{view.description}</small>
-          ) : null}
-        </span>
-        {view.kind === "provider" && view.hasNewTitles ? (
-          <span aria-label="New titles" className={styles.newTitles} role="img" />
-        ) : null}
-      </Link>
-    </li>
+    <>
+      {data.user.avatarUrl ? (
+        <Image
+          alt=""
+          className={styles.avatar}
+          height={28}
+          src={data.user.avatarUrl}
+          unoptimized
+          width={28}
+        />
+      ) : (
+        <span aria-hidden="true" className={styles.avatar} />
+      )}
+      <span>
+        <b className={styles.userName}>{data.user.displayName}</b>
+        {openRequests === 1 ? "1 open request" : `${openRequests} open requests`}
+        {data.requests.pending > 0 ? ` · ${data.requests.pending} pending approval` : ""}
+      </span>
+    </>
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ data }: SidebarProperties) {
+  const providerLogos = data?.kind === "ok" ? data.providerLogos : {};
+
   return (
     <aside aria-label="Views" className={styles.sidebar}>
       <ul className={styles.viewList}>
-        {placeholderSidebarViews.map((view) => (
-          <ViewCard key={view.id} view={view} />
+        {views.map((view) => (
+          <ViewLink key={view.id} logoUrl={providerLogos[view.id]} view={view} />
         ))}
       </ul>
       <AddViewDialog />
       <footer className={styles.footer}>
-        <span aria-hidden="true" className={styles.avatar} />
-        <span>
-          <b className={styles.userName}>James</b>
-          Seerr · Plex
-        </span>
+        <Footer data={data} />
       </footer>
     </aside>
   );

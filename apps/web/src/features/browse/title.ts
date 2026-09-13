@@ -1,0 +1,78 @@
+import type { MediaType } from "@/integrations/seerr/client";
+import type { MovieResult, TvResult } from "@/integrations/seerr/schemas";
+
+export type Availability =
+  | "not-in-library"
+  | "pending"
+  | "processing"
+  | "partially-available"
+  | "available";
+
+/** A movie or series as shown in the browse grid. Plain data so it can cross the RSC boundary. */
+export type Title = Readonly<{
+  id: number;
+  mediaType: MediaType;
+  name: string;
+  year: number | undefined;
+  rating: number | undefined;
+  voteCount: number;
+  popularity: number;
+  overview: string;
+  posterPath: string | undefined;
+  backdropPath: string | undefined;
+  genres: readonly string[];
+  availability: Availability;
+}>;
+
+export type GenreNames = ReadonlyMap<number, string>;
+
+/** Averages over fewer votes than this say nothing useful, so the card omits them. */
+const minimumVotesForRating = 10;
+
+/** Seerr `MediaInfo.status`: 1 unknown, 2 pending, 3 processing, 4 partial, 5 available, 6 deleted. */
+const availabilityByStatus: ReadonlyMap<number, Availability> = new Map([
+  [2, "pending"],
+  [3, "processing"],
+  [4, "partially-available"],
+  [5, "available"],
+]);
+
+export function availabilityFromStatus(status: number | undefined): Availability {
+  return (status === undefined ? undefined : availabilityByStatus.get(status)) ?? "not-in-library";
+}
+
+function text(value: string | null | undefined): string | undefined {
+  return value ? value : undefined;
+}
+
+function yearOf(date: string | null | undefined): number | undefined {
+  const year = date ? Number(date.slice(0, 4)) : Number.NaN;
+
+  return Number.isInteger(year) ? year : undefined;
+}
+
+export function titleFromResult(result: MovieResult | TvResult, genreNames: GenreNames): Title {
+  const voteCount = result.voteCount ?? 0;
+  const shared = {
+    id: result.id,
+    rating:
+      result.voteAverage && voteCount >= minimumVotesForRating
+        ? Math.round(result.voteAverage * 10) / 10
+        : undefined,
+    voteCount,
+    popularity: result.popularity ?? 0,
+    overview: result.overview ?? "",
+    posterPath: text(result.posterPath),
+    backdropPath: text(result.backdropPath),
+    genres: (result.genreIds ?? []).flatMap((id) => {
+      const name = genreNames.get(id);
+
+      return name === undefined ? [] : [name];
+    }),
+    availability: availabilityFromStatus(result.mediaInfo?.status),
+  };
+
+  return result.mediaType === "movie"
+    ? { ...shared, mediaType: "movie", name: result.title, year: yearOf(result.releaseDate) }
+    : { ...shared, mediaType: "tv", name: result.name, year: yearOf(result.firstAirDate) };
+}

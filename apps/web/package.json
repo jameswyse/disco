@@ -20,6 +20,7 @@
     "typecheck:source": "tsc --noEmit"
   },
   "dependencies": {
+    "@effect/platform": "catalog:",
     "effect": "catalog:",
     "next": "catalog:",
     "react": "catalog:",

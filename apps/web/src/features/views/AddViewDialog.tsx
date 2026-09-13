@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-import { placeholderSidebarViews } from "./sidebarViews";
+import { views } from "./views";
 
 import styles from "./AddViewDialog.module.css";
 
@@ -46,7 +46,7 @@ export function AddViewDialog() {
               Drag to reorder. Views are just saved filters — edit any of them.
             </p>
             <ul className={styles.viewList}>
-              {placeholderSidebarViews.map((view) => (
+              {views.map((view) => (
                 <li className={styles.viewItem} key={view.id}>
                   <span aria-hidden="true" className={styles.grip}>
                     ⋮⋮

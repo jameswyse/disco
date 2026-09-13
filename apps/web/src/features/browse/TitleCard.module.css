@@ -7,6 +7,7 @@
 }
 
 .poster {
+  background: var(--color-surface);
   aspect-ratio: 2 / 3;
   border: 1px solid rgb(255 255 255 / 6%);
   border-radius: 5px;
@@ -125,4 +126,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.posterImage {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.posterFallback {
+  color: var(--color-text-muted);
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 40px 12px;
+  text-align: center;
 }

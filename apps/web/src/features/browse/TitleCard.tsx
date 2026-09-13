@@ -1,8 +1,8 @@
-import Link from "next/link";
+import Image from "next/image";
 
-import { mediaTypeLabel } from "./placeholderTitles";
+import { tmdbImageUrl } from "@/integrations/seerr/images";
 
-import type { Availability, PlaceholderTitle } from "./placeholderTitles";
+import type { Availability, Title } from "./title";
 
 import styles from "./TitleCard.module.css";
 
@@ -16,20 +16,47 @@ const availabilityBadges = {
     label: "Partly in Plex",
     symbol: "◐",
   },
-  requested: { className: styles.requested, label: "Requested", symbol: "↓" },
+  processing: { className: styles.requested, label: "Requested", symbol: "↓" },
   pending: { className: styles.pending, label: "Pending approval", symbol: "…" },
   "not-in-library": undefined,
-} satisfies Record<Availability["kind"], AvailabilityBadge | undefined>;
+} satisfies Record<Availability, AvailabilityBadge | undefined>;
 
-export function TitleCard({ title }: Readonly<{ title: PlaceholderTitle }>) {
-  const badge = availabilityBadges[title.availability.kind];
+const mediaTypeLabels = { movie: "Film", tv: "TV" } satisfies Record<Title["mediaType"], string>;
+
+type TitleCardProperties = Readonly<{ title: Title; seerrOrigin: string }>;
+
+export function TitleCard({ title, seerrOrigin }: TitleCardProperties) {
+  const badge = availabilityBadges[title.availability];
+  const detail = [
+    title.rating === undefined ? undefined : `★ ${title.rating.toFixed(1)}`,
+    title.year,
+  ]
+    .filter((part) => part !== undefined)
+    .join(" · ");
 
   return (
     <li className={styles.card}>
-      <Link className={styles.link} href={`/title/${title.mediaType}/${title.id}`}>
-        <div className={styles.poster} style={{ background: title.tone }}>
+      <a
+        className={styles.link}
+        href={`${seerrOrigin}/${title.mediaType}/${title.id}`}
+        rel="noreferrer"
+        target="_blank"
+      >
+        <div className={styles.poster}>
+          {title.posterPath ? (
+            <Image
+              alt=""
+              className={styles.posterImage}
+              height={513}
+              src={tmdbImageUrl("w342", title.posterPath)}
+              unoptimized
+              width={342}
+            />
+          ) : (
+            <span className={styles.posterFallback}>{title.name}</span>
+          )}
           <span className={title.mediaType === "tv" ? styles.tvBadge : styles.movieBadge}>
-            {mediaTypeLabel(title.mediaType)}
+            {mediaTypeLabels[title.mediaType]}
           </span>
           {badge ? (
             <span
@@ -42,16 +69,11 @@ export function TitleCard({ title }: Readonly<{ title: PlaceholderTitle }>) {
           ) : null}
         </div>
         <div className={styles.caption}>
-          <div className={styles.title}>{title.title}</div>
-          <div className={styles.meta}>
-            <span className={styles.rating}>★ {title.rating.toFixed(1)}</span>
-            <span>
-              {title.detail} · {title.year}
-            </span>
-          </div>
-          <div className={styles.genres}>{title.genres.join(" · ")}</div>
+          <div className={styles.title}>{title.name}</div>
+          <div className={styles.meta}>{detail}</div>
+          <div className={styles.genres}>{title.genres.slice(0, 2).join(" · ")}</div>
         </div>
-      </Link>
+      </a>
     </li>
   );
 }

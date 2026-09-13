@@ -204,6 +204,8 @@ export default defineConfig({
     "jsx-a11y/prefer-tag-over-role": "off",
     "react/exhaustive-deps": "error",
     "react/no-array-index-key": "error",
+    // Effect discriminates tagged errors and unions with `_tag`.
+    "eslint/no-underscore-dangle": ["error", { allow: ["_tag"] }],
     // React 19 uses the automatic JSX runtime throughout the monorepo.
     "react/react-in-jsx-scope": "off",
     // Keeping small helpers near their use is preferred to hoisting them away from their context.

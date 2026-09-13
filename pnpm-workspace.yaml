@@ -10,6 +10,7 @@ catalog:
   "@types/react-dom": 19.3.0
   # TypeScript 7 CLI for repository type checks; API-based tooling still requires TypeScript 6.
   "@typescript/native": "npm:typescript@7.0.2"
+  "@effect/platform": 0.97.2
   effect: 3.22.2
   next: 16.3.5
   oxfmt: 0.67.0
@@ -36,4 +37,5 @@ update:
 
 allowBuilds:
   esbuild: true
+  msgpackr-extract: set this to true or false
   sharp: true

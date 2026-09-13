@@ -1,8 +1,7 @@
-import { BrowsePage } from "@/features/browse/BrowsePage";
-import { parseDiscoverListId } from "@/features/browse/discoverLists";
+import { redirect } from "next/navigation";
 
-export default async function Page({ searchParams }: PageProps<"/">) {
-  const listId = parseDiscoverListId((await searchParams).list);
+import { defaultViewId } from "@/features/views/views";
 
-  return <BrowsePage listId={listId} />;
+export default function Page() {
+  redirect(`/${defaultViewId}`);
 }

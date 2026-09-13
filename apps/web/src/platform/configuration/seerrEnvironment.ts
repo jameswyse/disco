@@ -9,12 +9,13 @@ export type SeerrEnvironment = Readonly<{
   origin: URL;
 }>;
 
-const seerrEnvironmentConfig = Config.all({
+/** Seerr connection settings, read from `SEERR_URL` and `SEERR_API_KEY`. */
+export const seerrEnvironmentConfig: Config.Config<SeerrEnvironment> = Config.all({
   apiKey: Config.redacted("SEERR_API_KEY"),
   origin: Config.url("SEERR_URL"),
 });
 
-/** Parse the Seerr connection settings once at the process boundary. */
+/** Parse the Seerr connection settings once from a plain environment map. */
 export function readSeerrEnvironment(
   environment: EnvironmentVariables,
 ): Either.Either<SeerrEnvironment, ConfigError.ConfigError> {

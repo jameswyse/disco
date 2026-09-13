@@ -71,6 +71,8 @@ function captionDetail(title: Title): string {
 
 /** Delay before a hover opens the preview, so scanning the grid does not flash cards. */
 const hoverDelayMs = 350;
+/** Delay before a hover closes, so the pointer can cross the gap to the preview. */
+const hoverHideDelayMs = 120;
 /** Preview card width plus its gap, used to decide which side has room. */
 const previewFootprint = 400;
 
@@ -127,15 +129,18 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
       ? {
           onMouseEnter: () => {
             clearTimeout(timer.current);
-            timer.current = setTimeout(show, hoverDelayMs);
+            timer.current = setTimeout(show, open ? 0 : hoverDelayMs);
           },
-          onMouseLeave: hide,
+          onMouseLeave: () => {
+            clearTimeout(timer.current);
+            timer.current = setTimeout(hide, hoverHideDelayMs);
+          },
         }
       : {};
 
-  // In button mode the card stays open until dismissed, so close on Escape or an outside click.
+  // Close on Escape or a click outside the card.
   useEffect(() => {
-    if (previewMode !== "button" || !open) {
+    if (!open) {
       return undefined;
     }
 
@@ -158,7 +163,7 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
       document.removeEventListener("keydown", handleKey);
       document.removeEventListener("pointerdown", handlePointer);
     };
-  }, [previewMode, open]);
+  }, [open]);
 
   return (
     <li className={open ? `${styles.card} ${styles.open}` : styles.card} ref={card}>
@@ -199,17 +204,15 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
             <div className={styles.genres}>{title.genres.slice(0, 2).join(" · ")}</div>
           </div>
         </Link>
-        {previewMode === "button" ? (
-          <button
-            aria-expanded={open}
-            aria-label={`Quick info for ${title.name}`}
-            className={styles.infoButton}
-            onClick={() => (open ? hide() : show())}
-            type="button"
-          >
-            i
-          </button>
-        ) : null}
+        <button
+          aria-expanded={open}
+          aria-label={`Quick info for ${title.name}`}
+          className={styles.infoButton}
+          onClick={() => (open ? hide() : show())}
+          type="button"
+        >
+          i
+        </button>
         {open ? (
           <TitleHoverCard onClose={hide} preview={preview} side={side} title={title} />
         ) : null}

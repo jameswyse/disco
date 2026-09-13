@@ -170,14 +170,19 @@ export async function ViewLibraryPage({ category, query }: ViewLibraryPageProper
               <SidebarItem count={data.views.length} index={index} key={view.id} view={view} />
             ))}
           </ul>
-          <PreferencesForm
-            className={styles.preferences}
-            labelClassName={styles.preference}
-            languages={data.languages}
-            noteClassName={styles.preferenceNote}
-            selectClassName={styles.preferenceSelect}
-            settings={data.settings}
-          />
+          <div className={styles.preferencesBlock}>
+            <h2 className={styles.paneHeading} id="preferences">
+              Preferences
+            </h2>
+            <PreferencesForm
+              className={styles.preferences}
+              labelClassName={styles.preference}
+              languages={data.languages}
+              noteClassName={styles.preferenceNote}
+              selectClassName={styles.preferenceSelect}
+              settings={data.settings}
+            />
+          </div>
         </section>
 
         <section className={styles.libraryPane}>

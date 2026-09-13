@@ -49,6 +49,22 @@ test("the library can be searched and filtered by category", async ({ page }) =>
   await expect(page.getByRole("button", { name: "Add heist to sidebar" })).toBeVisible();
 });
 
+test("preferences are reachable from the sidebar and /settings", async ({ page }) => {
+  await page.goto("/movies");
+  await page
+    .getByRole("complementary", { name: "Views" })
+    .getByRole("link", { name: "Preferences" })
+    .click();
+
+  await expect(page).toHaveURL(/\/views#preferences$/);
+  await expect(page.getByRole("heading", { name: "Preferences" })).toBeVisible();
+  await expect(page.getByLabel("Quick info on posters")).toBeVisible();
+
+  await page.goto("/settings");
+  await expect(page).toHaveURL(/\/views#preferences$/);
+  await expect(page.getByLabel("Default language filter")).toBeVisible();
+});
+
 test("a default language preference applies to browse filters until overridden", async ({
   page,
 }) => {

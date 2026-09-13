@@ -85,6 +85,9 @@ export function Sidebar() {
       <Link className={styles.addView} href="/views">
         + Add a view
       </Link>
+      <Link className={styles.preferencesLink} href={{ hash: "preferences", pathname: "/views" }}>
+        Preferences
+      </Link>
       <footer className={styles.footer}>
         <Suspense fallback={<span className={styles.footerNote}>Connecting to Seerr…</span>}>
           <Account />

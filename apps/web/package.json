@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "next build",
-    "dev": "next dev --hostname localhost --port 3000",
+    "dev": "next dev --hostname 0.0.0.0 --port 3000",
     "format": "oxfmt .",
     "format:check": "oxfmt --list-different .",
     "lint": "oxlint .",

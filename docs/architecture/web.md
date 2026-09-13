@@ -46,7 +46,8 @@ A view is a saved filter shown in the sidebar (`features/views`):
 `features/settings` persists user preferences (`settings.json` in the data directory) through the
 same `platform/jsonFile` helpers as views: a default original-language filter (URLs only name a
 language when it differs; `lang=any` clears it) and whether the poster quick-info card opens on
-hover or via an explicit ⓘ button. Preferences save on change from the `/views` screen.
+hover or via an explicit ⓘ button. Preferences save on change from the `/views` screen (sidebar
+link and `/settings` both land on `#preferences`). Poster cards always show ⓘ as well as hover.
 
 ## Browse
 
@@ -62,9 +63,10 @@ A browse screen is `(view, list, filters, page)`:
   comparable across media types) and applies the hide-in-Plex filter locally.
 - `title.ts` maps Seerr results to the `Title` shown on cards; Seerr `MediaInfo.status` becomes
   `Availability`. Ratings with fewer than 10 votes are hidden.
-- `TitleCard` is a client component: hovering for 350 ms (or pressing ⓘ, per the preference)
-  fetches `/api/titles/[mediaType]/[id]` (a `TitlePreview` validated with `Schema` on the client)
-  and shows the preview card with request, details and watchlist actions.
+- `TitleCard` is a client component: hovering for 350 ms, or pressing ⓘ, fetches
+  `/api/titles/[mediaType]/[id]` (a `TitlePreview` validated with `Schema` on the client)
+  and shows the preview card with request, details and watchlist actions. A preference on
+  `/views` can turn hover off so only the button opens it.
 - `titleFacts.ts` fetches runtime and season count per title through `"use cache"` with the
   longest cache life, since list endpoints omit them; cards show them once known.
 

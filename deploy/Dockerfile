@@ -51,6 +51,7 @@ FROM debian:stable-slim AS runner
 
 ARG APPLICATION_VERSION=development
 
+ENV DISCO_DATA_DIR=/data
 ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
@@ -64,7 +65,9 @@ WORKDIR /app/apps/web
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd --uid 1000 --create-home --user-group node
+    && useradd --uid 1000 --create-home --user-group node \
+    && mkdir /data \
+    && chown node:node /data
 
 COPY --from=base /usr/local/bin/node-runtime /usr/local/bin/node
 COPY --from=builder --chown=node:node /workspace/apps/web/.next/standalone /app
@@ -72,6 +75,8 @@ COPY --from=builder --chown=node:node /workspace/apps/web/.next/static /app/apps
 COPY --chown=node:node deploy/healthcheck.mjs /app/healthcheck.mjs
 
 USER node
+
+VOLUME ["/data"]
 
 EXPOSE 3000
 

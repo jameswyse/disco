@@ -46,7 +46,8 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "node tests/browser/fixtures/seerrServer.ts",
+      // Saved views live in the data directory; clear it so every run starts from the defaults.
+      command: "rm -rf tests/results/data && node tests/browser/fixtures/seerrServer.ts",
       reuseExistingServer: false,
       timeout: 30_000,
       // The fixture rejects unauthenticated requests, so a 401 also proves it is listening.

@@ -4,10 +4,19 @@ Media discovery for a [Seerr](https://github.com/seerr-team/seerr) instance. See
 content catalogue, metadata and the request → Radarr/Sonarr → Plex pipeline; Disco provides a
 simpler, user-controlled browsing UI on top of it.
 
-The browse screen reads live data from Seerr: hard-coded sidebar views (Movies, TV Shows, Netflix,
-Disney+), discover lists (Upcoming, Recently released, Trending, Popular), availability badges from
-Seerr's media status, and links into Seerr for each title. Filters, search, title details and
-editable views are placeholders for later phases.
+Disco reads everything from Seerr and writes requests back to it:
+
+- **Views** — a sidebar of saved filters (streaming services, networks, studios, genres, languages,
+  keywords) that you add, reorder and remove from the "Add a view" library. Views persist in
+  `DISCO_DATA_DIR`.
+- **Browse** — Upcoming, Recently released, Trending and Popular lists for each view, with media
+  type, genre, language and rating filters, a "hide what's already in Plex" toggle, availability
+  badges and hover previews.
+- **Titles** — details screens with scores (TMDB, Rotten Tomatoes, IMDb), cast, seasons, related
+  titles, where-to-watch for your region, and the request → Sonarr/Radarr → Plex status timeline.
+- **Requests** — request films, whole series or single seasons; toggle the Seerr watchlist; review
+  recent requests.
+- **Search** — search Seerr by title (press `/`).
 
 ## Quick start
 
@@ -22,7 +31,7 @@ pnpm dev
 
 Set `SEERR_URL` and `SEERR_API_KEY` in `apps/web/.env` (Seerr → Settings → General → API Key). The
 shell renders without them but shows a Seerr error; `/api/health` reports `misconfigured` until
-both parse.
+both parse. Saved views are written to `apps/web/data/` (override with `DISCO_DATA_DIR`).
 
 | Local service | URL                     | Command    |
 | ------------- | ----------------------- | ---------- |
@@ -77,7 +86,8 @@ docker compose up --build --detach
 ```
 
 The container listens on port 3000 (published on `DISCO_PORT`, default 3000) and reports health at
-`/api/health`. `docker compose ps` shows `healthy` once Seerr settings parse.
+`/api/health`. `docker compose ps` shows `healthy` once Seerr settings parse. Saved views live in
+the `disco-data` volume mounted at `/data`.
 
 To build and run without Compose:
 
@@ -86,6 +96,7 @@ docker build --file deploy/Dockerfile --tag disco:local .
 docker run --detach --publish 3000:3000 \
   --env SEERR_URL=https://request.example.com \
   --env SEERR_API_KEY=your-key \
+  --volume disco-data:/data \
   disco:local
 ```
 

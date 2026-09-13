@@ -13,3 +13,9 @@ services:
     environment:
       SEERR_URL: ${SEERR_URL:?Set SEERR_URL to your Seerr origin, for example https://request.example.com}
       SEERR_API_KEY: ${SEERR_API_KEY:?Set SEERR_API_KEY from Seerr → Settings → General}
+    volumes:
+      # Saved sidebar views.
+      - disco-data:/data
+
+volumes:
+  disco-data:

@@ -11,3 +11,11 @@ export type LogoSize = "w92" | "w154";
 export function tmdbImageUrl(size: PosterSize | BackdropSize | LogoSize, path: string): string {
   return `${tmdbImageOrigin}${size}${path}`;
 }
+
+/**
+ * Network and studio wordmarks on TMDB are often black on transparent. TMDB's CDN can recolour
+ * them; a white duotone keeps them legible on Disco's dark cards.
+ */
+export function tmdbWordmarkUrl(path: string): string {
+  return `${tmdbImageOrigin}w300_filter(duotone,ffffff,bababa)${path}`;
+}

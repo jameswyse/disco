@@ -1,6 +1,3 @@
-import { Suspense } from "react";
-
-import { loadSidebar } from "@/features/views/loadSidebar";
 import { Sidebar } from "@/features/views/Sidebar";
 
 import type { Metadata, Viewport } from "next";
@@ -21,10 +18,6 @@ export const viewport: Viewport = {
   themeColor: "#0f172a",
 };
 
-async function LoadedSidebar() {
-  return <Sidebar data={await loadSidebar()} />;
-}
-
 type RootLayoutProperties = Readonly<{ children: ReactNode }>;
 
 export default function RootLayout({ children }: RootLayoutProperties) {
@@ -32,9 +25,7 @@ export default function RootLayout({ children }: RootLayoutProperties) {
     <html lang="en">
       <body>
         <div className={styles.app}>
-          <Suspense fallback={<Sidebar data={undefined} />}>
-            <LoadedSidebar />
-          </Suspense>
+          <Sidebar />
           <main className={styles.main}>{children}</main>
         </div>
       </body>

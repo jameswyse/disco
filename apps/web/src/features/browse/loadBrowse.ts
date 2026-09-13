@@ -4,17 +4,18 @@ import { Effect } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
-import { seerrRuntime } from "@/integrations/seerr/runtime";
+import { appRuntime } from "@/platform/runtime";
 
 import { planBrowseSources } from "./browsePlan";
 import { titleFromResult } from "./title";
 
 import type { View } from "@/features/views/views";
 import type { SeerrError } from "@/integrations/seerr/errors";
-import type { MediaResult, MovieResult, TvResult } from "@/integrations/seerr/schemas";
+import type { Genre, MediaResult, MovieResult, TvResult } from "@/integrations/seerr/schemas";
 
 import type { BrowseSource } from "./browsePlan";
 import type { DiscoverListId } from "./discoverLists";
+import type { BrowseFilters } from "./filters";
 import type { GenreNames, Title } from "./title";
 
 /** Seerr returns 20 results per page; a browse page shows two of them. */
@@ -24,9 +25,12 @@ export type BrowseResult =
   | Readonly<{
       kind: "ok";
       titles: readonly Title[];
+      /** Titles removed by the "hide what's already in Plex" filter. */
+      hiddenAvailable: number;
       page: number;
       totalPages: number;
       totalResults: number;
+      genres: readonly Genre[];
       region: string;
       seerrOrigin: string;
     }>
@@ -122,7 +126,7 @@ function interleave(lists: readonly (readonly Title[])[]): Title[] {
   ).flat();
 }
 
-function combineSources(pages: readonly SourcePage[], genreNames: GenreNames): Title[] {
+export function combineSources(pages: readonly SourcePage[], genreNames: GenreNames): Title[] {
   const titlesBySource = pages.map((page) =>
     page.results.filter(isMedia).map((result) => titleFromResult(result, genreNames)),
   );
@@ -130,9 +134,14 @@ function combineSources(pages: readonly SourcePage[], genreNames: GenreNames): T
   return dedupe(interleave(titlesBySource));
 }
 
+function isInLibrary(title: Title): boolean {
+  return title.availability === "available" || title.availability === "partially-available";
+}
+
 function browseProgram(
   view: View,
   list: DiscoverListId,
+  filters: BrowseFilters,
   page: number,
 ): Effect.Effect<BrowseResult, SeerrError, SeerrClient> {
   return Effect.gen(function* () {
@@ -140,7 +149,7 @@ function browseProgram(
     const settings = yield* client.publicSettings();
     const region = settings.streamingRegion || settings.discoverRegion || "US";
     const today = new Date().toISOString().slice(0, 10);
-    const sources = planBrowseSources(view, list, { today, region });
+    const sources = planBrowseSources(view, list, filters, { today, region });
     const [movieGenres, tvGenres, sourcePages] = yield* Effect.all(
       [
         client.genres("movie"),
@@ -155,13 +164,22 @@ function browseProgram(
     const genreNames: GenreNames = new Map(
       [...movieGenres, ...tvGenres].map((genre) => [genre.id, genre.name]),
     );
+    const allTitles = combineSources(sourcePages, genreNames);
+    const titles = filters.hideAvailable
+      ? allTitles.filter((title) => !isInLibrary(title))
+      : allTitles;
+    const genresById = new Map(
+      [...movieGenres, ...tvGenres].map((genre) => [genre.id, genre] as const),
+    );
 
     return {
       kind: "ok",
-      titles: combineSources(sourcePages, genreNames),
+      titles,
+      hiddenAvailable: allTitles.length - titles.length,
       page,
-      totalPages: Math.max(...sourcePages.map((source) => source.totalPages)),
+      totalPages: Math.max(0, ...sourcePages.map((source) => source.totalPages)),
       totalResults: sourcePages.reduce((sum, source) => sum + source.totalResults, 0),
+      genres: [...genresById.values()].sort((a, b) => a.name.localeCompare(b.name)),
       region,
       seerrOrigin: client.origin.origin,
     };
@@ -171,14 +189,15 @@ function browseProgram(
 export async function loadBrowse(
   view: View,
   list: DiscoverListId,
+  filters: BrowseFilters,
   page: number,
 ): Promise<BrowseResult> {
   // Seerr data is request-time; opting in explicitly keeps the Effect runtime's clock access out
   // of the static prerender.
   await connection();
 
-  return seerrRuntime.runPromise(
-    browseProgram(view, list, page).pipe(
+  return appRuntime.runPromise(
+    browseProgram(view, list, filters, page).pipe(
       Effect.tapError((error) => Effect.logError("Seerr browse request failed", error)),
       Effect.catchAll((error) =>
         Effect.succeed<BrowseResult>({ kind: "error", message: describeSeerrError(error) }),

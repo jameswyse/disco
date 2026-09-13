@@ -37,5 +37,6 @@ update:
 
 allowBuilds:
   esbuild: true
-  msgpackr-extract: set this to true or false
+  # Optional native accelerator pulled in by @effect/platform; the JS fallback is sufficient.
+  msgpackr-extract: false
   sharp: true

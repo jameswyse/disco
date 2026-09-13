@@ -28,6 +28,12 @@
       "outputLogs": "errors-only",
       "outputs": []
     },
+    "typegen": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.test.{ts,tsx}", "!tests/**"],
+      "outputLogs": "errors-only",
+      "outputs": [".next/types/**", "next-env.d.ts"]
+    },
     "lint": {
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -36,11 +42,12 @@
         "$TURBO_ROOT$/tsconfig.base.json"
       ],
       "outputLogs": "errors-only",
-      "outputs": []
+      "outputs": [],
+      "dependsOn": ["typegen"]
     },
     "lint:fix": {
       "cache": false,
-      "dependsOn": ["format"],
+      "dependsOn": ["format", "typegen"],
       "outputLogs": "errors-only"
     },
     "test:unit": {
@@ -80,13 +87,13 @@
       "passThroughEnv": ["CI", "DISCO_HUMAN_OUTPUT"]
     },
     "typecheck": {
-      "dependsOn": ["^build", "^typecheck"],
+      "dependsOn": ["^build", "typegen"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.base.json"],
       "outputLogs": "errors-only",
       "outputs": []
     },
     "typecheck:source": {
-      "dependsOn": ["transit"],
+      "dependsOn": ["transit", "typegen"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.base.json"],
       "outputLogs": "errors-only",
       "outputs": []

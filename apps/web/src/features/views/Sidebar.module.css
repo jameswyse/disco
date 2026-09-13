@@ -123,6 +123,42 @@
   position: relative;
 }
 
+.wordmark {
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 60%));
+  height: auto;
+  max-height: 44%;
+  max-width: 64%;
+  object-fit: contain;
+  position: relative;
+  width: auto;
+}
+
+.addView {
+  background: transparent;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius);
+  color: var(--color-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  font-size: 13px;
+  height: 56px;
+}
+
+.addView:hover {
+  border-color: var(--color-text-dim);
+  color: var(--color-text-muted);
+}
+
+.footerLink {
+  display: block;
+}
+
+.footerLink:hover {
+  color: var(--color-text);
+}
+
 .footerNote {
   color: var(--color-text-dim);
   font-size: 12px;

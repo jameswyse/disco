@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
-import { defaultViewId } from "@/features/views/views";
+import { loadViews } from "@/features/views/loadViews";
 
-export default function Page() {
-  redirect(`/${defaultViewId}`);
+export default async function Page() {
+  await connection();
+  const [firstView] = await loadViews();
+
+  redirect(firstView ? `/${firstView.id}` : "/views");
 }

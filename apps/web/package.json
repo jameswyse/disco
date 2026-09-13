@@ -16,8 +16,9 @@
     "test:e2e:last": "playwright test --last-failed -x",
     "test:unit": "vitest run",
     "test:unit:changed": "vitest run --changed HEAD --bail=1 --passWithNoTests",
-    "typecheck": "next typegen && tsc --noEmit",
-    "typecheck:source": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:source": "tsc --noEmit",
+    "typegen": "next typegen"
   },
   "dependencies": {
     "@effect/platform": "catalog:",

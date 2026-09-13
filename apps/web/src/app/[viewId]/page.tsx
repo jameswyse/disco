@@ -1,21 +1,20 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 
 import { BrowsePage } from "@/features/browse/BrowsePage";
 import { discoverListLabels, parseDiscoverListId } from "@/features/browse/discoverLists";
+import { parseBrowseFilters } from "@/features/browse/filters";
 import { parsePageNumber } from "@/features/browse/pageNumber";
-import { findView, views } from "@/features/views/views";
+import { loadViews } from "@/features/views/loadViews";
 
 import type { Metadata } from "next";
 
 type ViewPageProperties = PageProps<"/[viewId]">;
 
-/** Views are known at build time, so their shells prerender and the sidebar's pathname resolves. */
-export function generateStaticParams() {
-  return views.map((view) => ({ viewId: view.id }));
-}
-
 async function resolveView({ params }: ViewPageProperties) {
-  const view = findView((await params).viewId);
+  await connection();
+  const { viewId } = await params;
+  const view = (await loadViews()).find((candidate) => candidate.id === viewId);
 
   if (!view) {
     notFound();
@@ -35,6 +34,7 @@ export default async function Page(properties: ViewPageProperties) {
 
   return (
     <BrowsePage
+      filters={parseBrowseFilters(query)}
       listId={parseDiscoverListId(query.list)}
       page={parsePageNumber(query.page)}
       view={view}

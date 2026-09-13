@@ -1,30 +1,29 @@
 import Link from "next/link";
 
+import { SearchBox } from "@/features/search/SearchBox";
+import { viewMediaTypes } from "@/features/views/views";
+
+import { browseHref } from "./browseHref";
 import { discoverListIds, discoverListLabels } from "./discoverLists";
+import { FilterBar } from "./FilterBar";
 import { loadBrowse } from "./loadBrowse";
-import { TitleCard } from "./TitleCard";
+import { TitleGrid } from "./TitleGrid";
 
 import type { View } from "@/features/views/views";
 
+import type { BrowseLocation } from "./browseHref";
 import type { DiscoverListId } from "./discoverLists";
+import type { BrowseFilters } from "./filters";
 import type { BrowseResult } from "./loadBrowse";
 
 import styles from "./BrowsePage.module.css";
 
-type BrowsePageProperties = Readonly<{ view: View; listId: DiscoverListId; page: number }>;
-
-const mediaFilters = ["All", "Movies", "TV"] as const;
-const filterMenus = ["Genre", "Language", "Rating"] as const;
-
-function browseHref(view: View, listId: DiscoverListId, page: number): `/${string}` {
-  const query = new URLSearchParams({ list: listId });
-
-  if (page > 1) {
-    query.set("page", String(page));
-  }
-
-  return `/${view.id}?${query.toString()}`;
-}
+type BrowsePageProperties = Readonly<{
+  view: View;
+  listId: DiscoverListId;
+  filters: BrowseFilters;
+  page: number;
+}>;
 
 function Summary({
   view,
@@ -44,12 +43,16 @@ function Summary({
       {discoverListLabels[listId]} on <b>{view.label}</b> ·{" "}
       {result.totalResults.toLocaleString("en-AU")} titles · page {result.page} of{" "}
       {result.totalPages.toLocaleString("en-AU")}
+      {result.hiddenAvailable > 0
+        ? ` · ${result.hiddenAvailable} hidden because they're already in your library`
+        : ""}
     </p>
   );
 }
 
-export async function BrowsePage({ view, listId, page }: BrowsePageProperties) {
-  const result = await loadBrowse(view, listId, page);
+export async function BrowsePage({ view, listId, filters, page }: BrowsePageProperties) {
+  const result = await loadBrowse(view, listId, filters, page);
+  const location: BrowseLocation = { viewId: view.id, listId, filters, page };
 
   return (
     <>
@@ -59,84 +62,40 @@ export async function BrowsePage({ view, listId, page }: BrowsePageProperties) {
             <Link
               aria-current={id === listId ? "page" : undefined}
               className={id === listId ? styles.activeTab : styles.tab}
-              href={browseHref(view, id, 1)}
+              href={browseHref({ ...location, listId: id, page: 1 })}
               key={id}
             >
               {discoverListLabels[id]}
             </Link>
           ))}
         </nav>
-        <label className={styles.search}>
-          <input
-            aria-label="Search"
-            className={styles.searchInput}
-            disabled
-            placeholder="Search movies, shows, people…"
-            type="search"
-          />
-          <kbd className={styles.searchShortcut}>/</kbd>
-        </label>
-        {result.kind === "ok" ? (
-          <a
-            className={styles.requestsButton}
-            href={`${result.seerrOrigin}/requests`}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Requests
-          </a>
-        ) : null}
+        <SearchBox />
+        <Link className={styles.requestsButton} href="/requests">
+          Requests
+        </Link>
       </header>
 
-      <div className={styles.filters}>
-        <div aria-label="Media type" className={styles.segmentedControl} role="group">
-          {mediaFilters.map((filter) => (
-            <button
-              aria-pressed={filter === "All"}
-              className={styles.segment}
-              disabled
-              key={filter}
-              type="button"
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-        {filterMenus.map((menu) => (
-          <button className={styles.dropdown} disabled key={menu} type="button">
-            {menu} <span aria-hidden="true">▾</span>
-          </button>
-        ))}
-        <label className={styles.toggle}>
-          Hide what's already in Plex
-          <input className={styles.toggleInput} disabled type="checkbox" />
-          <span aria-hidden="true" className={styles.toggleTrack} />
-        </label>
-      </div>
+      <FilterBar
+        genres={result.kind === "ok" ? result.genres : []}
+        location={location}
+        mixedMedia={viewMediaTypes(view).length > 1}
+      />
 
       <Summary listId={listId} result={result} view={view} />
 
       {result.kind === "ok" ? (
         <>
-          <ul aria-label={`${discoverListLabels[listId]} titles`} className={styles.grid}>
-            {result.titles.map((title) => (
-              <TitleCard
-                key={`${title.mediaType}-${title.id}`}
-                seerrOrigin={result.seerrOrigin}
-                title={title}
-              />
-            ))}
-          </ul>
+          <TitleGrid label={`${discoverListLabels[listId]} titles`} titles={result.titles} />
           <nav aria-label="Pages" className={styles.pagination}>
             {result.page > 1 ? (
-              <Link className={styles.pageLink} href={browseHref(view, listId, result.page - 1)}>
+              <Link className={styles.pageLink} href={browseHref({ ...location, page: page - 1 })}>
                 ← Previous
               </Link>
             ) : (
               <span />
             )}
             {result.page < result.totalPages ? (
-              <Link className={styles.pageLink} href={browseHref(view, listId, result.page + 1)}>
+              <Link className={styles.pageLink} href={browseHref({ ...location, page: page + 1 })}>
                 Next →
               </Link>
             ) : null}

@@ -3,12 +3,55 @@ import { Schema } from "effect";
 /** Optional string fields that Seerr may omit, null, or send as an empty string. */
 const OptionalText = Schema.optional(Schema.NullOr(Schema.String));
 const OptionalNumber = Schema.optional(Schema.NullOr(Schema.Number));
+const OptionalBoolean = Schema.optional(Schema.NullOr(Schema.Boolean));
+
+export const DownloadStatus = Schema.Struct({
+  title: OptionalText,
+  status: OptionalText,
+  size: OptionalNumber,
+  sizeLeft: OptionalNumber,
+  timeLeft: OptionalText,
+  estimatedCompletionTime: OptionalText,
+  episode: Schema.optional(
+    Schema.NullOr(Schema.Struct({ seasonNumber: Schema.Number, episodeNumber: Schema.Number })),
+  ),
+});
+export type DownloadStatus = typeof DownloadStatus.Type;
+
+export const RequestUser = Schema.Struct({
+  id: Schema.Number,
+  displayName: Schema.String,
+});
+
+/** A Seerr media request. `status`: 1 pending approval, 2 approved, 3 declined, 4 failed, 5 completed. */
+export const MediaRequest = Schema.Struct({
+  id: Schema.Number,
+  status: Schema.Number,
+  type: Schema.Literal("movie", "tv"),
+  is4k: OptionalBoolean,
+  createdAt: Schema.String,
+  updatedAt: Schema.String,
+  requestedBy: Schema.optional(Schema.NullOr(RequestUser)),
+  seasons: Schema.optional(
+    Schema.Array(Schema.Struct({ seasonNumber: Schema.Number, status: Schema.Number })),
+  ),
+});
+export type MediaRequest = typeof MediaRequest.Type;
+
+export const MediaSeasonInfo = Schema.Struct({
+  seasonNumber: Schema.Number,
+  status: Schema.Number,
+});
 
 export const MediaInfo = Schema.Struct({
   tmdbId: Schema.Number,
   /** 1 unknown, 2 pending, 3 processing, 4 partially available, 5 available, 6 deleted. */
   status: Schema.Number,
   mediaUrl: OptionalText,
+  mediaAddedAt: OptionalText,
+  downloadStatus: Schema.optional(Schema.Array(DownloadStatus)),
+  requests: Schema.optional(Schema.Array(MediaRequest)),
+  seasons: Schema.optional(Schema.Array(MediaSeasonInfo)),
 });
 export type MediaInfo = typeof MediaInfo.Type;
 
@@ -42,7 +85,7 @@ export const TvResult = Schema.Struct({
 });
 export type TvResult = typeof TvResult.Type;
 
-/** Trending can include people; they are decoded so the page parses and then dropped. */
+/** Search and trending can include people; they are decoded so the page parses and then dropped. */
 export const PersonResult = Schema.Struct({
   id: Schema.Number,
   mediaType: Schema.Literal("person"),
@@ -80,6 +123,33 @@ export const Genre = Schema.Struct({ id: Schema.Number, name: Schema.String });
 export type Genre = typeof Genre.Type;
 export const Genres = Schema.Array(Genre);
 
+export const GenreWithBackdrops = Schema.Struct({
+  id: Schema.Number,
+  name: Schema.String,
+  backdrops: Schema.optional(Schema.Array(Schema.String)),
+});
+export const GenreSlider = Schema.Array(GenreWithBackdrops);
+
+export const Language = Schema.Struct({
+  iso_639_1: Schema.String,
+  english_name: Schema.String,
+  name: OptionalText,
+});
+export type Language = typeof Language.Type;
+export const Languages = Schema.Array(Language);
+
+export const Keyword = Schema.Struct({ id: Schema.Number, name: Schema.String });
+export type Keyword = typeof Keyword.Type;
+export const KeywordPage = Schema.Struct({ results: Schema.Array(Keyword) });
+
+/** Shared by `/network/{id}` and `/studio/{id}`. */
+export const Company = Schema.Struct({
+  id: Schema.Number,
+  name: Schema.String,
+  logoPath: OptionalText,
+});
+export type Company = typeof Company.Type;
+
 export const RequestCount = Schema.Struct({
   total: Schema.Number,
   pending: Schema.Number,
@@ -102,8 +172,178 @@ export const PublicSettings = Schema.Struct({
   discoverRegion: OptionalText,
   streamingRegion: OptionalText,
   hideAvailable: Schema.optional(Schema.Boolean),
+  partialRequestsEnabled: Schema.optional(Schema.Boolean),
 });
 export type PublicSettings = typeof PublicSettings.Type;
 
 export const Status = Schema.Struct({ version: Schema.String });
 export type Status = typeof Status.Type;
+
+const CastMember = Schema.Struct({
+  id: Schema.Number,
+  name: Schema.String,
+  character: OptionalText,
+  profilePath: OptionalText,
+  order: OptionalNumber,
+});
+export type CastMember = typeof CastMember.Type;
+
+const CrewMember = Schema.Struct({
+  id: Schema.Number,
+  name: Schema.String,
+  job: OptionalText,
+  department: OptionalText,
+});
+export type CrewMember = typeof CrewMember.Type;
+
+const Credits = Schema.Struct({
+  cast: Schema.optional(Schema.Array(CastMember)),
+  crew: Schema.optional(Schema.Array(CrewMember)),
+});
+
+const RelatedVideo = Schema.Struct({
+  site: OptionalText,
+  key: OptionalText,
+  name: OptionalText,
+  type: OptionalText,
+  url: OptionalText,
+});
+
+const RegionalWatchProviders = Schema.Struct({
+  iso_3166_1: Schema.String,
+  link: OptionalText,
+  flatrate: Schema.optional(Schema.Array(WatchProvider)),
+  buy: Schema.optional(Schema.Array(WatchProvider)),
+  rent: Schema.optional(Schema.Array(WatchProvider)),
+});
+export type RegionalWatchProviders = typeof RegionalWatchProviders.Type;
+
+const ProductionCountry = Schema.Struct({ iso_3166_1: Schema.String, name: Schema.String });
+const SpokenLanguage = Schema.Struct({
+  iso_639_1: Schema.String,
+  englishName: OptionalText,
+  english_name: OptionalText,
+  name: OptionalText,
+});
+
+const DetailsBase = {
+  id: Schema.Number,
+  overview: OptionalText,
+  tagline: OptionalText,
+  posterPath: OptionalText,
+  backdropPath: OptionalText,
+  genres: Schema.optional(Schema.Array(Genre)),
+  originalLanguage: OptionalText,
+  voteAverage: OptionalNumber,
+  voteCount: OptionalNumber,
+  popularity: OptionalNumber,
+  status: OptionalText,
+  homepage: OptionalText,
+  credits: Schema.optional(Credits),
+  relatedVideos: Schema.optional(Schema.Array(RelatedVideo)),
+  productionCompanies: Schema.optional(Schema.Array(Company)),
+  productionCountries: Schema.optional(Schema.Array(ProductionCountry)),
+  spokenLanguages: Schema.optional(Schema.Array(SpokenLanguage)),
+  keywords: Schema.optional(Schema.Array(Keyword)),
+  watchProviders: Schema.optional(Schema.Array(RegionalWatchProviders)),
+  mediaInfo: Schema.optional(Schema.NullOr(MediaInfo)),
+  onUserWatchlist: OptionalBoolean,
+};
+
+const MovieRelease = Schema.Struct({
+  iso_3166_1: Schema.String,
+  release_dates: Schema.Array(
+    Schema.Struct({
+      certification: OptionalText,
+      release_date: OptionalText,
+      type: OptionalNumber,
+    }),
+  ),
+});
+
+export const MovieDetails = Schema.Struct({
+  ...DetailsBase,
+  title: Schema.String,
+  releaseDate: OptionalText,
+  runtime: OptionalNumber,
+  imdbId: OptionalText,
+  releases: Schema.optional(Schema.Struct({ results: Schema.Array(MovieRelease) })),
+  externalIds: Schema.optional(Schema.Struct({ imdbId: OptionalText })),
+});
+export type MovieDetails = typeof MovieDetails.Type;
+
+const Season = Schema.Struct({
+  id: Schema.Number,
+  seasonNumber: Schema.Number,
+  name: OptionalText,
+  episodeCount: OptionalNumber,
+  airDate: OptionalText,
+  posterPath: OptionalText,
+});
+export type Season = typeof Season.Type;
+
+const ContentRating = Schema.Struct({ iso_3166_1: Schema.String, rating: OptionalText });
+
+export const TvDetails = Schema.Struct({
+  ...DetailsBase,
+  name: Schema.String,
+  firstAirDate: OptionalText,
+  lastAirDate: OptionalText,
+  numberOfSeasons: OptionalNumber,
+  numberOfEpisodes: OptionalNumber,
+  episodeRunTime: Schema.optional(Schema.Array(Schema.Number)),
+  type: OptionalText,
+  inProduction: OptionalBoolean,
+  originCountry: Schema.optional(Schema.Array(Schema.String)),
+  networks: Schema.optional(Schema.Array(Company)),
+  createdBy: Schema.optional(
+    Schema.Array(Schema.Struct({ id: Schema.Number, name: Schema.String })),
+  ),
+  seasons: Schema.optional(Schema.Array(Season)),
+  contentRatings: Schema.optional(Schema.Struct({ results: Schema.Array(ContentRating) })),
+  externalIds: Schema.optional(Schema.Struct({ imdbId: OptionalText, tvdbId: OptionalNumber })),
+});
+export type TvDetails = typeof TvDetails.Type;
+
+export const RottenTomatoesRating = Schema.Struct({
+  url: OptionalText,
+  criticsRating: OptionalText,
+  criticsScore: OptionalNumber,
+  audienceRating: OptionalText,
+  audienceScore: OptionalNumber,
+});
+export type RottenTomatoesRating = typeof RottenTomatoesRating.Type;
+
+export const ImdbRating = Schema.Struct({
+  url: OptionalText,
+  criticsScore: OptionalNumber,
+  criticsScoreCount: OptionalNumber,
+});
+export type ImdbRating = typeof ImdbRating.Type;
+
+export const CombinedRatings = Schema.Struct({
+  rt: Schema.optional(Schema.NullOr(RottenTomatoesRating)),
+  imdb: Schema.optional(Schema.NullOr(ImdbRating)),
+});
+export type CombinedRatings = typeof CombinedRatings.Type;
+
+export const RequestListPage = Schema.Struct({
+  pageInfo: Schema.Struct({ pages: Schema.Number, results: Schema.Number, page: Schema.Number }),
+  results: Schema.Array(
+    Schema.Struct({
+      ...MediaRequest.fields,
+      media: Schema.Struct({
+        tmdbId: Schema.Number,
+        mediaType: Schema.Literal("movie", "tv"),
+        status: Schema.Number,
+      }),
+    }),
+  ),
+});
+export type RequestListPage = typeof RequestListPage.Type;
+
+export const CreatedRequest = Schema.Struct({ id: Schema.Number, status: Schema.Number });
+export type CreatedRequest = typeof CreatedRequest.Type;
+
+/** Empty-body responses (watchlist mutations). */
+export const NoContent = Schema.Unknown;

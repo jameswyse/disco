@@ -2,6 +2,10 @@
   position: relative;
 }
 
+.hoverArea {
+  position: relative;
+}
+
 .link {
   display: block;
 }
@@ -19,6 +23,11 @@
     box-shadow 150ms ease-out;
 }
 
+.hovered {
+  z-index: 10;
+}
+
+.hovered .poster,
 .link:hover .poster {
   box-shadow: 0 18px 40px rgb(0 0 0 / 50%);
   outline: 2px solid var(--color-accent);
@@ -31,6 +40,11 @@
     transition: none;
   }
 
+  .hovered {
+    z-index: 10;
+  }
+
+  .hovered .poster,
   .link:hover .poster {
     transform: none;
   }

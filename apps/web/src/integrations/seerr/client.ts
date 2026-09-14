@@ -25,12 +25,18 @@ import {
   MovieResultPage,
   NoContent,
   PublicSettings,
+  PersonDetails,
+  PersonCredits,
+  RequestServers,
+  ServiceProfiles,
   RequestCount,
   RequestListPage,
   RottenTomatoesRating,
+  SeasonDetails,
   Status,
   TvDetails,
   TvResultPage,
+  WatchProviderRegions,
   WatchProviders,
 } from "./schemas";
 
@@ -86,6 +92,9 @@ export type CreateRequestBody = Readonly<{
   mediaId: number;
   /** Season numbers for a partial series request, or every season. */
   seasons?: readonly number[] | "all";
+  serverId?: number;
+  profileId?: number;
+  is4k?: boolean;
 }>;
 
 export type WatchlistItem = Readonly<{ tmdbId: number; mediaType: MediaType; title: string }>;
@@ -228,6 +237,10 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
           sort: "added",
           sortDirection: "desc",
         }),
+      requestServers: (mediaType: MediaType) =>
+        get(`service/${mediaType === "movie" ? "radarr" : "sonarr"}`, RequestServers),
+      serviceProfiles: (mediaType: MediaType, serverId: number) =>
+        get(`service/${mediaType === "movie" ? "radarr" : "sonarr"}/${serverId}`, ServiceProfiles),
       createRequest: (body: CreateRequestBody) => post("request", CreatedRequest, body),
       addToWatchlist: (item: WatchlistItem) => post("watchlist", NoContent, item),
       removeFromWatchlist: (tmdbId: number, mediaType: MediaType) =>
@@ -238,6 +251,7 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
       network: (id: number) => get(`network/${id}`, Company),
       studio: (id: number) => get(`studio/${id}`, Company),
       searchKeywords: (query: string) => get("search/keyword", KeywordPage, { query }),
+      watchProviderRegions: () => get("watchproviders/regions", WatchProviderRegions),
       watchProviders: (mediaType: MediaType, region: string) =>
         get(`watchproviders/${mediaType === "movie" ? "movies" : "tv"}`, WatchProviders, {
           watchRegion: region,
@@ -255,8 +269,11 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
           timeWindow: "week",
         }),
       search: (query: string, page: number) => get("search", MediaResultPage, { query, page }),
+      person: (id: number) => get(`person/${id}`, PersonDetails),
+      personCredits: (id: number) => get(`person/${id}/combined_credits`, PersonCredits),
       movie: (id: number) => get(`movie/${id}`, MovieDetails),
       tv: (id: number) => get(`tv/${id}`, TvDetails),
+      tvSeason: (id: number, season: number) => get(`tv/${id}/season/${season}`, SeasonDetails),
       movieRatings: (id: number) => get(`movie/${id}/ratingscombined`, CombinedRatings),
       tvRatings: (id: number) => get(`tv/${id}/ratings`, RottenTomatoesRating),
       recommendations: (mediaType: MediaType, id: number) =>

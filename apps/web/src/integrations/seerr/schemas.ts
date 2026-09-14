@@ -29,6 +29,9 @@ export const MediaRequest = Schema.Struct({
   status: Schema.Number,
   type: Schema.Literal("movie", "tv"),
   is4k: OptionalBoolean,
+  profileName: OptionalText,
+  profileId: OptionalNumber,
+  serverId: OptionalNumber,
   createdAt: Schema.String,
   updatedAt: Schema.String,
   requestedBy: Schema.optional(Schema.NullOr(RequestUser)),
@@ -85,10 +88,13 @@ export const TvResult = Schema.Struct({
 });
 export type TvResult = typeof TvResult.Type;
 
-/** Search and trending can include people; they are decoded so the page parses and then dropped. */
+/** Search and trending include people alongside titles. */
 export const PersonResult = Schema.Struct({
   id: Schema.Number,
   mediaType: Schema.Literal("person"),
+  name: Schema.String,
+  profilePath: OptionalText,
+  knownFor: Schema.optional(Schema.Array(Schema.Union(MovieResult, TvResult))),
 });
 
 export const MediaResult = Schema.Union(MovieResult, TvResult, PersonResult);
@@ -118,6 +124,13 @@ export const WatchProvider = Schema.Struct({
 });
 export type WatchProvider = typeof WatchProvider.Type;
 export const WatchProviders = Schema.Array(WatchProvider);
+
+export const WatchProviderRegion = Schema.Struct({
+  iso_3166_1: Schema.String.pipe(Schema.pattern(/^[A-Z]{2}$/)),
+  english_name: Schema.NonEmptyString,
+});
+export type WatchProviderRegion = typeof WatchProviderRegion.Type;
+export const WatchProviderRegions = Schema.NonEmptyArray(WatchProviderRegion);
 
 export const Genre = Schema.Struct({ id: Schema.Number, name: Schema.String });
 export type Genre = typeof Genre.Type;
@@ -170,6 +183,7 @@ export const CurrentUser = Schema.Struct({
   id: SeerrUserId,
   displayName: Schema.String,
   avatar: OptionalText,
+  permissions: Schema.optional(Schema.Number),
 });
 export type CurrentUser = typeof CurrentUser.Type;
 
@@ -319,6 +333,20 @@ const Season = Schema.Struct({
 });
 export type Season = typeof Season.Type;
 
+export const SeasonDetails = Schema.Struct({
+  episodes: Schema.Array(
+    Schema.Struct({
+      id: Schema.Number,
+      episodeNumber: Schema.Number,
+      name: Schema.String,
+      overview: OptionalText,
+      airDate: OptionalText,
+      stillPath: OptionalText,
+    }),
+  ),
+});
+export type SeasonDetails = typeof SeasonDetails.Type;
+
 const ContentRating = Schema.Struct({ iso_3166_1: Schema.String, rating: OptionalText });
 
 export const TvDetails = Schema.Struct({
@@ -384,3 +412,34 @@ export type CreatedRequest = typeof CreatedRequest.Type;
 
 /** Empty-body responses (watchlist mutations). */
 export const NoContent = Schema.Unknown;
+
+export const PersonDetails = Schema.Struct({
+  id: Schema.Number,
+  name: Schema.String,
+  profilePath: OptionalText,
+  biography: OptionalText,
+  birthday: OptionalText,
+  deathday: OptionalText,
+  placeOfBirth: OptionalText,
+  knownForDepartment: OptionalText,
+  alsoKnownAs: Schema.optional(Schema.Array(Schema.String)),
+  imdbId: OptionalText,
+});
+export type PersonDetails = typeof PersonDetails.Type;
+export const PersonCredits = Schema.Struct({
+  id: Schema.Number,
+  cast: Schema.Array(Schema.Union(MovieResult, TvResult)),
+  crew: Schema.Array(Schema.Union(MovieResult, TvResult)),
+});
+
+export const RequestServer = Schema.Struct({
+  id: Schema.Number,
+  name: Schema.String,
+  is4k: Schema.Boolean,
+  isDefault: Schema.Boolean,
+  activeProfileId: Schema.Number,
+});
+export const RequestServers = Schema.Array(RequestServer);
+export const ServiceProfiles = Schema.Struct({
+  profiles: Schema.Array(Schema.Struct({ id: Schema.Number, name: Schema.String })),
+});

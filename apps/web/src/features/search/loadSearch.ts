@@ -2,27 +2,25 @@ import { connection } from "next/server";
 
 import { Effect } from "effect";
 
-import { titleFromResult } from "@/features/browse/title";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";
 
-import type { GenreNames, Title } from "@/features/browse/title";
-import type { MediaResult, MovieResult, TvResult } from "@/integrations/seerr/schemas";
+import { searchItem } from "./searchResult";
+
+import type { GenreNames } from "@/features/browse/title";
+
+import type { SearchItem } from "./searchResult";
 
 export type SearchResult =
   | Readonly<{
       kind: "ok";
-      titles: readonly Title[];
+      items: readonly SearchItem[];
       page: number;
       totalPages: number;
       totalResults: number;
     }>
   | Readonly<{ kind: "error"; message: string }>;
-
-function isMedia(result: MediaResult): result is MovieResult | TvResult {
-  return result.mediaType !== "person";
-}
 
 const searchProgram = (query: string, page: number) =>
   Effect.gen(function* () {
@@ -37,7 +35,7 @@ const searchProgram = (query: string, page: number) =>
 
     return {
       kind: "ok",
-      titles: results.results.filter(isMedia).map((result) => titleFromResult(result, genreNames)),
+      items: results.results.map((result) => searchItem(result, genreNames)),
       page: results.page,
       totalPages: results.totalPages,
       totalResults: results.totalResults,

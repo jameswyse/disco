@@ -1,0 +1,139 @@
+.page {
+  padding: 26px;
+}
+.back {
+  color: var(--color-text-muted);
+  display: inline-block;
+  margin-bottom: 24px;
+}
+.header {
+  min-width: 0;
+}
+.profile {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
+}
+.header h1 {
+  font-size: clamp(30px, 4vw, 48px);
+  margin: 0 0 24px;
+  letter-spacing: -0.03em;
+}
+.page h2 {
+  font-size: 19px;
+  margin: 0 0 16px;
+}
+.portrait {
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-large);
+  overflow: hidden;
+  background: var(--color-surface);
+  display: grid;
+  place-items: center;
+  font-size: 80px;
+}
+.portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.eyebrow {
+  color: var(--color-accent-soft);
+  margin: 0 0 8px;
+}
+.biography {
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+  line-height: 1.75;
+  max-width: 90ch;
+}
+.columns {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 36px;
+}
+.personal {
+  border-top: 1px solid var(--color-border-strong);
+  padding-top: 24px;
+}
+.personal dl {
+  margin: 0 0 24px;
+}
+.personal dl div {
+  margin-bottom: 20px;
+}
+.personal dt {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.personal dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.personal a {
+  margin-right: 16px;
+  color: var(--color-accent-soft);
+}
+.credits {
+  margin-top: 32px;
+  min-width: 0;
+}
+.credits section {
+  margin-bottom: 32px;
+}
+.credits ul {
+  padding: 0;
+}
+.creditsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.creditsHeader h2 {
+  margin: 0;
+}
+.creditsHeader select {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  padding: 10px;
+  color: var(--color-text);
+}
+@media (max-width: 50rem) {
+  .columns {
+    grid-template-columns: 140px minmax(0, 1fr);
+    grid-template-areas:
+      "portrait identity"
+      "personal personal"
+      "biography biography";
+    gap: 20px;
+  }
+  .profile,
+  .header {
+    display: contents;
+  }
+  .identity {
+    grid-area: identity;
+    overflow-wrap: anywhere;
+  }
+  .personal {
+    grid-area: personal;
+  }
+  .biographySection {
+    grid-area: biography;
+  }
+  .portrait {
+    grid-area: portrait;
+  }
+}
+
+.portrait svg {
+  width: 55%;
+  color: var(--color-text-muted);
+  stroke: currentColor;
+  stroke-width: 3;
+}

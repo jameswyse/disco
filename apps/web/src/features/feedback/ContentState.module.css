@@ -1,0 +1,77 @@
+.state {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 32px 26px;
+  padding: 40px 24px;
+  text-align: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-large);
+  background: var(--color-background-raised);
+}
+.state h2 {
+  font-size: 20px;
+  margin: 0;
+}
+.state p {
+  color: var(--color-text-muted);
+  max-width: 48ch;
+  margin: 0;
+}
+.symbol {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-accent-soft);
+  font-size: 24px;
+}
+.button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  min-height: 44px;
+}
+.button:hover {
+  background: var(--color-accent-strong);
+}
+.skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 24px 16px;
+  padding: 26px;
+}
+.loadingLabel {
+  grid-column: 1 / -1;
+  color: var(--color-text-muted);
+}
+.placeholder div {
+  aspect-ratio: 2 / 3;
+  background: var(--color-surface);
+  border-radius: var(--radius-large);
+}
+.placeholder span {
+  display: block;
+  margin-top: 12px;
+  height: 12px;
+  width: 80%;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+}
+.placeholder span:last-child {
+  width: 45%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .placeholder {
+    animation: pulse 1.8s ease-in-out infinite alternate;
+  }
+  @keyframes pulse {
+    to {
+      opacity: 0.45;
+    }
+  }
+}

@@ -1,9 +1,5 @@
-import styles from "./loading.module.css";
+import { ContentSkeleton } from "@/features/feedback/ContentState";
 
 export default function Loading() {
-  return (
-    <div aria-busy="true" aria-live="polite" className={styles.loading}>
-      Loading…
-    </div>
-  );
+  return <ContentSkeleton />;
 }

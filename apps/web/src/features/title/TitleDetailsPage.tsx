@@ -11,6 +11,7 @@ import { tmdbImageUrl } from "@/integrations/seerr/images";
 import { RequestButton } from "./RequestButton";
 import { requestTimeline } from "./requestTimeline";
 import { SeasonEpisodes } from "./SeasonEpisodes";
+import { TrailerButton } from "./TrailerButton";
 import { WatchlistButton } from "./WatchlistButton";
 
 import type { ReactNode } from "react";
@@ -323,15 +324,12 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
             <Meta details={details} />
             <div className={styles.actions}>
               <PrimaryAction details={details} />
-              {details.trailerUrl ? (
-                <a
+              {details.trailerEmbedUrl ? (
+                <TrailerButton
                   className={styles.button}
-                  href={details.trailerUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  ▶ Play trailer
-                </a>
+                  embedUrl={details.trailerEmbedUrl}
+                  title={details.name}
+                />
               ) : null}
               <WatchlistButton
                 className={`${styles.button} ${styles.ghostButton}`}

@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { RequestButton } from "@/features/title/RequestButton";
 import { titleHref } from "@/features/title/titleRoute";
+import { TrailerButton } from "@/features/title/TrailerButton";
 import { WatchlistButton } from "@/features/title/WatchlistButton";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
@@ -193,6 +194,14 @@ export function TitleHoverCard({ title, preview, side, onClose }: TitleHoverCard
           <Link className={styles.action} href={titleHref(title.mediaType, title.id)}>
             Details
           </Link>
+          {details?.trailerEmbedUrl ? (
+            <TrailerButton
+              className={styles.action}
+              embedUrl={details.trailerEmbedUrl}
+              label="▶ Trailer"
+              title={title.name}
+            />
+          ) : null}
           {details ? (
             <WatchlistButton
               className={`${styles.action} ${styles.iconAction}`}

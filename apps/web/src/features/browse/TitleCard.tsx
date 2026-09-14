@@ -105,6 +105,12 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
   const card = useRef<HTMLLIElement>(null);
 
   const show = () => {
+    clearTimeout(timer.current);
+
+    if (card.current?.querySelector("dialog[open]")) {
+      return;
+    }
+
     const bounds = card.current?.getBoundingClientRect();
 
     if (bounds) {
@@ -120,6 +126,10 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
   };
 
   const hide = () => {
+    if (card.current?.querySelector("dialog[open]")) {
+      return;
+    }
+
     clearTimeout(timer.current);
     setOpen(false);
   };
@@ -133,7 +143,11 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
           },
           onMouseLeave: () => {
             clearTimeout(timer.current);
-            timer.current = setTimeout(hide, hoverHideDelayMs);
+            timer.current = setTimeout(() => {
+              if (!card.current?.contains(document.activeElement)) {
+                hide();
+              }
+            }, hoverHideDelayMs);
           },
         }
       : {};
@@ -145,7 +159,7 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
     }
 
     function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !card.current?.querySelector("dialog[open]")) {
         setOpen(false);
       }
     }

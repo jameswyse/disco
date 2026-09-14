@@ -30,7 +30,7 @@ const base: TitleDetails = {
   companies: [],
   networks: [],
   keywords: [],
-  trailerUrl: undefined,
+  trailerEmbedUrl: undefined,
   streamingOn: [],
   availability: "not-in-library",
   plexUrl: undefined,

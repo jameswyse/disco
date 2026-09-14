@@ -1,0 +1,99 @@
+.dialog {
+  background: transparent;
+  border: 0;
+  color: var(--color-text);
+  height: 100dvh;
+  inset: 0;
+  margin: 0;
+  max-height: none;
+  max-width: none;
+  overscroll-behavior: contain;
+  padding: 0;
+  width: 100vw;
+}
+
+.dialog[open] {
+  display: grid;
+  place-items: center;
+}
+
+.dialog::backdrop {
+  background: #000c;
+  backdrop-filter: blur(6px);
+}
+
+.player {
+  background: #000;
+  border-radius: var(--radius-large);
+  box-shadow: 0 24px 80px #0008;
+  height: 90dvh;
+  overflow: hidden;
+  position: relative;
+  width: 90vw;
+}
+
+.player:fullscreen {
+  border-radius: 0;
+  height: 100dvh;
+  width: 100vw;
+}
+
+.control {
+  align-items: center;
+  background: #0f172acc;
+  border: 1px solid #ffffff40;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  font-size: 24px;
+  height: 44px;
+  justify-content: center;
+  position: absolute;
+  width: 44px;
+}
+
+.control:hover {
+  background: var(--color-surface);
+}
+
+.control:disabled {
+  opacity: 0.5;
+}
+
+.close {
+  font-size: 30px;
+  inset-block-start: 12px;
+  inset-inline-end: 12px;
+}
+
+.playback {
+  inset-block-end: 12px;
+  inset-inline-start: 12px;
+}
+
+.fullscreen {
+  inset-block-end: 12px;
+  inset-inline-end: 12px;
+}
+
+.video,
+.video iframe {
+  border: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.video iframe {
+  pointer-events: none;
+}
+
+.message {
+  background: #000c;
+  border-radius: var(--radius);
+  inset-block-start: 50%;
+  inset-inline: 16px;
+  margin: 0;
+  padding: 16px;
+  position: absolute;
+  text-align: center;
+}

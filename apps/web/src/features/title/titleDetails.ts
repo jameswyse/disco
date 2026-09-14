@@ -102,7 +102,7 @@ export type TitleDetails = Readonly<{
   companies: readonly string[];
   networks: readonly Readonly<{ name: string; logoPath: string | undefined }>[];
   keywords: readonly string[];
-  trailerUrl: string | undefined;
+  trailerEmbedUrl: string | undefined;
   streamingOn: readonly WatchProvider[];
   availability: Availability;
   plexUrl: string | undefined;
@@ -188,15 +188,30 @@ function streamingOn(details: MovieDetails | TvDetails, region: string): readonl
   return regional?.flatrate ?? [];
 }
 
-function trailerUrl(details: MovieDetails | TvDetails): string | undefined {
+const youtubeVideoId = /^[\w-]+$/;
+
+function trailerEmbedUrl(details: MovieDetails | TvDetails): string | undefined {
   const trailer =
     details.relatedVideos?.find((video) => video.type === "Trailer" && video.site === "YouTube") ??
     details.relatedVideos?.find((video) => video.site === "YouTube");
 
-  return (
-    text(trailer?.url) ??
-    (trailer?.key ? `https://www.youtube.com/watch?v=${trailer.key}` : undefined)
-  );
+  let videoId = text(trailer?.key);
+
+  if (!videoId && trailer?.url) {
+    const url = URL.parse(trailer.url);
+
+    if (url?.hostname === "youtu.be") {
+      videoId = url.pathname.slice(1);
+    } else if (url?.hostname === "www.youtube.com" || url?.hostname === "youtube.com") {
+      videoId = url.pathname.startsWith("/embed/")
+        ? url.pathname.slice("/embed/".length)
+        : (url.searchParams.get("v") ?? undefined);
+    }
+  }
+
+  return videoId && youtubeVideoId.test(videoId)
+    ? `https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&controls=0&fs=1&rel=0`
+    : undefined;
 }
 
 function sharedDetails(details: MovieDetails | TvDetails, region: string) {
@@ -234,7 +249,7 @@ function sharedDetails(details: MovieDetails | TvDetails, region: string) {
     directors: crew.filter((member) => member.job === "Director").map((member) => member.name),
     companies: (details.productionCompanies ?? []).map((company) => company.name),
     keywords: (details.keywords ?? []).map((keyword) => keyword.name),
-    trailerUrl: trailerUrl(details),
+    trailerEmbedUrl: trailerEmbedUrl(details),
     streamingOn: streamingOn(details, region),
     availability: availabilityFromStatus(details.mediaInfo?.status),
     plexUrl: text(details.mediaInfo?.mediaUrl),

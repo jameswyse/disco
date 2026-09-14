@@ -178,7 +178,13 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
     ): Effect.Effect<A, SeerrError, SeerrIdentity> =>
       Effect.flatMap(userClient, (client) =>
         client
-          .get(new URL(path, apiBase), { urlParams: definedParameters(parameters) })
+          // Seerr's OpenAPI validator rejects form-encoded `+` spaces.
+          .get(
+            new URL(
+              `${path}?${new URLSearchParams(definedParameters(parameters)).toString().replaceAll("+", "%20")}`,
+              apiBase,
+            ).toString(),
+          )
           .pipe(decode(path, schema)),
       );
 

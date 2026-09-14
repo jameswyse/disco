@@ -54,6 +54,15 @@ function testClient(respond: (url: URL, headers: Headers) => StubResponse) {
 }
 
 describe("SeerrClient", () => {
+  it("percent-encodes search text without form-style spaces rejected by Seerr", async () => {
+    const { requests, run } = testClient(() => ({
+      status: 200,
+      body: { page: 1, totalPages: 0, totalResults: 0, results: [] },
+    }));
+    await run((client) => client.search("Law & Order + café", 1));
+    expect(requests[0]?.search).toBe("?query=Law%20%26%20Order%20%2B%20caf%C3%A9&page=1");
+    expect(requests[0]?.searchParams.get("query")).toBe("Law & Order + café");
+  });
   it("sends the API key with the verified user and builds discover queries against /api/v1", async () => {
     let receivedKey: string | null = null;
     let receivedUser: string | null = null;

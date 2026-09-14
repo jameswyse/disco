@@ -1,15 +1,16 @@
 /**
- * Seerr serves TMDB image paths; the browser loads them from TMDB's CDN, as Seerr's own UI does
- * when image caching is disabled.
+ * Seerr serves relative TMDB paths or full URLs from other metadata providers.
+ * The browser loads artwork directly from its provider.
  */
 const tmdbImageOrigin = "https://image.tmdb.org/t/p/";
+const absoluteImageUrl = /^https?:\/\//i;
 
 export type PosterSize = "w185" | "w342" | "w500";
 export type BackdropSize = "w780" | "w1280";
 export type LogoSize = "w92" | "w154";
 
 export function tmdbImageUrl(size: PosterSize | BackdropSize | LogoSize, path: string): string {
-  return `${tmdbImageOrigin}${size}${path}`;
+  return absoluteImageUrl.test(path) ? path : `${tmdbImageOrigin}${size}${path}`;
 }
 
 /** A backdrop recoloured by TMDB's CDN into a two-colour tint, used for the media view cards. */

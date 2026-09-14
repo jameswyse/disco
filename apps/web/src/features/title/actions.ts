@@ -5,8 +5,10 @@ import { revalidatePath } from "next/cache";
 import { Effect, Schema } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
-import { describeSeerrError } from "@/integrations/seerr/errors";
+import { SeerrRejected, describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";
+
+import { requestProfiles } from "./qualityProfiles";
 
 import type { CreateRequestBody } from "@/integrations/seerr/client";
 import type { SeerrError } from "@/integrations/seerr/errors";
@@ -20,6 +22,7 @@ const RequestInput = Schema.Struct({
   id: TmdbId,
   /** Season number for a partial series request; omitted means every season. */
   season: Schema.optional(TmdbId),
+  quality: Schema.optional(Schema.String.pipe(Schema.pattern(/^(?:\d+:\d+)?$/))),
 });
 const WatchlistInput = Schema.Struct({
   mediaType: MediaTypeInput,
@@ -28,7 +31,6 @@ const WatchlistInput = Schema.Struct({
   action: Schema.Literal("add", "remove"),
 });
 
-const decodeRequest = Schema.decodeUnknownSync(RequestInput);
 const decodeWatchlist = Schema.decodeUnknownSync(WatchlistInput);
 
 export type ActionResult = Readonly<{ ok: true }> | Readonly<{ ok: false; message: string }>;
@@ -44,10 +46,18 @@ function run(
       Effect.catchAll((error) =>
         Effect.succeed<ActionResult>({ ok: false, message: describeSeerrError(error) }),
       ),
-      Effect.tap(() =>
+      Effect.tap((result) =>
         Effect.sync(() => {
+          if (!result.ok) {
+            return;
+          }
+
           for (const path of paths) {
-            revalidatePath(path);
+            if (path === "/") {
+              revalidatePath(path, "layout");
+            } else {
+              revalidatePath(path);
+            }
           }
         }),
       ),
@@ -60,7 +70,13 @@ export async function requestTitle(
   _previous: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  const input = decodeRequest(Object.fromEntries(formData));
+  const decoded = Schema.decodeUnknownEither(RequestInput)(Object.fromEntries(formData));
+
+  if (decoded._tag === "Left") {
+    return { ok: false, message: "Choose a valid title and quality profile." };
+  }
+
+  const input = decoded.right;
   const body: CreateRequestBody =
     input.mediaType === "tv"
       ? {
@@ -71,7 +87,27 @@ export async function requestTitle(
       : { mediaType: "movie", mediaId: input.id };
 
   return run(
-    Effect.flatMap(SeerrClient, (client) => client.createRequest(body)),
+    Effect.gen(function* () {
+      const client = yield* SeerrClient;
+
+      if (!input.quality) {
+        return yield* client.createRequest(body);
+      }
+
+      const options = yield* requestProfiles(input.mediaType);
+      const profile = options.profiles.find((option) => option.key === input.quality);
+
+      if (!profile) {
+        return yield* Effect.fail(new SeerrRejected({ path: "request", status: 403 }));
+      }
+
+      return yield* client.createRequest({
+        ...body,
+        serverId: profile.serverId,
+        profileId: profile.profileId,
+        is4k: profile.is4k,
+      });
+    }),
     [`/title/${input.mediaType}/${input.id}`, "/", "/requests"],
   );
 }

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { Effect } from "effect";
 
 import { availabilityFromStatus } from "@/features/browse/title";
+import { requestedProfileName } from "@/features/title/qualityProfiles";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";
@@ -37,6 +38,7 @@ export type RequestRow = Readonly<{
   status: "pending" | "approved" | "declined" | "failed" | "completed";
   availability: Availability;
   seasons: readonly number[];
+  qualityProfile: string | undefined;
 }>;
 
 export type RequestsResult =
@@ -89,17 +91,22 @@ const requestsProgram = (filter: RequestFilter, page: number) =>
               posterPath: undefined,
             }),
           ),
-          Effect.map((title): RequestRow => ({
-            id: request.id,
-            mediaType: request.media.mediaType,
-            tmdbId: request.media.tmdbId,
-            ...title,
-            requestedBy: request.requestedBy?.displayName,
-            requestedAt: request.createdAt,
-            status: requestStatuses.get(request.status) ?? "pending",
-            availability: availabilityFromStatus(request.media.status),
-            seasons: (request.seasons ?? []).map((season) => season.seasonNumber),
-          })),
+          Effect.flatMap((title) =>
+            requestedProfileName(request.type, request).pipe(
+              Effect.map((qualityProfile): RequestRow => ({
+                id: request.id,
+                mediaType: request.media.mediaType,
+                tmdbId: request.media.tmdbId,
+                ...title,
+                requestedBy: request.requestedBy?.displayName,
+                requestedAt: request.createdAt,
+                status: requestStatuses.get(request.status) ?? "pending",
+                availability: availabilityFromStatus(request.media.status),
+                seasons: (request.seasons ?? []).map((season) => season.seasonNumber),
+                qualityProfile,
+              })),
+            ),
+          ),
         ),
       ),
       { concurrency: 6 },

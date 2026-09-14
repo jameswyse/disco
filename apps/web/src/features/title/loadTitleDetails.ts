@@ -7,6 +7,7 @@ import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";
 
+import { requestedProfileName } from "./qualityProfiles";
 import { titleDetailsFromMovie, titleDetailsFromTv } from "./titleDetails";
 
 import type { GenreNames, Title } from "@/features/browse/title";
@@ -60,9 +61,20 @@ function detailsProgram(
       [...movieGenres, ...tvGenres].map((genre) => [genre.id, genre.name]),
     );
 
+    const requests = yield* Effect.all(
+      details.requests.map((request) =>
+        requestedProfileName(mediaType, {
+          profileName: request.qualityProfile,
+          profileId: request.profileId,
+          serverId: request.serverId,
+        }).pipe(Effect.map((qualityProfile) => ({ ...request, qualityProfile }))),
+      ),
+      { concurrency: 4 },
+    );
+
     return {
       kind: "ok",
-      details,
+      details: { ...details, requests },
       related: recommendations.results
         .slice(0, 8)
         .map((result) => titleFromResult(result, genreNames)),

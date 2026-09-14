@@ -1,0 +1,75 @@
+.dialog {
+  background: var(--color-background-raised);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  padding: 24px;
+  width: min(460px, calc(100% - 32px));
+  box-shadow: 0 24px 80px #0008;
+}
+.dialog::backdrop {
+  background: #000a;
+  backdrop-filter: blur(4px);
+}
+.dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.dialog h2 {
+  font-size: 20px;
+  margin: 0;
+}
+.dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+.close {
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.field select {
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  padding: 12px;
+  font: inherit;
+  width: 100%;
+}
+.note {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  margin-top: 20px;
+}
+.error {
+  color: var(--color-danger-soft);
+}
+.secondary,
+.primary {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  background: var(--color-surface);
+  min-height: 44px;
+}
+.primary {
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent);
+}
+.dialog button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}

@@ -146,6 +146,10 @@ test("concurrent users request titles and update their watchlists under their ow
       page.getByRole("button", { name: "↓ Request" }).click(),
       secondPage.getByRole("button", { name: "↓ Request" }).click(),
     ]);
+    await Promise.all([
+      page.getByRole("button", { name: "Confirm request" }).click(),
+      secondPage.getByRole("button", { name: "Confirm request" }).click(),
+    ]);
     await expect(page.getByText("✓ Requested")).toBeVisible();
     await expect(secondPage.getByText("✓ Requested")).toBeVisible();
     await Promise.all([

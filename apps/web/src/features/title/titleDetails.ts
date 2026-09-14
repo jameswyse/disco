@@ -39,6 +39,9 @@ export type RequestSummary = Readonly<{
   requestedBy: string | undefined;
   requestedAt: string;
   seasons: readonly number[];
+  qualityProfile?: string | undefined;
+  profileId?: number | undefined;
+  serverId?: number | undefined;
 }>;
 
 export type Download = Readonly<{
@@ -135,6 +138,9 @@ function requestSummaries(mediaInfo: MediaInfo | null | undefined): RequestSumma
     requestedBy: request.requestedBy?.displayName,
     requestedAt: request.createdAt,
     seasons: (request.seasons ?? []).map((season) => season.seasonNumber),
+    qualityProfile: request.profileName ?? undefined,
+    profileId: request.profileId ?? undefined,
+    serverId: request.serverId ?? undefined,
   }));
 }
 

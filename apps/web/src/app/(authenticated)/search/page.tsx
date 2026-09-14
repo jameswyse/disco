@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 
-import { parsePageNumber } from "@/features/browse/pageNumber";
 import { SearchPage } from "@/features/search/SearchPage";
+import { parsePageNumber } from "@/platform/pageNumber";
 
 import Loading from "../loading";
 

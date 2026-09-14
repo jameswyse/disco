@@ -7,11 +7,11 @@ import { browseListLabel } from "@/features/browse/browseListLabel";
 import { BrowsePage } from "@/features/browse/BrowsePage";
 import { parseDiscoverListId } from "@/features/browse/discoverLists";
 import { parseBrowseFilters } from "@/features/browse/filters";
-import { parsePageNumber } from "@/features/browse/pageNumber";
 import { loadSettings } from "@/features/settings/loadSettings";
 import { defaultPreviewMode } from "@/features/settings/settings";
 import { loadViews } from "@/features/views/loadViews";
 import { viewMediaTypes } from "@/features/views/views";
+import { parsePageNumber } from "@/platform/pageNumber";
 
 import Loading from "../loading";
 

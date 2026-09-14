@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { TitleCard } from "@/features/browse/TitleCard";
+import { TitleCard } from "@/features/title/TitleCard";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
 import { searchItemHref } from "./searchResult";

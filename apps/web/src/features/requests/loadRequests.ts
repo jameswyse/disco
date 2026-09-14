@@ -2,13 +2,13 @@ import { connection } from "next/server";
 
 import { Effect } from "effect";
 
-import { availabilityFromStatus } from "@/features/browse/title";
 import { requestedProfileName } from "@/features/title/qualityProfiles";
+import { availabilityFromStatus } from "@/features/title/title";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";
 
-import type { Availability } from "@/features/browse/title";
+import type { Availability } from "@/features/title/title";
 import type { MediaType, RequestListQuery } from "@/integrations/seerr/client";
 
 export type RequestFilter = RequestListQuery["filter"];

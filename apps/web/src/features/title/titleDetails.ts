@@ -1,6 +1,5 @@
-import { availabilityFromStatus } from "@/features/browse/title";
+import { availabilityFromStatus } from "./title";
 
-import type { Availability } from "@/features/browse/title";
 import type { MediaType } from "@/integrations/seerr/client";
 import type {
   CombinedRatings,
@@ -12,6 +11,8 @@ import type {
   TvDetails,
   WatchProvider,
 } from "@/integrations/seerr/schemas";
+
+import type { Availability } from "./title";
 
 export type Person = Readonly<{
   id: number;

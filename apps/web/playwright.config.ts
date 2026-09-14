@@ -31,6 +31,14 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      testIgnore: ["fixtures/**", "**/settings.spec.ts"],
+      use: devices["Desktop Chrome"],
+    },
+    {
+      // Preferences are instance-wide, so their mutations must follow every other browser test.
+      name: "settings",
+      dependencies: ["chromium"],
+      testMatch: "**/settings.spec.ts",
       use: devices["Desktop Chrome"],
     },
   ],

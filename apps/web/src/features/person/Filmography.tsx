@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
 
-import { TitleCard } from "@/features/browse/TitleCard";
 import { ContentState } from "@/features/feedback/ContentState";
 import { InfiniteList } from "@/features/feedback/InfiniteList";
+import { TitleCard } from "@/features/title/TitleCard";
 
-import type { Title } from "@/features/browse/title";
 import type { PageBatch } from "@/features/feedback/InfiniteList";
 import type { PreviewMode } from "@/features/settings/settings";
+import type { Title } from "@/features/title/title";
 
 import styles from "./PersonPage.module.css";
 import gridStyles from "@/features/browse/BrowsePage.module.css";

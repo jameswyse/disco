@@ -3,9 +3,9 @@ import Link from "next/link";
 
 import { ContentState } from "@/features/feedback/ContentState";
 import { InfiniteList } from "@/features/feedback/InfiniteList";
-import { decodePageNumber } from "@/features/feedback/pageNumber";
 import { titleHref } from "@/features/title/titleRoute";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
+import { decodePageNumber } from "@/platform/pageNumber";
 
 import { loadRequests, requestFilters } from "./loadRequests";
 import { requestBadge } from "./requestBadge";

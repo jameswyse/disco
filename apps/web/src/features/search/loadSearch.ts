@@ -8,7 +8,7 @@ import { runAuthenticated } from "@/platform/auth/session";
 
 import { searchItem } from "./searchResult";
 
-import type { GenreNames } from "@/features/browse/title";
+import type { GenreNames } from "@/features/title/title";
 
 import type { SearchItem } from "./searchResult";
 

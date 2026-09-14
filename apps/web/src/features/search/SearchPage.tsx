@@ -1,8 +1,8 @@
 import { ContentState } from "@/features/feedback/ContentState";
 import { InfiniteList } from "@/features/feedback/InfiniteList";
-import { decodePageNumber } from "@/features/feedback/pageNumber";
 import { loadSettings } from "@/features/settings/loadSettings";
 import { defaultPreviewMode } from "@/features/settings/settings";
+import { decodePageNumber } from "@/platform/pageNumber";
 
 import { loadSearch } from "./loadSearch";
 import { SearchResultCard } from "./SearchResultCard";

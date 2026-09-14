@@ -2,14 +2,15 @@ import { connection } from "next/server";
 
 import { Effect } from "effect";
 
+import { titleFromResult } from "@/features/title/title";
 import { viewMediaTypes } from "@/features/views/views";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";
 
 import { planBrowseSources } from "./browsePlan";
-import { titleFromResult } from "./title";
 
+import type { GenreNames, Title } from "@/features/title/title";
 import type { View } from "@/features/views/views";
 import type { SeerrError } from "@/integrations/seerr/errors";
 import type { SeerrIdentity } from "@/integrations/seerr/identity";
@@ -18,7 +19,6 @@ import type { Genre, MediaResult, MovieResult, TvResult } from "@/integrations/s
 import type { BrowseSource } from "./browsePlan";
 import type { DiscoverListId } from "./discoverLists";
 import type { BrowseFilters } from "./filters";
-import type { GenreNames, Title } from "./title";
 
 /** Seerr returns 20 results per page; a browse page shows two of them. */
 const seerrPagesPerBrowsePage = 2;

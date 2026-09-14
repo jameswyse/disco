@@ -5,7 +5,7 @@ import { Fragment, useCallback, useEffect, useRef, useState, useTransition } fro
 import type { ReactNode } from "react";
 
 import stateStyles from "./ContentState.module.css";
-import styles from "@/features/browse/BrowsePage.module.css";
+import styles from "./InfiniteList.module.css";
 
 export type PageItem = Readonly<{ id: string; content: ReactNode }>;
 export type PageBatch =

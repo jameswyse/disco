@@ -8,7 +8,7 @@ export type Availability =
   | "partially-available"
   | "available";
 
-/** A movie or series as shown in the browse grid. Plain data so it can cross the RSC boundary. */
+/** A movie or series shown on a title card. Plain data so it can cross the RSC boundary. */
 export type Title = Readonly<{
   id: number;
   mediaType: MediaType;

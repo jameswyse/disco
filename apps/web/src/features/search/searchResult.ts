@@ -1,6 +1,6 @@
-import { titleFromResult } from "@/features/browse/title";
+import { titleFromResult } from "@/features/title/title";
 
-import type { GenreNames, Title } from "@/features/browse/title";
+import type { GenreNames, Title } from "@/features/title/title";
 import type { MediaResult } from "@/integrations/seerr/schemas";
 
 export type SearchItem =

@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { TitleCard } from "@/features/browse/TitleCard";
-import { withTitleFacts } from "@/features/browse/titleFacts";
 import { ContentState } from "@/features/feedback/ContentState";
 import { loadSettings } from "@/features/settings/loadSettings";
 import { defaultPreviewMode } from "@/features/settings/settings";
@@ -11,15 +9,16 @@ import { tmdbImageUrl } from "@/integrations/seerr/images";
 import { RequestButton } from "./RequestButton";
 import { requestTimeline } from "./requestTimeline";
 import { SeasonEpisodes } from "./SeasonEpisodes";
+import { TitleCard } from "./TitleCard";
+import { withTitleFacts } from "./titleFacts";
 import { TrailerButton } from "./TrailerButton";
 import { WatchlistButton } from "./WatchlistButton";
 
 import type { ReactNode } from "react";
 
-import type { Availability } from "@/features/browse/title";
-
 import type { TitleDetailsResult } from "./loadTitleDetails";
 import type { TimelineStep } from "./requestTimeline";
+import type { Availability } from "./title";
 import type { SeasonSummary, TitleDetails } from "./titleDetails";
 
 import styles from "./TitleDetailsPage.module.css";

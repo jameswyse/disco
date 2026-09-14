@@ -6,7 +6,7 @@ import { TopBar } from "./TopBar";
 
 import type { ReactNode } from "react";
 
-import styles from "../layout.module.css";
+import styles from "./AppShell.module.css";
 
 export function AppShell({
   children,

@@ -8,7 +8,7 @@ reason it changes:
 | `app`          | Thin routes, layouts, route handlers and metadata. Pages parse URL input and delegate.                                                             |
 | `features`     | Bounded user contexts: `auth`, `browse`, `title`, `person`, `views`, `search`, `requests`; shared feedback components live in `features/feedback`. |
 | `integrations` | Reusable external-system mechanics: the Seerr client, schemas and image URLs.                                                                      |
-| `platform`     | Application-wide behaviour: configuration and the Effect runtime.                                                                                  |
+| `platform`     | Application-wide behaviour: configuration, page-number validation and the Effect runtime.                                                          |
 
 ## Seerr integration
 
@@ -93,19 +93,20 @@ A browse screen is `(view, list, filters, page)`:
 - `loadBrowse.ts` fetches two Seerr pages per browse page, drops people from trending, resolves
   genre names, interleaves movie and series sources round-robin (TMDB popularity is not
   comparable across media types) and applies the hide-already-available filter locally.
+
+## Titles
+
+`features/title` owns the shared title model, cards and previews used by browse, search and
+person pages, as well as `/title/[mediaType]/[id]`:
+
 - `title.ts` maps Seerr results to the `Title` shown on cards; Seerr `MediaInfo.status` becomes
   `Availability`. Ratings with fewer than 10 votes are hidden.
 - `TitleCard` is a client component: hovering for 350 ms, or pressing ⓘ, fetches
   `/api/titles/[mediaType]/[id]` (a `TitlePreview` validated with `Schema` on the client)
-  and shows the preview card with request, details and watchlist actions. A preference on
+  and renders `TitleHoverCard` with request, details and watchlist actions. A preference on
   `/settings` can turn hover off so only the button opens it.
 - `titleFacts.ts` fetches runtime and season count per title through `"use cache"` with the
   longest cache life, since list endpoints omit them; cards show them once known.
-
-## Title details
-
-`features/title` renders `/title/[mediaType]/[id]`:
-
 - `titleDetails.ts` maps Seerr's movie and series payloads plus Rotten Tomatoes / IMDb ratings
   into one `TitleDetails` model (scores, cast, seasons with availability, providers for the
   region, requests, downloads, external links).
@@ -120,9 +121,13 @@ A browse screen is `(view, list, filters, page)`:
 - Pages read `params` and `searchParams`, validate them once (`parseDiscoverListId`,
   `parseBrowseFilters`, `parsePageNumber`, `parseTmdbId`), and pass typed values into a feature
   component.
+- `platform/pageNumber.ts` owns both page-number entry points. `parsePageNumber` defaults invalid
+  URL input to page one; `decodePageNumber` rejects invalid numeric input to server actions.
 - Loaders call `connection()` before running Effect programs so the runtime's clock access is
   request-time rather than a prerender error. Request-time parts of the sidebar sit inside
   `Suspense` boundaries; `app/(authenticated)/loading.tsx` covers browsing pages.
+- `AppShell.module.css` lives beside `app/(authenticated)/AppShell.tsx`. Shared results-footer
+  styles belong to `features/feedback/InfiniteList.module.css`.
 - Configuration is parsed once with Effect `Config` in `platform/configuration`. `/api/health`
   returns `503 misconfigured` until it parses, so the Docker health check reflects configuration.
 - Use relative imports within a feature and `@/` when crossing into another area.
@@ -136,6 +141,11 @@ A browse screen is `(view, list, filters, page)`:
   `/__fixture/requests`, and rejects API-key calls without an explicit user ID. The fixture also models Seerr sessions,
   CSRF protection and per-user watchlists. Browser tests sign in through the real login screen.
   Saved views use a fresh temporary data directory for each test run.
+- Browser specs group tests by the behaviour they exercise. `title.spec.ts` covers title requests
+  and previews, `filters.spec.ts` covers browse filters, and `search.spec.ts` covers search results.
+  `settings.spec.ts` owns preference persistence and its effects on browsing. Its Playwright project
+  runs after the other browser tests because preferences are instance-wide. Settings mutations run
+  serially and restore defaults; view mutations remain in `views.spec.ts`.
 
 ## Search, people and continuous results
 

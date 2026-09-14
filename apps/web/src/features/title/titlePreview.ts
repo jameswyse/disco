@@ -5,7 +5,7 @@ import type { TitleDetails } from "./titleDetails";
 const OptionalText = Schema.optional(Schema.String);
 const OptionalNumber = Schema.optional(Schema.Number);
 
-/** The subset of `TitleDetails` the browse hover card needs, validated when it crosses the wire. */
+/** The subset of `TitleDetails` the title hover card needs, validated when it crosses the wire. */
 export const TitlePreview = Schema.Struct({
   name: Schema.String,
   year: OptionalNumber,

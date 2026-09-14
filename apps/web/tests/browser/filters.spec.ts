@@ -88,20 +88,6 @@ test("hiding library titles removes them and reports the count", async ({ page }
   ).toHaveCount(0);
 });
 
-test("search finds titles through Seerr", async ({ page }) => {
-  await page.goto("/movies");
-  await page.getByRole("combobox", { name: "Search" }).fill("fixture");
-  await page.getByRole("combobox", { name: "Search" }).press("Enter");
-
-  await expect(page).toHaveURL(/\/search\?q=fixture$/);
-  await expect(page.getByRole("combobox", { name: "Search", exact: true })).toHaveCount(1);
-  await expect(page.getByRole("banner").getByRole("combobox")).toHaveValue("fixture");
-  await expect(page.getByText(/3 results for “fixture”/)).toBeVisible();
-  const grid = page.getByRole("list", { name: "Search results" });
-  await expect(grid.getByText("Fixture Series One")).toBeVisible();
-  await expect(grid.getByRole("link", { name: /Fixture Film Two/ })).toBeVisible();
-});
-
 test("provider upcoming lists identify originals without explanatory text", async ({ page }) => {
   await page.goto("/netflix?list=upcoming&lang=any");
   await expect(page.getByRole("link", { name: "Upcoming originals", exact: true })).toHaveAttribute(
@@ -212,3 +198,25 @@ for (const width of [390, 1440]) {
     await expect(search).toHaveValue("");
   });
 }
+
+test("extra filters are counted and mixed views require a media type before sorting", async ({
+  page,
+}) => {
+  await page.goto("/netflix?list=popular&lang=any");
+  await page.getByText(/^Filters 0$/).click();
+  await expect(page.getByLabel("Sort order", { exact: true })).toBeDisabled();
+  await page
+    .getByRole("navigation", { name: "Media type" })
+    .getByRole("link", { name: "Movies" })
+    .click();
+  await expect(page.getByLabel("Sort order", { exact: true })).toBeEnabled();
+  await page.getByLabel("Sort order", { exact: true }).selectOption("rating");
+  await expect(page).toHaveURL(/sort=rating/);
+  const year = page.getByLabel("Release year", { exact: true });
+  await year.fill("2020");
+  await year.press("Enter");
+  await expect(page).toHaveURL(/year=2020/);
+  await page.getByLabel("Minimum votes", { exact: true }).selectOption("500");
+  await expect(page).toHaveURL(/votes=500/);
+  await expect(page.getByText(/^Filters 4$/)).toBeVisible();
+});

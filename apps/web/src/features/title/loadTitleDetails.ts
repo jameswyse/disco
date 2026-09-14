@@ -2,19 +2,19 @@ import { connection } from "next/server";
 
 import { Effect } from "effect";
 
-import { titleFromResult } from "@/features/browse/title";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";
 
 import { requestedProfileName } from "./qualityProfiles";
+import { titleFromResult } from "./title";
 import { titleDetailsFromMovie, titleDetailsFromTv } from "./titleDetails";
 
-import type { GenreNames, Title } from "@/features/browse/title";
 import type { MediaType } from "@/integrations/seerr/client";
 import type { SeerrError } from "@/integrations/seerr/errors";
 import type { SeerrIdentity } from "@/integrations/seerr/identity";
 
+import type { GenreNames, Title } from "./title";
 import type { TitleDetails } from "./titleDetails";
 
 export type TitleDetailsResult =

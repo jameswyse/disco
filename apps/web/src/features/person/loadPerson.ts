@@ -2,7 +2,7 @@ import { connection } from "next/server";
 
 import { Effect } from "effect";
 
-import { titleFromResult } from "@/features/browse/title";
+import { titleFromResult } from "@/features/title/title";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";

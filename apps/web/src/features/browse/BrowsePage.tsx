@@ -2,8 +2,10 @@ import Link from "next/link";
 
 import { ContentState } from "@/features/feedback/ContentState";
 import { InfiniteList } from "@/features/feedback/InfiniteList";
-import { decodePageNumber } from "@/features/feedback/pageNumber";
+import { TitleCard } from "@/features/title/TitleCard";
+import { withTitleFacts } from "@/features/title/titleFacts";
 import { viewMediaTypes } from "@/features/views/views";
+import { decodePageNumber } from "@/platform/pageNumber";
 
 import { BrowseEmptyState } from "./BrowseEmptyState";
 import { browseHref } from "./browseHref";
@@ -11,8 +13,6 @@ import { browseListLabel } from "./browseListLabel";
 import { discoverListIds } from "./discoverLists";
 import { FilterMenu } from "./FilterMenu";
 import { loadBrowse } from "./loadBrowse";
-import { TitleCard } from "./TitleCard";
-import { withTitleFacts } from "./titleFacts";
 
 import type { PageBatch } from "@/features/feedback/InfiniteList";
 import type { PreviewMode } from "@/features/settings/settings";

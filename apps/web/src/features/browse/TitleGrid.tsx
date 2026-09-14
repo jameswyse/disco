@@ -1,8 +1,7 @@
-import { TitleCard } from "./TitleCard";
+import { TitleCard } from "@/features/title/TitleCard";
 
 import type { PreviewMode } from "@/features/settings/settings";
-
-import type { Title } from "./title";
+import type { Title } from "@/features/title/title";
 
 import styles from "./BrowsePage.module.css";
 

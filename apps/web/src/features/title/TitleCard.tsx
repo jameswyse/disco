@@ -5,11 +5,11 @@ import Link from "next/link";
 
 import { useEffect, useRef, useState } from "react";
 
-import { decodeTitlePreview } from "@/features/title/titlePreview";
-import { titleHref } from "@/features/title/titleRoute";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
 import { TitleHoverCard } from "./TitleHoverCard";
+import { decodeTitlePreview } from "./titlePreview";
+import { titleHref } from "./titleRoute";
 
 import type { PreviewMode } from "@/features/settings/settings";
 

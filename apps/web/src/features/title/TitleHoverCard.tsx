@@ -3,15 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { RequestButton } from "@/features/title/RequestButton";
-import { titleHref } from "@/features/title/titleRoute";
-import { TrailerButton } from "@/features/title/TrailerButton";
-import { WatchlistButton } from "@/features/title/WatchlistButton";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
-import type { TitlePreview } from "@/features/title/titlePreview";
+import { RequestButton } from "./RequestButton";
+import { titleHref } from "./titleRoute";
+import { TrailerButton } from "./TrailerButton";
+import { WatchlistButton } from "./WatchlistButton";
 
 import type { Title } from "./title";
+import type { TitlePreview } from "./titlePreview";
 
 import styles from "./TitleHoverCard.module.css";
 

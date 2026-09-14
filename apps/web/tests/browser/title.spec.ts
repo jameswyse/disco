@@ -252,3 +252,51 @@ test("the requests page shows one combined status per request", async ({ page })
   ).toBeVisible();
   await expect(page.getByRole("banner").getByRole("combobox")).toHaveCount(1);
 });
+
+test("quality profile is sent with a season request and appears on existing requests", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/title/tv/201");
+  await expect(page.getByText(/Quality profile · HD-1080p/)).toBeVisible();
+  const season = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("button", { name: /^Season 2/ }) });
+  await season.getByRole("button", { name: "Request", exact: true }).click();
+  await page.getByLabel("Quality profile", { exact: true }).selectOption("0:2");
+  await page.getByRole("button", { name: "Confirm request" }).click();
+  await expect(season.getByText("✓ Requested")).toBeVisible();
+  const recorded: unknown = await (
+    await request.get(`${seerrFixtureOrigin}/__fixture/requests`)
+  ).json();
+  expect(recorded).toMatchObject({
+    requests: expect.arrayContaining([
+      {
+        mediaType: "tv",
+        mediaId: 201,
+        seasons: [2],
+        profileId: 2,
+        serverId: 0,
+        is4k: false,
+        userId: 2,
+      },
+    ]),
+  });
+  await page.goto("/requests");
+  await expect(page.getByRole("list", { name: "Requests" }).getByText(/HD-1080p/)).toBeVisible();
+});
+
+test("a request dialog opened from a hover card stays open", async ({ page }) => {
+  await page.goto("/movies?list=popular");
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("link", { name: /Fixture Film Two/ }) });
+  await card.getByRole("button", { name: /info/i }).click();
+  await card.getByRole("button", { name: /Request/ }).click();
+  const dialog = page.getByRole("dialog", { name: "Request title", exact: true });
+  await expect(dialog).toBeVisible();
+  await page.mouse.move(5, 5);
+  await dialog.getByLabel("Quality profile").selectOption("0:2");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+});

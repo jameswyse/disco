@@ -1,21 +1,26 @@
 import Link from "next/link";
 
+import { ContentState } from "@/features/feedback/ContentState";
+import { InfiniteList } from "@/features/feedback/InfiniteList";
+import { decodePageNumber } from "@/features/feedback/pageNumber";
 import { viewMediaTypes } from "@/features/views/views";
 
+import { BrowseEmptyState } from "./BrowseEmptyState";
 import { browseHref } from "./browseHref";
-import { discoverListIds, discoverListLabels } from "./discoverLists";
-import { FilterBar } from "./FilterBar";
+import { browseListLabel } from "./browseListLabel";
+import { discoverListIds } from "./discoverLists";
+import { FilterMenu } from "./FilterMenu";
 import { loadBrowse } from "./loadBrowse";
+import { TitleCard } from "./TitleCard";
 import { withTitleFacts } from "./titleFacts";
-import { TitleGrid } from "./TitleGrid";
 
+import type { PageBatch } from "@/features/feedback/InfiniteList";
 import type { PreviewMode } from "@/features/settings/settings";
 import type { View } from "@/features/views/views";
 
 import type { BrowseLocation } from "./browseHref";
 import type { DiscoverListId } from "./discoverLists";
 import type { BrowseFilters } from "./filters";
-import type { BrowseResult } from "./loadBrowse";
 
 import styles from "./BrowsePage.module.css";
 
@@ -28,29 +33,28 @@ type BrowsePageProperties = Readonly<{
   page: number;
 }>;
 
-function Summary({
-  view,
-  listId,
-  result,
-}: Readonly<{ view: View; listId: DiscoverListId; result: BrowseResult }>) {
+async function makeBatch(
+  view: View,
+  listId: DiscoverListId,
+  previewMode: PreviewMode,
+  result: Awaited<ReturnType<typeof loadBrowse>>,
+): Promise<PageBatch> {
   if (result.kind === "error") {
-    return (
-      <p className={styles.summary} role="alert">
-        {result.message}
-      </p>
-    );
+    return result;
   }
 
-  return (
-    <p className={styles.summary}>
-      {discoverListLabels[listId]} on <b>{view.label}</b> ·{" "}
-      {result.totalResults.toLocaleString("en-AU")} titles · page {result.page} of{" "}
-      {result.totalPages.toLocaleString("en-AU")}
-      {result.hiddenAvailable > 0
-        ? ` · ${result.hiddenAvailable} hidden because they're already in your library`
-        : ""}
-    </p>
-  );
+  const titles = await withTitleFacts(result.titles);
+
+  return {
+    kind: "ok",
+    page: result.page,
+    totalPages: result.totalPages,
+    items: titles.map((title) => ({
+      id: `${title.mediaType}-${title.id}`,
+      content: <TitleCard title={title} previewMode={previewMode} />,
+    })),
+    summary: `${browseListLabel(view, listId)} on ${view.label} · ${result.totalResults.toLocaleString("en-AU")} titles · page ${result.page} of ${Math.max(1, result.totalPages)}${result.hiddenAvailable ? ` · ${result.hiddenAvailable} hidden because they're already available` : ""}`,
+  };
 }
 
 export async function BrowsePage({
@@ -62,7 +66,19 @@ export async function BrowsePage({
   page,
 }: BrowsePageProperties) {
   const result = await loadBrowse(view, listId, filters, page);
-  const titles = result.kind === "ok" ? await withTitleFacts(result.titles) : [];
+
+  async function loadPage(nextPage: number): Promise<PageBatch> {
+    "use server";
+
+    return makeBatch(
+      view,
+      listId,
+      previewMode,
+      await loadBrowse(view, listId, filters, decodePageNumber(nextPage)),
+    );
+  }
+
+  const initial = await makeBatch(view, listId, previewMode, result);
   const location: BrowseLocation = { viewId: view.id, listId, filters, defaultLanguage, page };
 
   return (
@@ -76,47 +92,37 @@ export async function BrowsePage({
               href={browseHref({ ...location, listId: id, page: 1 })}
               key={id}
             >
-              {discoverListLabels[id]}
+              {browseListLabel(view, id)}
             </Link>
           ))}
         </nav>
-
-        <Link className={styles.requestsButton} href="/requests">
-          Requests
-        </Link>
+        <FilterMenu
+          genres={result.kind === "ok" ? result.genres : []}
+          location={location}
+          lockedGenre={view.source.kind === "genre" ? view.label : undefined}
+          lockedLanguage={view.source.kind === "language" ? view.label : undefined}
+          mixedMedia={viewMediaTypes(view).length > 1}
+        />
       </header>
 
-      <FilterBar
-        genres={result.kind === "ok" ? result.genres : []}
-        location={location}
-        mixedMedia={viewMediaTypes(view).length > 1}
-      />
-
-      <Summary listId={listId} result={result} view={view} />
-
-      {result.kind === "ok" ? (
-        <>
-          <TitleGrid
-            label={`${discoverListLabels[listId]} titles`}
-            previewMode={previewMode}
-            titles={titles}
-          />
-          <nav aria-label="Pages" className={styles.pagination}>
-            {result.page > 1 ? (
-              <Link className={styles.pageLink} href={browseHref({ ...location, page: page - 1 })}>
-                ← Previous
-              </Link>
-            ) : (
-              <span />
-            )}
-            {result.page < result.totalPages ? (
-              <Link className={styles.pageLink} href={browseHref({ ...location, page: page + 1 })}>
-                Next →
-              </Link>
-            ) : null}
-          </nav>
-        </>
-      ) : null}
+      {initial.kind === "error" ? (
+        <ContentState title="Titles couldn’t be loaded" message={initial.message} retry />
+      ) : (
+        <InfiniteList
+          initial={initial}
+          loadPage={loadPage}
+          key={browseHref(location)}
+          label={`${browseListLabel(view, listId)} titles`}
+          className={styles.grid}
+          empty={
+            <BrowseEmptyState
+              hiddenAvailable={result.kind === "ok" ? result.hiddenAvailable : 0}
+              location={location}
+              view={view}
+            />
+          }
+        />
+      )}
     </>
   );
 }

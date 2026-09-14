@@ -22,7 +22,7 @@ describe("parseBrowseFilters", () => {
   it("ignores values outside the supported sets", () => {
     expect(
       parseBrowseFilters(
-        { type: "person", genre: "-1", lang: "english", rating: "9", hide: "yes" },
+        { type: "person", genre: "-1", lang: "english", rating: "10", hide: "yes" },
         undefined,
       ),
     ).toEqual(noFilters);

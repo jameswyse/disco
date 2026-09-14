@@ -74,7 +74,6 @@ describe("planBrowseSources", () => {
       mediaType: "movie",
       query: {
         sortBy: "popularity.desc",
-        releasedAfter: "2025-09-13",
         watchProviders: [8],
         watchRegion: "AU",
       },
@@ -85,10 +84,45 @@ describe("planBrowseSources", () => {
       query: {
         sortBy: "first_air_date.asc",
         releasedAfter: "2026-09-14",
-        watchProviders: [8],
-        watchRegion: "AU",
+        network: 213,
       },
     });
+  });
+
+  it("uses verified original studios and limits Disney+ to series", () => {
+    expect(planBrowseSources(netflixView, "upcoming", noFilters, context)[0]).toEqual({
+      kind: "discover",
+      mediaType: "movie",
+      query: { studio: 178464, sortBy: "primary_release_date.asc", releasedAfter: "2026-09-14" },
+    });
+    expect(
+      planBrowseSources(
+        { ...netflixView, source: { kind: "provider", providerId: 337 } },
+        "upcoming",
+        noFilters,
+        context,
+      ),
+    ).toEqual([
+      {
+        kind: "discover",
+        mediaType: "tv",
+        query: { network: 2739, sortBy: "first_air_date.asc", releasedAfter: "2026-09-14" },
+      },
+    ]);
+    expect(
+      planBrowseSources(
+        { ...netflixView, source: { kind: "provider", providerId: 999999 } },
+        "upcoming",
+        noFilters,
+        context,
+      ),
+    ).toEqual([]);
+  });
+
+  it("keeps older network shows eligible for trending", () => {
+    expect(planBrowseSources(hboView, "trending", noFilters, context)).toEqual([
+      { kind: "discover", mediaType: "tv", query: { network: 49, sortBy: "popularity.desc" } },
+    ]);
   });
 
   it("limits network views to series and studio-style constraints to their media type", () => {
@@ -108,7 +142,7 @@ describe("planBrowseSources", () => {
     expect(sources.map((source) => source.mediaType)).toEqual(["tv"]);
   });
 
-  it("switches trending to a discover query once grid filters apply and merges genres", () => {
+  it("switches trending to a discover query once grid filters apply and preserves the view genre", () => {
     const [source] = planBrowseSources(
       dramaView,
       "trending",
@@ -121,12 +155,38 @@ describe("planBrowseSources", () => {
       mediaType: "movie",
       query: {
         sortBy: "popularity.desc",
-        releasedAfter: "2025-09-13",
-        genres: [18, 80],
+        genres: [18],
         originalLanguage: "ko",
         voteAverageAtLeast: 7,
         voteCountAtLeast: 50,
       },
     });
+  });
+  it("applies a release year, rating sort and minimum vote count through discover", () => {
+    expect(
+      planBrowseSources(
+        dramaView,
+        "popular",
+        { ...noFilters, mediaType: "movie", year: 2020, sort: "rating", votesAtLeast: 500 },
+        context,
+      ),
+    ).toEqual([
+      {
+        kind: "discover",
+        mediaType: "movie",
+        query: {
+          genres: [18],
+          sortBy: "vote_average.desc",
+          releasedAfter: "2020-01-01",
+          releasedBefore: "2020-12-31",
+          voteCountAtLeast: 500,
+        },
+      },
+    ]);
+  });
+  it("does not send impossible date ranges when an upcoming view is filtered to a past year", () => {
+    expect(planBrowseSources(dramaView, "upcoming", { ...noFilters, year: 2020 }, context)).toEqual(
+      [],
+    );
   });
 });

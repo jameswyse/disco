@@ -3,13 +3,15 @@ import { connection } from "next/server";
 
 import { Suspense } from "react";
 
+import { browseListLabel } from "@/features/browse/browseListLabel";
 import { BrowsePage } from "@/features/browse/BrowsePage";
-import { discoverListLabels, parseDiscoverListId } from "@/features/browse/discoverLists";
+import { parseDiscoverListId } from "@/features/browse/discoverLists";
 import { parseBrowseFilters } from "@/features/browse/filters";
 import { parsePageNumber } from "@/features/browse/pageNumber";
 import { loadSettings } from "@/features/settings/loadSettings";
 import { defaultPreviewMode } from "@/features/settings/settings";
 import { loadViews } from "@/features/views/loadViews";
+import { viewMediaTypes } from "@/features/views/views";
 
 import Loading from "../loading";
 
@@ -32,7 +34,7 @@ async function resolveView({ params }: ViewPageProperties) {
 export async function generateMetadata(properties: ViewPageProperties): Promise<Metadata> {
   const [view, query] = await Promise.all([resolveView(properties), properties.searchParams]);
 
-  return { title: `${discoverListLabels[parseDiscoverListId(query.list)]} · ${view.label}` };
+  return { title: `${browseListLabel(view, parseDiscoverListId(query.list))} · ${view.label}` };
 }
 
 async function ViewBrowse(properties: ViewPageProperties) {
@@ -42,10 +44,20 @@ async function ViewBrowse(properties: ViewPageProperties) {
     loadSettings(),
   ]);
 
+  const parsed = parseBrowseFilters(query, settings.defaultLanguage);
+  const types = viewMediaTypes(view);
+  const filters = {
+    ...parsed,
+    sort: types.length > 1 && parsed.mediaType === "all" ? undefined : parsed.sort,
+    genreId: view.source.kind === "genre" ? undefined : parsed.genreId,
+    language: view.source.kind === "language" ? undefined : parsed.language,
+    mediaType: types.length === 1 ? ("all" as const) : parsed.mediaType,
+  };
+
   return (
     <BrowsePage
       defaultLanguage={settings.defaultLanguage}
-      filters={parseBrowseFilters(query, settings.defaultLanguage)}
+      filters={filters}
       listId={parseDiscoverListId(query.list)}
       page={parsePageNumber(query.page)}
       previewMode={settings.previewMode ?? defaultPreviewMode}

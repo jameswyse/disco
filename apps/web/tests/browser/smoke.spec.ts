@@ -18,7 +18,7 @@ test("the root redirects to the first view and renders titles from Seerr", async
   );
   const grid = page.getByRole("list", { name: "Trending titles" });
   await expect(grid.getByText("Fixture Film One")).toBeVisible();
-  await expect(grid.getByRole("img", { name: "In Plex" })).toBeVisible();
+  await expect(grid.getByRole("img", { name: "Available" })).toBeVisible();
   await expect(page.getByText("Fixture User")).toBeVisible();
   const sidebar = page.getByRole("complementary", { name: "Views" });
   await expect(sidebar.getByRole("link", { name: /Add a view/ })).toHaveCount(0);

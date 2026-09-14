@@ -1,6 +1,7 @@
 import { viewMediaTypes } from "@/features/views/views";
 
 import { hasDiscoverFilters } from "./filters";
+import { providerOriginals } from "./providerOriginals";
 
 import type { View, ViewSource } from "@/features/views/views";
 import type { DiscoverQuery, MediaType } from "@/integrations/seerr/client";
@@ -25,7 +26,6 @@ type DiscoverConstraints = Omit<DiscoverQuery, "page" | "sortBy">;
 
 /** Recently released reaches back half a year so narrow views (one network, one studio) still fill. */
 const recentWindowDays = 180;
-const trendingWindowDays = 365;
 /** Keeps very obscure releases out of date-sorted lists. */
 const minimumVotes = 5;
 /** A rating floor is only meaningful once enough people have voted. */
@@ -99,16 +99,23 @@ function filterConstraints(filters: BrowseFilters): DiscoverConstraints {
     constraints.voteCountAtLeast = minimumVotesForRatingFilter;
   }
 
+  if (filters.year !== undefined) {
+    constraints.releasedAfter = `${filters.year}-01-01`;
+    constraints.releasedBefore = `${filters.year}-12-31`;
+  }
+
+  if (filters.votesAtLeast !== undefined) {
+    constraints.voteCountAtLeast = Math.max(
+      constraints.voteCountAtLeast ?? 0,
+      filters.votesAtLeast,
+    );
+  }
+
   return constraints;
 }
 
 function mergeConstraints(view: DiscoverConstraints, filter: DiscoverConstraints) {
-  const merged: MutableConstraints = { ...view, ...filter };
-
-  // A view genre and a filter genre both apply (TMDB treats comma-separated genres as "and").
-  if (view.genres && filter.genres) {
-    merged.genres = [...view.genres, ...filter.genres];
-  }
+  const merged: MutableConstraints = { ...filter, ...view };
 
   return merged;
 }
@@ -119,19 +126,51 @@ function planForMediaType(
   filters: BrowseFilters,
   mediaType: MediaType,
   context: BrowseContext,
-): BrowseSource {
-  const constraints = mergeConstraints(
-    sourceConstraints(view.source, mediaType, context),
-    filterConstraints(filters),
-  );
+): BrowseSource | undefined {
+  const source =
+    view.source.kind === "provider" && list === "upcoming"
+      ? providerOriginals(view.source.providerId, mediaType)
+      : sourceConstraints(view.source, mediaType, context);
+
+  if (source === undefined) {
+    return undefined;
+  }
+
+  const constraints = mergeConstraints(source, filterConstraints(filters));
   // Seerr's trending and upcoming endpoints take no filters, so anything constrained falls back
   // to TMDB discover approximations.
   const constrained = view.source.kind !== "media" || hasDiscoverFilters(filters);
-  const discover = (query: Omit<DiscoverQuery, "page">): BrowseSource => ({
-    kind: "discover",
-    mediaType,
-    query,
-  });
+
+  const discover = (query: Omit<DiscoverQuery, "page">): BrowseSource | undefined => {
+    const sorts = {
+      popular: "popularity.desc",
+      rating: "vote_average.desc",
+      newest: dateSort(mediaType, "desc"),
+      oldest: dateSort(mediaType, "asc"),
+    } satisfies Record<NonNullable<BrowseFilters["sort"]>, DiscoverQuery["sortBy"]>;
+    const sorted = { ...query, sortBy: filters.sort ? sorts[filters.sort] : query.sortBy };
+
+    if (filters.year !== undefined) {
+      sorted.releasedAfter =
+        query.releasedAfter && query.releasedAfter > `${filters.year}-01-01`
+          ? query.releasedAfter
+          : `${filters.year}-01-01`;
+      sorted.releasedBefore =
+        query.releasedBefore && query.releasedBefore < `${filters.year}-12-31`
+          ? query.releasedBefore
+          : `${filters.year}-12-31`;
+    }
+
+    if (
+      sorted.releasedAfter &&
+      sorted.releasedBefore &&
+      sorted.releasedAfter > sorted.releasedBefore
+    ) {
+      return undefined;
+    }
+
+    return { kind: "discover", mediaType, query: sorted };
+  };
 
   switch (list) {
     case "popular":
@@ -141,7 +180,6 @@ function planForMediaType(
         ? discover({
             ...constraints,
             sortBy: "popularity.desc",
-            releasedAfter: shiftDate(context.today, -trendingWindowDays),
           })
         : { kind: "trending", mediaType };
     case "upcoming":
@@ -178,5 +216,9 @@ export function planBrowseSources(
 ): readonly BrowseSource[] {
   return viewMediaTypes(view)
     .filter((mediaType) => filters.mediaType === "all" || mediaType === filters.mediaType)
-    .map((mediaType) => planForMediaType(view, list, filters, mediaType, context));
+    .flatMap((mediaType) => {
+      const source = planForMediaType(view, list, filters, mediaType, context);
+
+      return source === undefined ? [] : [source];
+    });
 }

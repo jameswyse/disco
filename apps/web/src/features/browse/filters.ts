@@ -10,12 +10,15 @@ export type BrowseFilters = Readonly<{
   language: string | undefined;
   ratingAtLeast: number | undefined;
   hideAvailable: boolean;
+  year?: number | undefined;
+  sort?: "popular" | "rating" | "newest" | "oldest" | undefined;
+  votesAtLeast?: number | undefined;
 }>;
 
 export type SearchParameter = string | string[] | undefined;
 export type SearchParameters = Readonly<Record<string, SearchParameter>>;
 
-export const ratingOptions = [6, 7, 8] as const;
+export const ratingOptions = [5, 6, 7, 8, 9] as const;
 
 export const noFilters: BrowseFilters = {
   mediaType: "all",
@@ -55,6 +58,20 @@ function resolveLanguage(
   return languagePattern.test(value) ? value : defaultLanguage;
 }
 
+export const sortOptions = [
+  { id: "popular", label: "Most popular" },
+  { id: "rating", label: "Highest rated" },
+  { id: "newest", label: "Newest first" },
+  { id: "oldest", label: "Oldest first" },
+] as const;
+export const voteOptions = [100, 500, 1000, 5000] as const;
+
+function parseYear(value: string | undefined): number | undefined {
+  const year = positiveInteger(value);
+
+  return year !== undefined && year >= 1870 && year <= 2100 ? year : undefined;
+}
+
 export function parseBrowseFilters(
   query: SearchParameters,
   defaultLanguage: string | undefined,
@@ -71,6 +88,9 @@ export function parseBrowseFilters(
         ? rating
         : undefined,
     hideAvailable: first(query.hide) === "1",
+    year: parseYear(first(query.year)),
+    sort: sortOptions.find((option) => option.id === first(query.sort))?.id,
+    votesAtLeast: voteOptions.find((option) => option === positiveInteger(first(query.votes))),
   };
 }
 
@@ -101,6 +121,18 @@ export function filterEntries(
     entries.push(["hide", "1"]);
   }
 
+  if (filters.year !== undefined) {
+    entries.push(["year", String(filters.year)]);
+  }
+
+  if (filters.sort !== undefined) {
+    entries.push(["sort", filters.sort]);
+  }
+
+  if (filters.votesAtLeast !== undefined) {
+    entries.push(["votes", String(filters.votesAtLeast)]);
+  }
+
   return entries;
 }
 
@@ -109,6 +141,9 @@ export function hasDiscoverFilters(filters: BrowseFilters): boolean {
   return (
     filters.genreId !== undefined ||
     filters.language !== undefined ||
-    filters.ratingAtLeast !== undefined
+    filters.ratingAtLeast !== undefined ||
+    filters.year !== undefined ||
+    filters.sort !== undefined ||
+    filters.votesAtLeast !== undefined
   );
 }

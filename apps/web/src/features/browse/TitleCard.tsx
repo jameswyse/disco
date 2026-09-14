@@ -22,10 +22,10 @@ import styles from "./TitleCard.module.css";
 type AvailabilityBadge = Readonly<{ className: string | undefined; label: string; symbol: string }>;
 
 const availabilityBadges = {
-  available: { className: styles.available, label: "In Plex", symbol: "✓" },
+  available: { className: styles.available, label: "Available", symbol: "✓" },
   "partially-available": {
     className: styles.partiallyAvailable,
-    label: "Partly in Plex",
+    label: "Partly Available",
     symbol: "◐",
   },
   processing: { className: styles.requested, label: "Requested", symbol: "↓" },
@@ -113,7 +113,7 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
 
     setOpen(true);
 
-    if (preview.kind === "idle") {
+    if (preview.kind === "idle" || preview.kind === "error") {
       setPreview({ kind: "loading" });
       void fetchPreview(title).then(setPreview);
     }

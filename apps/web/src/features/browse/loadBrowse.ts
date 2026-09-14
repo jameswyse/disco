@@ -2,6 +2,7 @@ import { connection } from "next/server";
 
 import { Effect } from "effect";
 
+import { viewMediaTypes } from "@/features/views/views";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";
@@ -26,7 +27,7 @@ export type BrowseResult =
   | Readonly<{
       kind: "ok";
       titles: readonly Title[];
-      /** Titles removed by the "hide what's already in Plex" filter. */
+      /** Titles removed by the "Hide already available" filter. */
       hiddenAvailable: number;
       page: number;
       totalPages: number;
@@ -169,9 +170,14 @@ function browseProgram(
     const titles = filters.hideAvailable
       ? allTitles.filter((title) => !isInLibrary(title))
       : allTitles;
-    const genresById = new Map(
-      [...movieGenres, ...tvGenres].map((genre) => [genre.id, genre] as const),
+    const mediaTypes = viewMediaTypes(view).filter(
+      (type) => filters.mediaType === "all" || filters.mediaType === type,
     );
+    const applicableGenres = [
+      ...(mediaTypes.includes("movie") ? movieGenres : []),
+      ...(mediaTypes.includes("tv") ? tvGenres : []),
+    ];
+    const genresById = new Map(applicableGenres.map((genre) => [genre.id, genre] as const));
 
     return {
       kind: "ok",

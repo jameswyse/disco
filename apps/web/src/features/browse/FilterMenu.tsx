@@ -115,7 +115,8 @@ export function FilterMenu({
         </svg>
         Filters <span className={styles.count}>{activeCount}</span>
       </summary>
-      <div aria-label="Filters" className={styles.panel} role="group">
+      {/* Keep padding clicks focused inside the disclosure when an input blurs. */}
+      <div aria-label="Filters" className={styles.panel} role="group" tabIndex={-1}>
         {mixedMedia ? (
           <nav aria-label="Media type" className={styles.segmentedControl}>
             {mediaFilters.map((filter) => (

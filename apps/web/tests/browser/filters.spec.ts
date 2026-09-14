@@ -1,5 +1,56 @@
 import { expect, test } from "./authenticatedTest";
 
+for (const width of [390, 1440]) {
+  test(`blurring the release year keeps filters usable at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+
+    for (const value of ["", "2020"]) {
+      const path = value ? `/movies?year=${value}` : "/movies";
+      await page.goto(path);
+      await page.getByText(/^Filters \d+$/).click();
+      const panel = page.getByRole("group", { name: "Filters", exact: true });
+      const year = page.getByLabel("Release year", { exact: true });
+
+      await year.click();
+      // Clicking panel padding must blur the field without dismissing the filters.
+      await panel.click({ position: { x: 8, y: 8 } });
+      await expect(year).not.toBeFocused();
+      await expect(panel).toBeVisible();
+      await expect(year).toHaveValue(value);
+      expect(new URL(page.url()).pathname + new URL(page.url()).search).toBe(path);
+
+      await year.click();
+      await year.press("Tab");
+      await expect(page.getByLabel("Minimum votes", { exact: true })).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(panel).toBeHidden();
+      await expect(page.getByText(/^Filters \d+$/)).toBeFocused();
+    }
+
+    await page.getByText(/^Filters \d+$/).click();
+    const panel = page.getByRole("group", { name: "Filters", exact: true });
+    const year = page.getByLabel("Release year", { exact: true });
+    await year.fill("2021");
+    await panel.click({ position: { x: 8, y: 8 } });
+    await expect(page).toHaveURL(/year=2021$/);
+    await expect(panel).toBeVisible();
+    await expect(year).toHaveValue("2021");
+
+    await year.fill("");
+    await panel.click({ position: { x: 8, y: 8 } });
+    await expect(page).toHaveURL(/\/movies$/);
+    await expect(panel).toBeVisible();
+    await page.getByLabel("Hide already available", { exact: true }).focus();
+    await page.keyboard.press("Tab");
+    await expect(panel).toBeHidden();
+
+    await page.getByText(/^Filters \d+$/).click();
+    await year.click();
+    await page.getByRole("combobox", { name: "Search", exact: true }).click();
+    await expect(panel).toBeHidden();
+  });
+}
+
 test("the media type filter narrows mixed views and is kept in the URL", async ({ page }) => {
   await page.goto("/netflix?list=popular");
   await page.getByText(/^Filters \d+$/).click();

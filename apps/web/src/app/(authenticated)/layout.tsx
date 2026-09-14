@@ -1,20 +1,26 @@
 import { Suspense } from "react";
 
+import { Account } from "@/features/auth/Account";
+import { RequestCount } from "@/features/requests/RequestCount";
+import { loadViews } from "@/features/views/loadViews";
 import { Sidebar } from "@/features/views/Sidebar";
+import { ViewEditor } from "@/features/views/ViewEditor";
 import { requireSession } from "@/platform/auth/session";
+
+import { AppShell } from "./AppShell";
 
 import type { ReactNode } from "react";
 
-import styles from "../layout.module.css";
-
 async function AuthenticatedShell({ children }: Readonly<{ children: ReactNode }>) {
   await requireSession();
+  const views = await loadViews();
 
   return (
-    <div className={styles.app}>
-      <Sidebar />
-      <main className={styles.main}>{children}</main>
-    </div>
+    <ViewEditor views={views}>
+      <AppShell account={<Account />} requestCount={<RequestCount />} sidebar={<Sidebar />}>
+        {children}
+      </AppShell>
+    </ViewEditor>
   );
 }
 

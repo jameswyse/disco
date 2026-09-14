@@ -1,14 +1,12 @@
 import { connection } from "next/server";
 
+import { cache } from "react";
+
 import { Effect } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { runAuthenticated } from "@/platform/auth/session";
-
-import { loadViews } from "./loadViews";
-
-import type { View } from "./views";
 
 export type SeerrAccount =
   | Readonly<{
@@ -31,15 +29,7 @@ const accountProgram = Effect.gen(function* () {
   } satisfies SeerrAccount;
 });
 
-export async function loadSidebarViews(): Promise<readonly View[]> {
-  // Saved views are request-time data; opting in explicitly keeps the Effect runtime's clock
-  // access out of the static prerender.
-  await connection();
-
-  return loadViews();
-}
-
-export async function loadAccount(): Promise<SeerrAccount> {
+export const loadAccount = cache(async (): Promise<SeerrAccount> => {
   await connection();
 
   return runAuthenticated(
@@ -50,4 +40,4 @@ export async function loadAccount(): Promise<SeerrAccount> {
       ),
     ),
   );
-}
+});

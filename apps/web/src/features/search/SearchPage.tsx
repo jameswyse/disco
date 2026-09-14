@@ -6,7 +6,6 @@ import { loadSettings } from "@/features/settings/loadSettings";
 import { defaultPreviewMode } from "@/features/settings/settings";
 
 import { loadSearch } from "./loadSearch";
-import { SearchBox } from "./SearchBox";
 
 import browseStyles from "@/features/browse/BrowsePage.module.css";
 
@@ -33,7 +32,7 @@ export async function SearchPage({ query, page }: SearchPageProperties) {
     <>
       <header className={browseStyles.tabBar}>
         <h1 className={browseStyles.pageHeading}>Search</h1>
-        <SearchBox initialQuery={query} />
+
         <Link className={browseStyles.requestsButton} href="/requests">
           Requests
         </Link>

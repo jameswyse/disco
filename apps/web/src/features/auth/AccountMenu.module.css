@@ -1,0 +1,116 @@
+.avatar {
+  background: linear-gradient(135deg, var(--color-warning), #ef4444);
+  border-radius: 50%;
+  flex: none;
+  height: 28px;
+  width: 28px;
+}
+
+.userName {
+  color: var(--color-text);
+  max-width: 160px;
+  font-size: 12.5px;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account {
+  position: relative;
+}
+
+.accountTrigger {
+  align-items: center;
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  list-style: none;
+  min-height: 44px;
+  padding: 6px 8px;
+}
+
+.accountTrigger::-webkit-details-marker {
+  display: none;
+}
+
+.menuIcon,
+.accountIcon {
+  flex: none;
+}
+
+.accountIcon {
+  color: var(--color-text-muted);
+  height: 18px;
+  width: 18px;
+}
+
+.account[open] .menuIcon {
+  transform: rotate(180deg);
+}
+
+.accountMenu {
+  background: var(--color-background-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-large);
+  top: calc(100% + 8px);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+  padding: 4px;
+  position: absolute;
+  right: 0;
+  width: 240px;
+  max-width: calc(100vw - 32px);
+  z-index: 2;
+}
+
+.accountItem {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--color-text-secondary);
+  display: flex;
+  font: inherit;
+  font-size: 13px;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.accountItem:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+@media (hover: hover) {
+  .accountTrigger:hover,
+  .accountItem:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+}
+
+.account[open] .accountTrigger {
+  background: var(--color-surface-hover);
+}
+
+.logout {
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.accountNote {
+  color: var(--color-text-dim);
+  font-size: 12px;
+}
+
+@media (max-width: 40rem) {
+  .userName {
+    display: none;
+  }
+}

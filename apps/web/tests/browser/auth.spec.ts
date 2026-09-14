@@ -49,7 +49,8 @@ test("signing out invalidates the Seerr session even if its old cookie is replay
 }) => {
   await signIn(page);
   const cookies = await page.context().cookies();
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await page.getByText("Fixture User", { exact: true }).click();
+  await page.getByRole("button", { name: "Logout", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect((await page.context().cookies()).some((cookie) => cookie.name === "disco_session")).toBe(
     false,
@@ -74,7 +75,8 @@ test("a rejected logout keeps the session and shows the error", async ({ page })
   await page.request.post(`${seerrFixtureOrigin}/__fixture/reject-logout`, {
     headers: { Cookie: `connect.sid=${session.value}` },
   });
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await page.getByText("Fixture User", { exact: true }).click();
+  await page.getByRole("button", { name: "Logout", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: /could not sign you out/ })).toBeVisible();
   await expect(page).toHaveURL(/\/movies$/);
   expect(

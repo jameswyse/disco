@@ -3,7 +3,7 @@
 import { useRef } from "react";
 
 import { updateSettings } from "./actions";
-import { defaultPreviewMode } from "./settings";
+import { defaultPreviewMode, defaultSidebarStyle } from "./settings";
 
 import type { Settings } from "./settings";
 
@@ -31,7 +31,15 @@ export function PreferencesForm({
   const current = languages.find((language) => language.code === settings.defaultLanguage);
 
   return (
-    <form action={updateSettings} className={className} ref={form}>
+    <form
+      action={updateSettings}
+      className={className}
+      onReset={(event) => {
+        // Autosave must retain the selections after React completes the form action.
+        event.preventDefault();
+      }}
+      ref={form}
+    >
       <label className={labelClassName}>
         Default language filter
         <select
@@ -70,6 +78,28 @@ export function PreferencesForm({
         {(settings.previewMode ?? defaultPreviewMode) === "hover"
           ? "Rest the pointer on a poster for a moment to see its details."
           : "Tap or click ⓘ on a poster to see its details; good for touch screens."}
+      </small>
+      <label className={labelClassName}>
+        Sidebar style
+        <select
+          className={selectClassName}
+          defaultValue={settings.sidebarStyle ?? defaultSidebarStyle}
+          name="sidebarStyle"
+          onChange={() => form.current?.requestSubmit()}
+        >
+          <option value="large">Large · 96px (default)</option>
+          <option value="medium">Medium · 64px</option>
+          <option value="small">Small · 32px</option>
+        </select>
+      </label>
+      <small className={noteClassName}>
+        {
+          {
+            large: "Large artwork cards in the sidebar.",
+            medium: "Shorter artwork cards, with more views on screen.",
+            small: "Compact, single-line rows with view names.",
+          }[settings.sidebarStyle ?? defaultSidebarStyle]
+        }
       </small>
     </form>
   );

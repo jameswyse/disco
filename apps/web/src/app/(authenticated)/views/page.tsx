@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 
-import { parseLibraryCategory } from "@/features/views/loadLibraryPage";
+import { parseLibraryCategory } from "@/features/views/libraryFilters";
 import { ViewLibraryPage } from "@/features/views/ViewLibraryPage";
 
 import Loading from "../loading";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Add a view" };
+export const metadata: Metadata = { title: "Manage views" };
 
 async function Library({ searchParams }: PageProps<"/views">) {
   const query = await searchParams;
@@ -16,6 +16,7 @@ async function Library({ searchParams }: PageProps<"/views">) {
   return (
     <ViewLibraryPage
       category={parseLibraryCategory(query.category)}
+      country={Array.isArray(query.country) ? query.country[0] : query.country}
       query={(search ?? "").trim()}
     />
   );

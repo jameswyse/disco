@@ -1,7 +1,12 @@
 .app {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100dvh;
+}
+
+.withSidebar {
   grid-template-columns: 264px minmax(0, 1fr);
-  height: 100vh;
 }
 
 .main {
@@ -10,4 +15,16 @@
   min-width: 0;
   overflow: auto;
   position: relative;
+}
+
+@media (max-width: 40rem) {
+  .app {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .withSidebar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
 }

@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { SearchBox } from "@/features/search/SearchBox";
 import { titleHref } from "@/features/title/titleRoute";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
@@ -82,7 +81,7 @@ export async function RequestsPage({ filter, page }: RequestsPageProperties) {
             </Link>
           ))}
         </nav>
-        <SearchBox />
+
       </header>
 
       {result.kind === "error" ? (

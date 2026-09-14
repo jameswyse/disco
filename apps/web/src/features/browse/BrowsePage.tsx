@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { SearchBox } from "@/features/search/SearchBox";
 import { viewMediaTypes } from "@/features/views/views";
 
 import { browseHref } from "./browseHref";
@@ -81,7 +80,7 @@ export async function BrowsePage({
             </Link>
           ))}
         </nav>
-        <SearchBox />
+
         <Link className={styles.requestsButton} href="/requests">
           Requests
         </Link>

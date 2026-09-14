@@ -5,7 +5,7 @@ import { Effect } from "effect";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
 import { SeerrIdentity } from "@/integrations/seerr/identity";
-import { requireSession, runAuthenticated } from "@/platform/auth/session";
+import { requireSession } from "@/platform/auth/session";
 import { appRuntime } from "@/platform/runtime";
 
 import type { SeerrUserId } from "@/integrations/seerr/schemas";
@@ -21,7 +21,7 @@ export type LibraryEntry = Readonly<{
   note: string | undefined;
 }>;
 
-export type LibrarySection = "streaming" | "networks" | "studios" | "genres" | "languages";
+export type LibrarySection = "streaming" | "networks" | "studios" | "genres";
 
 export type Library = Readonly<Record<LibrarySection, readonly LibraryEntry[]>>;
 
@@ -35,34 +35,10 @@ const featuredStudioIds = [
   2, 3, 4, 33, 174, 420, 521, 1, 41077, 923, 1632, 10342, 3172, 90733, 10146, 12, 21, 43, 297, 6704,
   14, 25,
 ];
-/** Languages offered without searching, by ISO 639-1 code. */
-const featuredLanguages = new Set([
-  "en",
-  "es",
-  "fr",
-  "de",
-  "it",
-  "ja",
-  "ko",
-  "zh",
-  "hi",
-  "pt",
-  "ru",
-  "sv",
-  "da",
-  "no",
-  "nl",
-  "tr",
-  "ar",
-  "pl",
-  "th",
-  "id",
-]);
-
 const libraryProgram = (region: string) =>
   Effect.gen(function* () {
     const client = yield* SeerrClient;
-    const [movieProviders, tvProviders, networks, studios, movieGenres, tvGenres, languages] =
+    const [movieProviders, tvProviders, networks, studios, movieGenres, tvGenres] =
       yield* Effect.all(
         [
           client.watchProviders("movie", region),
@@ -77,23 +53,30 @@ const libraryProgram = (region: string) =>
           ),
           client.genreSlider("movie"),
           client.genreSlider("tv"),
-          client.languages(),
         ],
         { concurrency: "unbounded" },
       );
 
     const providersById = new Map<number, LibraryEntry>();
+    const movieProviderIds = new Set(movieProviders.map((provider) => provider.id));
+    const tvProviderIds = new Set(tvProviders.map((provider) => provider.id));
 
     for (const provider of [...movieProviders, ...tvProviders].sort(
       (a, b) => (a.displayPriority ?? 0) - (b.displayPriority ?? 0),
     )) {
       if (!providersById.has(provider.id)) {
+        let note = "Series";
+
+        if (movieProviderIds.has(provider.id)) {
+          note = tvProviderIds.has(provider.id) ? "Films & series" : "Films";
+        }
+
         providersById.set(provider.id, {
           label: provider.name,
           source: { kind: "provider", providerId: provider.id },
           logoPath: provider.logoPath ?? undefined,
           backdropPath: undefined,
-          note: undefined,
+          note,
         });
       }
     }
@@ -142,16 +125,6 @@ const libraryProgram = (region: string) =>
         note: undefined,
       })),
       genres: [...genresByName.values()].sort((a, b) => a.label.localeCompare(b.label)),
-      languages: languages
-        .filter((language) => language.english_name !== "")
-        .sort((a, b) => a.english_name.localeCompare(b.english_name))
-        .map((language) => ({
-          label: language.english_name,
-          source: { kind: "language", language: language.iso_639_1 },
-          logoPath: undefined,
-          backdropPath: undefined,
-          note: language.name || undefined,
-        })),
     } satisfies Library;
 
     return library;
@@ -176,22 +149,4 @@ export async function loadLibrary(region: string): Promise<Library> {
   const { user } = await requireSession();
 
   return cachedLibrary(region, user.id);
-}
-
-export function isFeaturedLanguage(entry: LibraryEntry): boolean {
-  return entry.source.kind === "language" && featuredLanguages.has(entry.source.language);
-}
-
-export async function searchKeywords(query: string): Promise<readonly LibraryEntry[]> {
-  const page = await runAuthenticated(
-    Effect.flatMap(SeerrClient, (client) => client.searchKeywords(query)),
-  );
-
-  return page.results.map((keyword) => ({
-    label: keyword.name,
-    source: { kind: "keyword", keywordId: keyword.id },
-    logoPath: undefined,
-    backdropPath: undefined,
-    note: "Keyword",
-  }));
 }

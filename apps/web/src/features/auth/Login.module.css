@@ -59,8 +59,7 @@
 .button:hover {
   background: var(--color-accent);
 }
-.button:disabled,
-.signOut:disabled {
+.button:disabled {
   opacity: 0.6;
   cursor: wait;
 }
@@ -84,11 +83,4 @@
 }
 .link:hover {
   color: var(--color-text);
-}
-.signOut {
-  background: transparent;
-  border: 0;
-  padding: 8px 0;
-  color: var(--color-text-muted);
-  font-size: 12px;
 }

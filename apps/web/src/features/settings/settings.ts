@@ -4,11 +4,16 @@ import { Schema } from "effect";
 export const PreviewMode = Schema.Literal("hover", "button");
 export type PreviewMode = typeof PreviewMode.Type;
 
+export const SidebarStyle = Schema.Literal("large", "medium", "small");
+export type SidebarStyle = typeof SidebarStyle.Type;
+export const defaultSidebarStyle: SidebarStyle = "large";
+
 export const Settings = Schema.Struct({
   /** ISO 639-1 code applied as the original-language filter when a URL does not name one. */
   defaultLanguage: Schema.optional(Schema.String),
   /** How the quick-info card on grid posters opens. */
   previewMode: Schema.optional(PreviewMode),
+  sidebarStyle: Schema.optional(SidebarStyle),
 });
 export type Settings = typeof Settings.Type;
 

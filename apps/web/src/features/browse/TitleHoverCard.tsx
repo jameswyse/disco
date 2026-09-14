@@ -28,11 +28,11 @@ type TitleHoverCardProperties = Readonly<{
 }>;
 
 const availabilityLabels = {
-  available: "In Plex",
-  "partially-available": "Partly in Plex",
+  available: "Available",
+  "partially-available": "Partly Available",
   processing: "Requested",
   pending: "Pending approval",
-  "not-in-library": "Not in Plex",
+  "not-in-library": "Not Available",
 } satisfies Record<Title["availability"], string>;
 
 function runtimeLabel(details: TitlePreview, mediaType: Title["mediaType"]): string | undefined {
@@ -128,13 +128,25 @@ export function TitleHoverCard({ title, preview, side, onClose }: TitleHoverCard
             <span key={genre}>{genre}</span>
           ))}
         </div>
-        <p className={styles.overview}>
-          {preview.kind === "loading" ? "Loading…" : (details?.overview ?? title.overview)}
-        </p>
+        {preview.kind === "loading" ? (
+          <div aria-label="Loading preview" className={styles.previewLoading} role="status">
+            <span />
+            <span />
+            <span />
+          </div>
+        ) : (
+          <p className={styles.overview}>{details?.overview ?? title.overview}</p>
+        )}
+        {preview.kind === "error" ? (
+          <p className={styles.previewError} role="alert">
+            Preview couldn’t be loaded.{" "}
+            <Link href={titleHref(title.mediaType, title.id)}>Open title details →</Link>
+          </p>
+        ) : null}
         {details && details.cast.length > 0 ? (
           <div className={styles.cast}>
             {details.cast.map((person) => (
-              <span key={person.id}>
+              <Link className={styles.castLink} href={`/person/${person.id}`} key={person.id}>
                 {person.profilePath ? (
                   <Image
                     alt=""
@@ -147,7 +159,7 @@ export function TitleHoverCard({ title, preview, side, onClose }: TitleHoverCard
                   <i aria-hidden="true" />
                 )}
                 {person.name}
-              </span>
+              </Link>
             ))}
           </div>
         ) : null}

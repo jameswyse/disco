@@ -3,12 +3,14 @@ import Link from "next/link";
 
 import { TitleCard } from "@/features/browse/TitleCard";
 import { withTitleFacts } from "@/features/browse/titleFacts";
+import { ContentState } from "@/features/feedback/ContentState";
 import { loadSettings } from "@/features/settings/loadSettings";
 import { defaultPreviewMode } from "@/features/settings/settings";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
 import { RequestButton } from "./RequestButton";
 import { requestTimeline } from "./requestTimeline";
+import { SeasonEpisodes } from "./SeasonEpisodes";
 import { WatchlistButton } from "./WatchlistButton";
 
 import type { ReactNode } from "react";
@@ -26,8 +28,8 @@ type TitleDetailsPageProperties = Readonly<{
 }>;
 
 const availabilityLabels = {
-  available: "In Plex",
-  "partially-available": "Partly in Plex",
+  available: "Available",
+  "partially-available": "Partly Available",
   processing: "Requested · processing",
   pending: "Requested · awaiting approval",
   "not-in-library": undefined,
@@ -63,18 +65,6 @@ function seriesLabel(details: TitleDetails): string | undefined {
   return details.seasonCount
     ? `${details.seasonCount} ${details.seasonCount === 1 ? "season" : "seasons"}`
     : "Series";
-}
-
-function formatDate(iso: string | undefined): string | undefined {
-  if (!iso) {
-    return undefined;
-  }
-
-  const date = new Date(`${iso}T00:00:00Z`);
-
-  return Number.isNaN(date.getTime())
-    ? iso
-    : date.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
 }
 
 type MetaPart = Readonly<{ key: string; content: ReactNode }>;
@@ -153,10 +143,10 @@ function PrimaryAction({ details }: Readonly<{ details: TitleDetails }>) {
     case "available":
       return details.plexUrl ? (
         <a className={`${styles.button} ${styles.plexButton}`} href={details.plexUrl}>
-          ▶ Watch in Plex
+          ▶ Watch
         </a>
       ) : (
-        <span className={`${styles.button} ${styles.plexButton}`}>✓ In Plex</span>
+        <span className={`${styles.button} ${styles.plexButton}`}>✓ Available</span>
       );
     case "processing":
     case "pending":
@@ -237,41 +227,32 @@ function SeasonRow({
   details,
 }: Readonly<{ season: SeasonSummary; details: TitleDetails }>) {
   const label = availabilityLabels[season.availability];
-  const aired = formatDate(season.airDate);
 
   return (
-    <li className={styles.season}>
-      <span className={styles.seasonName}>{season.name}</span>
-      <span className={styles.seasonEpisodes}>
-        {season.episodeCount} episodes{aired ? ` · aired ${aired}` : ""}
-      </span>
-      {label ? (
-        <span className={`${styles.pill} ${pillClasses[season.availability]}`}>{label}</span>
-      ) : (
-        <RequestButton
-          className={styles.seasonRequest}
-          id={details.id}
-          label="Request"
-          mediaType="tv"
-          pendingClassName={`${styles.pill} ${styles.pillRequested}`}
-          season={season.number}
-        />
-      )}
-    </li>
+    <SeasonEpisodes
+      id={details.id}
+      season={season}
+      status={
+        label ? (
+          <span className={`${styles.pill} ${pillClasses[season.availability]}`}>{label}</span>
+        ) : (
+          <RequestButton
+            className={styles.seasonRequest}
+            id={details.id}
+            label="Request"
+            mediaType="tv"
+            pendingClassName={`${styles.pill} ${styles.pillRequested}`}
+            season={season.number}
+          />
+        )
+      }
+    />
   );
 }
 
 export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
   if (result.kind === "error") {
-    return (
-      <section className={styles.errorState}>
-        <h1 className={styles.errorHeading}>Title unavailable</h1>
-        <p role="alert">{result.message}</p>
-        <Link className={styles.back} href="/">
-          ← Back to browse
-        </Link>
-      </section>
-    );
+    return <ContentState title="Title couldn’t be loaded" message={result.message} retry />;
   }
 
   const { details, region, seerrOrigin } = result;
@@ -279,14 +260,27 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
   const previewMode = settings.previewMode ?? defaultPreviewMode;
   const timeline = requestTimeline(details);
   const statusLabel = availabilityLabels[details.availability];
+  const facts = [
+    ["Status", details.status],
+    [
+      details.mediaType === "movie" ? "Released" : "First aired",
+      details.year ? String(details.year) : undefined,
+    ],
+    ["Network", details.networks.map((network) => network.name).join(" · ") || undefined],
+    ["Production", details.companies.slice(0, 3).join(" · ") || undefined],
+    ["Created by", details.creators.join(" · ") || undefined],
+    ["Director", details.directors.join(" · ") || undefined],
+    ["Original language", details.originalLanguage],
+    ["Country", details.countries.join(" · ") || undefined],
+  ].filter((fact): fact is [string, string] => fact[1] !== undefined);
 
   return (
-    <article>
+    <article className={details.backdropPath ? undefined : styles.withoutBackdrop}>
       <Link className={styles.back} href="/">
         ← Back to browse
       </Link>
-      <div className={styles.hero}>
-        {details.backdropPath ? (
+      {details.backdropPath ? (
+        <div className={styles.hero}>
           <Image
             alt=""
             className={styles.heroImage}
@@ -296,12 +290,12 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
             src={tmdbImageUrl("w1280", details.backdropPath)}
             unoptimized
           />
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <div className={styles.content}>
         <header className={styles.header}>
-          <div className={styles.poster}>
-            {details.posterPath ? (
+          {details.posterPath ? (
+            <div className={styles.poster}>
               <Image
                 alt=""
                 className={styles.posterImage}
@@ -310,9 +304,9 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
                 unoptimized
                 width={210}
               />
-            ) : null}
-            {statusLabel ? <span className={styles.posterStatus}>{statusLabel}</span> : null}
-          </div>
+              {statusLabel ? <span className={styles.posterStatus}>{statusLabel}</span> : null}
+            </div>
+          ) : null}
           <div className={styles.titleBlock}>
             {timeline.length > 0 ? (
               <p className={styles.status}>
@@ -359,7 +353,7 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
         </header>
 
         <div className={styles.columns}>
-          <div>
+          <div className={styles.primary}>
             <Scores details={details} />
 
             {details.overview ? (
@@ -385,22 +379,24 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
                 <ul className={styles.cast}>
                   {details.cast.slice(0, 7).map((person) => (
                     <li className={styles.person} key={person.id}>
-                      {person.profilePath ? (
-                        <Image
-                          alt=""
-                          className={styles.personPortrait}
-                          height={120}
-                          src={tmdbImageUrl("w185", person.profilePath)}
-                          unoptimized
-                          width={120}
-                        />
-                      ) : (
-                        <span aria-hidden="true" className={styles.personPortraitFallback} />
-                      )}
-                      <span className={styles.personName}>{person.name}</span>
-                      {person.role ? (
-                        <span className={styles.personRole}>{person.role}</span>
-                      ) : null}
+                      <Link className={styles.personLink} href={`/person/${person.id}`}>
+                        {person.profilePath ? (
+                          <Image
+                            alt=""
+                            className={styles.personPortrait}
+                            height={120}
+                            src={tmdbImageUrl("w185", person.profilePath)}
+                            unoptimized
+                            width={120}
+                          />
+                        ) : (
+                          <span aria-hidden="true" className={styles.personPortraitFallback} />
+                        )}
+                        <span className={styles.personName}>{person.name}</span>
+                        {person.role ? (
+                          <span className={styles.personRole}>{person.role}</span>
+                        ) : null}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -454,77 +450,69 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
                     </li>
                   ))}
                 </ol>
+                {details.requests
+                  .filter((request) => request.qualityProfile)
+                  .map((request) => (
+                    <p className={styles.qualityProfile} key={request.id}>
+                      Quality profile · <b>{request.qualityProfile}</b>
+                      {request.seasons.length > 0 ? ` · Seasons ${request.seasons.join(", ")}` : ""}
+                    </p>
+                  ))}
               </section>
             ) : null}
 
-            <section className={styles.panel}>
-              <h2 className={styles.panelHeading}>
-                Where to watch <small>{region}</small>
-              </h2>
-              {details.streamingOn.length === 0 && !details.plexUrl ? (
-                <p className={styles.panelNote}>No streaming service in {region} yet.</p>
-              ) : null}
-              <ul className={styles.watchList}>
-                {details.streamingOn.map((provider) => (
-                  <li className={styles.watch} key={provider.id}>
-                    <span className={styles.watchProvider}>
-                      {provider.logoPath ? (
-                        <Image
-                          alt=""
-                          className={styles.watchLogo}
-                          height={26}
-                          src={tmdbImageUrl("w92", provider.logoPath)}
-                          unoptimized
-                          width={26}
-                        />
-                      ) : null}
-                      {provider.name}
-                    </span>
-                    <span className={styles.watchKind}>Subscription</span>
-                  </li>
-                ))}
-                {details.plexUrl ? (
-                  <li className={styles.watch}>
-                    <span className={styles.watchProvider}>
-                      <span aria-hidden="true" className={styles.plexLogo} />
-                      Plex
-                    </span>
-                    <a className={styles.watchKind} href={details.plexUrl}>
-                      Open →
-                    </a>
-                  </li>
-                ) : null}
-              </ul>
-            </section>
+            {details.streamingOn.length > 0 || details.plexUrl ? (
+              <section className={styles.panel}>
+                <h2 className={styles.panelHeading}>
+                  Where to watch <small>{region}</small>
+                </h2>
+                <ul className={styles.watchList}>
+                  {details.streamingOn.map((provider) => (
+                    <li className={styles.watch} key={provider.id}>
+                      <span className={styles.watchProvider}>
+                        {provider.logoPath ? (
+                          <Image
+                            alt=""
+                            className={styles.watchLogo}
+                            height={26}
+                            src={tmdbImageUrl("w92", provider.logoPath)}
+                            unoptimized
+                            width={26}
+                          />
+                        ) : null}
+                        {provider.name}
+                      </span>
+                      <span className={styles.watchKind}>Subscription</span>
+                    </li>
+                  ))}
+                  {details.plexUrl ? (
+                    <li className={styles.watch}>
+                      <span className={styles.watchProvider}>
+                        <span aria-hidden="true" className={styles.plexLogo} />
+                        Plex
+                      </span>
+                      <a className={styles.watchKind} href={details.plexUrl}>
+                        Open →
+                      </a>
+                    </li>
+                  ) : null}
+                </ul>
+              </section>
+            ) : null}
 
-            <section className={styles.panel}>
-              <h2 className={styles.panelHeading}>Details</h2>
-              <dl className={styles.facts}>
-                {[
-                  ["Status", details.status],
-                  [
-                    details.mediaType === "movie" ? "Released" : "First aired",
-                    details.year ? String(details.year) : undefined,
-                  ],
-                  [
-                    "Network",
-                    details.networks.map((network) => network.name).join(" · ") || undefined,
-                  ],
-                  ["Production", details.companies.slice(0, 3).join(" · ") || undefined],
-                  ["Created by", details.creators.join(" · ") || undefined],
-                  ["Director", details.directors.join(" · ") || undefined],
-                  ["Original language", details.originalLanguage],
-                  ["Country", details.countries.join(" · ") || undefined],
-                ]
-                  .filter((fact): fact is [string, string] => fact[1] !== undefined)
-                  .map(([label, value]) => (
+            {facts.length > 0 ? (
+              <section className={styles.panel}>
+                <h2 className={styles.panelHeading}>Details</h2>
+                <dl className={styles.facts}>
+                  {facts.map(([label, value]) => (
                     <div className={styles.fact} key={label}>
                       <dt>{label}</dt>
                       <dd>{value}</dd>
                     </div>
                   ))}
-              </dl>
-            </section>
+                </dl>
+              </section>
+            ) : null}
 
             {details.keywords.length > 0 ? (
               <section className={styles.panel}>

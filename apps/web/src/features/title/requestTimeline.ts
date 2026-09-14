@@ -85,7 +85,7 @@ export function requestTimeline(details: TitleDetails): readonly TimelineStep[] 
       ]
         .filter(Boolean)
         .join(" · ")
-    : "Added to Plex outside Seerr";
+    : "Available without a Seerr request";
   const downloadDetail = downloading
     ? details.downloads
         .map((download) =>
@@ -123,9 +123,8 @@ export function requestTimeline(details: TitleDetails): readonly TimelineStep[] 
     },
     {
       id: "available",
-      label:
-        details.availability === "partially-available" ? "Partly in Plex" : "Available in Plex",
-      detail: available ? undefined : "You'll see it here once Plex has it",
+      label: details.availability === "partially-available" ? "Partly Available" : "Available",
+      detail: available ? undefined : "You'll see it here once it's available",
       state: stepState(available, false),
     },
   ];

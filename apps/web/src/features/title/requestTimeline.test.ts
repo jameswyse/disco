@@ -110,11 +110,11 @@ describe("requestTimeline", () => {
     expect(steps[3]?.detail).toBe("Film.2026.1080p · 40%");
   });
 
-  it("completes every step for titles already in Plex, even without a Seerr request", () => {
+  it("completes every step for available titles, even without a Seerr request", () => {
     const steps = requestTimeline({ ...base, availability: "available" });
 
     expect(steps.map((step) => step.state)).toEqual(["done", "done", "done", "done", "done"]);
-    expect(steps[0]?.detail).toBe("Added to Plex outside Seerr");
+    expect(steps[0]?.detail).toBe("Available without a Seerr request");
   });
 
   it("stops at declined for declined requests", () => {

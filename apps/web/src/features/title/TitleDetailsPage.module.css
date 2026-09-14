@@ -62,6 +62,19 @@
   margin-top: -190px;
 }
 
+.withoutBackdrop .content {
+  padding-top: 76px;
+}
+
+.withoutBackdrop .header {
+  margin-top: 0;
+}
+
+.withoutBackdrop .heading {
+  font-size: 36px;
+  line-height: 1.15;
+}
+
 .poster {
   aspect-ratio: 2 / 3;
   background: var(--color-surface);
@@ -237,6 +250,18 @@
   padding-bottom: 60px;
 }
 
+.primary {
+  min-width: 0;
+}
+
+.primary:empty {
+  display: none;
+}
+
+.columns:has(> .primary:empty) {
+  grid-template-columns: minmax(0, 640px);
+}
+
 .section {
   margin-bottom: 28px;
 }
@@ -316,9 +341,19 @@
 }
 
 .person {
+  min-width: 0;
+}
+
+.personLink {
+  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.personLink:hover .personName,
+.personLink:focus-visible .personName {
+  color: var(--color-accent-soft);
 }
 
 .personPortrait,
@@ -357,27 +392,6 @@
   list-style: none;
   margin: 0;
   padding: 0;
-}
-
-.season {
-  align-items: center;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  display: flex;
-  gap: 14px;
-  padding: 10px 14px;
-}
-
-.seasonName {
-  font-weight: 600;
-  width: 110px;
-}
-
-.seasonEpisodes {
-  color: var(--color-text-muted);
-  flex: 1;
-  font-size: 13px;
 }
 
 .seasonRequest {
@@ -453,12 +467,6 @@
 .panelHeading small {
   color: var(--color-text-dim);
   font-weight: 400;
-}
-
-.panelNote {
-  color: var(--color-text-dim);
-  font-size: 13px;
-  margin: 0;
 }
 
 .steps {
@@ -604,4 +612,45 @@
 
 .chips a:hover {
   color: var(--color-text);
+}
+
+@media (max-width: 60rem) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 40rem) {
+  .content {
+    padding-inline: 16px;
+  }
+
+  .hero {
+    height: 260px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: -120px;
+  }
+
+  .poster {
+    width: 120px;
+  }
+
+  .heading,
+  .withoutBackdrop .heading {
+    font-size: 32px;
+  }
+}
+.qualityProfile {
+  border-top: 1px solid var(--color-border-strong);
+  color: var(--color-text-muted);
+  padding-top: 12px;
+  font-size: 12px;
+}
+.qualityProfile b {
+  color: var(--color-text-secondary);
 }

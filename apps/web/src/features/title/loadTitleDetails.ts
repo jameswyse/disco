@@ -93,7 +93,7 @@ export async function loadTitleDetails(
   return runAuthenticated(
     detailsProgram(mediaType, id).pipe(
       Effect.catchTag("SeerrRejected", (error) =>
-        error.status === 404
+        error.status === 404 && error.path === `${mediaType}/${id}`
           ? Effect.succeed<TitleDetailsResult>({ kind: "not-found" })
           : Effect.fail(error),
       ),

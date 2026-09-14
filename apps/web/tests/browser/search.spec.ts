@@ -1,5 +1,15 @@
 import { expect, test } from "./authenticatedTest";
 
+test("a supporting 404 does not hide an existing person", async ({ page }) => {
+  await page.goto("/person/302");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "person/302/combined_credits",
+  );
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  await page.goto("/person/303");
+  await expect(page.getByRole("heading", { name: "Nothing here" })).toBeVisible();
+});
+
 for (const width of [390, 1440]) {
   test(`search suggests titles and people and Enter opens all results at ${width}px`, async ({
     page,

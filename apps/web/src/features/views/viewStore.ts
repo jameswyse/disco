@@ -14,6 +14,7 @@ const emptyFile: ViewsFile = { version: 1, views: defaultViews };
 export class ViewStore extends Effect.Service<ViewStore>()("ViewStore", {
   effect: Effect.gen(function* () {
     const dataDirectory = path.resolve(yield* dataDirectoryConfig);
+    const mutex = yield* Effect.makeSemaphore(1);
     const read = () =>
       readJsonFile(dataDirectory, fileName, ViewsFile, emptyFile).pipe(
         Effect.map((file) => file.views),
@@ -29,6 +30,7 @@ export class ViewStore extends Effect.Service<ViewStore>()("ViewStore", {
 
             return writeJsonFile(dataDirectory, fileName, ViewsFile, file);
           }),
+          mutex.withPermits(1),
         ),
     };
   }),

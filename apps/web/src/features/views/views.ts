@@ -10,8 +10,13 @@ export const ViewSource = Schema.Union(
   Schema.Struct({ kind: Schema.Literal("studio"), companyId: Schema.Number }),
   Schema.Struct({
     kind: Schema.Literal("genre"),
-    movieGenreId: Schema.optional(Schema.Number),
+    movieGenreId: Schema.Number,
     tvGenreId: Schema.optional(Schema.Number),
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("genre"),
+    movieGenreId: Schema.optional(Schema.Number),
+    tvGenreId: Schema.Number,
   }),
   Schema.Struct({ kind: Schema.Literal("language"), language: Schema.String }),
   Schema.Struct({ kind: Schema.Literal("keyword"), keywordId: Schema.Number }),

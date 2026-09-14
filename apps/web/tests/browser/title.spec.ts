@@ -14,6 +14,31 @@ async function expectRecorded(
   expect(body).toMatchObject(expected);
 }
 
+for (const { mediaType, existingId, missingId } of [
+  { mediaType: "movie", existingId: 105, missingId: 106 },
+  { mediaType: "tv", existingId: 203, missingId: 204 },
+]) {
+  test(`a supporting 404 does not hide an existing ${mediaType}`, async ({ page, context }) => {
+    const preview = await context.request.get(`/api/titles/${mediaType}/${existingId}`);
+    expect(preview.status()).toBe(502);
+    expect(await preview.json()).toMatchObject({
+      kind: "error",
+      message: expect.stringContaining(`${mediaType}/${existingId}/recommendations`),
+    });
+    await page.goto(`/title/${mediaType}/${existingId}`);
+    await expect(page.getByRole("main").getByRole("alert")).toContainText(
+      `${mediaType}/${existingId}/recommendations`,
+    );
+    await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+
+    const missing = await context.request.get(`/api/titles/${mediaType}/${missingId}`);
+    expect(missing.status()).toBe(404);
+    expect(await missing.json()).toEqual({ kind: "not-found" });
+    await page.goto(`/title/${mediaType}/${missingId}`);
+    await expect(page.getByRole("heading", { name: "Nothing here" })).toBeVisible();
+  });
+}
+
 test("a title card opens the details screen", async ({ page }) => {
   await page.goto("/movies?list=popular");
   await page.getByRole("link", { name: /Fixture Film Two/ }).click();

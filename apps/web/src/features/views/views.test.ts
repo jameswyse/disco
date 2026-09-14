@@ -1,6 +1,22 @@
+import { Either, Schema } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { defaultViews, sameSource, uniqueViewId, viewMediaTypes } from "./views";
+import { defaultViews, sameSource, uniqueViewId, viewMediaTypes, ViewSource } from "./views";
+
+describe("genre source decoding", () => {
+  it("rejects a genre filter without either genre ID", () => {
+    expect(Either.isLeft(Schema.decodeUnknownEither(ViewSource)({ kind: "genre" }))).toBe(true);
+  });
+
+  it.each([
+    { input: { kind: "genre", movieGenreId: 28 }, mediaTypes: ["movie"] },
+    { input: { kind: "genre", tvGenreId: 18 }, mediaTypes: ["tv"] },
+    { input: { kind: "genre", movieGenreId: 18, tvGenreId: 18 }, mediaTypes: ["movie", "tv"] },
+  ])("preserves the media types in $input", ({ input, mediaTypes }) => {
+    const source = Schema.decodeUnknownSync(ViewSource)(input);
+    expect(viewMediaTypes({ id: "genre", label: "Genre", source })).toEqual(mediaTypes);
+  });
+});
 
 describe("viewMediaTypes", () => {
   it("limits networks to series and studios to films", () => {

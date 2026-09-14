@@ -286,6 +286,9 @@ const staticRoutes = {
     cast: [filmOne, seriesOne],
     crew: [filmOne, filmTwo],
   },
+  // Person 302 exists but its credits return 404; person 303 itself is missing.
+  "/api/v1/person/302": { id: 302, name: "Credits unavailable" },
+  "/api/v1/person/303/combined_credits": { id: 303, cast: [], crew: [] },
   "/api/v1/service/radarr": [
     { id: 0, name: "Movies", is4k: false, isDefault: true, activeProfileId: 1 },
   ],
@@ -311,6 +314,12 @@ const staticRoutes = {
     imdb: { url: null, criticsScore: 7.9, criticsScoreCount: 1200 },
   },
   "/api/v1/movie/102/recommendations": page([filmOne]),
+  // These titles exist but their recommendations return 404.
+  "/api/v1/movie/105": { id: 105, title: "Recommendations unavailable" },
+  "/api/v1/tv/203": { id: 203, name: "Recommendations unavailable" },
+  // Only the primary title is missing for these IDs.
+  "/api/v1/movie/106/recommendations": page([]),
+  "/api/v1/tv/204/recommendations": page([]),
   "/api/v1/movie/1765392": {
     id: 1765392,
     title: "Call Me Tim",

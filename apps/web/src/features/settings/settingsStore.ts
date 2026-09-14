@@ -14,6 +14,7 @@ const emptyFile: SettingsFile = { version: 1, settings: defaultSettings };
 export class SettingsStore extends Effect.Service<SettingsStore>()("SettingsStore", {
   effect: Effect.gen(function* () {
     const dataDirectory = path.resolve(yield* dataDirectoryConfig);
+    const mutex = yield* Effect.makeSemaphore(1);
     const read = () =>
       readJsonFile(dataDirectory, fileName, SettingsFile, emptyFile).pipe(
         Effect.map((file) => file.settings),
@@ -28,6 +29,7 @@ export class SettingsStore extends Effect.Service<SettingsStore>()("SettingsStor
 
             return writeJsonFile(dataDirectory, fileName, SettingsFile, file);
           }),
+          mutex.withPermits(1),
         ),
     };
   }),

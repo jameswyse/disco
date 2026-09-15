@@ -78,8 +78,9 @@ Set the Seerr values in `apps/web/.env`, then run `pnpm dev` and open
 Local development reads `apps/web/.env`; Docker Compose reads the root `.env`.
 After `pnpm install` installs Husky, `git worktree add` copies ignored `.env` and `.env.*` files
 from the main worktree into the new worktree, preserving relative paths and existing files.
-Ignored directories such as `node_modules` and build output are skipped. The hook runs only on
-initial checkout, so later branch switches leave environment files unchanged.
+Ignored directories such as `node_modules` and build output are skipped. The hook then runs
+`pnpm install --prefer-offline` in the new worktree to reuse cached packages. It runs only on
+initial checkout, so later branch switches leave environment files and dependencies unchanged.
 `git worktree add --no-checkout` does not run the hook.
 
 Local saved views and preferences live in `apps/web/data/`. Set `DISCO_DATA_DIR` to use another

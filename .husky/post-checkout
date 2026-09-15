@@ -27,3 +27,5 @@ git --git-dir="$common_directory" --work-tree="$main_worktree" \
       esac
     done
   ' sh "$main_worktree" "$worktree"
+
+pnpm install --prefer-offline

@@ -76,6 +76,12 @@ Set the Seerr values in `apps/web/.env`, then run `pnpm dev` and open
 [localhost:3000](http://localhost:3000).
 
 Local development reads `apps/web/.env`; Docker Compose reads the root `.env`.
+After `pnpm install` installs Husky, `git worktree add` copies ignored `.env` and `.env.*` files
+from the main worktree into the new worktree, preserving relative paths and existing files.
+Ignored directories such as `node_modules` and build output are skipped. The hook runs only on
+initial checkout, so later branch switches leave environment files unchanged.
+`git worktree add --no-checkout` does not run the hook.
+
 Local saved views and preferences live in `apps/web/data/`. Set `DISCO_DATA_DIR` to use another
 directory. Views and preferences are shared by everyone on the Disco instance.
 

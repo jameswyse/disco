@@ -1,7 +1,15 @@
 import { defineConfig } from "oxfmt";
 
 export default defineConfig({
-  ignorePatterns: [".next", ".next-dev", "coverage", "dist", "tests/results"],
+  ignorePatterns: [
+    ".next",
+    ".next-dev",
+    "coverage",
+    "dist",
+    "tests/results",
+    // Release Please owns the generated changelog's formatting.
+    "CHANGELOG.md",
+  ],
   sortImports: {
     internalPattern: ["@/", "#"],
     groups: [

@@ -139,8 +139,9 @@ jobs:
           # Candidate images have already created the package, even for the first release.
           gh api --paginate --slurp \
             "/users/${GITHUB_REPOSITORY_OWNER}/packages/container/${GITHUB_REPOSITORY#*/}/versions?per_page=100" \
-            --jq '[.[][] | .metadata.container.tags[] | select(test("^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"))] | unique' \
-            > versions.json
+            > package-versions.json
+          jq '[.[][] | .metadata.container.tags[] | select(test("^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"))] | unique' \
+            package-versions.json > versions.json
 
           if jq --exit-status --arg version "$VERSION" 'index($version) != null' versions.json > /dev/null; then
             # A rerun resumes promotion from the original image, without rebuilding its tag.

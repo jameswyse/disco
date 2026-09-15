@@ -25,9 +25,6 @@ user-controlled browsing UI.
 - `apps/web/src`: read [docs/architecture/web.md](docs/architecture/web.md) for directory ownership.
 - Tests: before writing or changing one, state the observable behaviour, proposed seam and
   authoritative source. Test through a caller's interface with an independent expected result.
-- The approved UI mockups live outside the repository in
-  `/Users/james/Projects/Personal/media-discovery-mockups/` (`05-seerr-browse.html`,
-  `06-seerr-details.html`, `07-seerr-views.html`). Match them before inventing new layouts.
 
 ## Finish code tasks
 

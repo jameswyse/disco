@@ -1,4 +1,5 @@
 import { availabilityFromStatus } from "./title";
+import { tvAvailability } from "./tvAvailability";
 
 import type { MediaType } from "@/integrations/seerr/client";
 import type {
@@ -57,6 +58,8 @@ export type SeasonSummary = Readonly<{
   name: string;
   episodeCount: number;
   airDate: string | undefined;
+  airDateLabel?: string | undefined;
+  availabilityDetail?: string | undefined;
   availability: Availability;
 }>;
 
@@ -106,6 +109,8 @@ export type TitleDetails = Readonly<{
   trailerEmbedUrl: string | undefined;
   streamingOn: readonly WatchProvider[];
   availability: Availability;
+  availabilityDetail?: string | undefined;
+  airing?: string | undefined;
   plexUrl: string | undefined;
   requests: readonly RequestSummary[];
   downloads: readonly Download[];
@@ -340,12 +345,10 @@ export function titleDetailsFromTv(
 ): TitleDetails {
   const imdbId = text(details.externalIds?.imdbId);
   const tvdbId = details.externalIds?.tvdbId ?? undefined;
-  const seasonStatuses = new Map(
-    (details.mediaInfo?.seasons ?? []).map((season) => [season.seasonNumber, season.status]),
-  );
 
   return {
     ...sharedDetails(details, region),
+    ...tvAvailability(details, today),
     mediaType: "tv",
     name: details.name,
     year: yearOf(details.firstAirDate),
@@ -363,15 +366,6 @@ export function titleDetailsFromTv(
       name: network.name,
       logoPath: text(network.logoPath),
     })),
-    seasons: (details.seasons ?? [])
-      .filter((season) => season.seasonNumber > 0)
-      .map((season) => ({
-        number: season.seasonNumber,
-        name: text(season.name) ?? `Season ${season.seasonNumber}`,
-        episodeCount: season.episodeCount ?? 0,
-        airDate: text(season.airDate),
-        availability: availabilityFromStatus(seasonStatuses.get(season.seasonNumber)),
-      })),
     externalLinks: [
       { label: "TMDB", url: `https://www.themoviedb.org/tv/${details.id}` },
       ...(imdbId ? [{ label: "IMDb", url: `https://www.imdb.com/title/${imdbId}` }] : []),

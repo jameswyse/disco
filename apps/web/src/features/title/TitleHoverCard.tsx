@@ -5,7 +5,9 @@ import Link from "next/link";
 
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
+import { BlocklistButton } from "./BlocklistButton";
 import { RequestButton } from "./RequestButton";
+import { availabilityLabels } from "./title";
 import { titleHref } from "./titleRoute";
 import { TrailerButton } from "./TrailerButton";
 import { WatchlistButton } from "./WatchlistButton";
@@ -26,15 +28,8 @@ type TitleHoverCardProperties = Readonly<{
   preview: PreviewState;
   side: "right" | "left";
   onClose: () => void;
+  onBlocklistChange: () => void;
 }>;
-
-const availabilityLabels = {
-  available: "Available",
-  "partially-available": "Partly Available",
-  processing: "Requested",
-  pending: "Pending approval",
-  "not-in-library": "Not Available",
-} satisfies Record<Title["availability"], string>;
 
 function runtimeLabel(details: TitlePreview, mediaType: Title["mediaType"]): string | undefined {
   if (mediaType === "movie") {
@@ -74,7 +69,13 @@ function Scores({ details }: Readonly<{ details: TitlePreview }>) {
   );
 }
 
-export function TitleHoverCard({ title, preview, side, onClose }: TitleHoverCardProperties) {
+export function TitleHoverCard({
+  title,
+  preview,
+  side,
+  onClose,
+  onBlocklistChange,
+}: TitleHoverCardProperties) {
   const details = preview.kind === "ready" ? preview.preview : undefined;
   const meta = details
     ? [
@@ -87,7 +88,10 @@ export function TitleHoverCard({ title, preview, side, onClose }: TitleHoverCard
         .filter((part) => part !== undefined)
         .join(" · ")
     : [title.year].filter((part) => part !== undefined).join(" · ");
-  const canRequest = title.availability === "not-in-library";
+  const availability = details?.availability ?? title.availability;
+  const availabilityDetail = details?.availabilityDetail ?? title.availabilityDetail;
+  const airing = details?.airing ?? title.airing;
+  const canRequest = availability === "not-in-library" || availability === "not-yet-aired";
 
   return (
     <div
@@ -118,11 +122,13 @@ export function TitleHoverCard({ title, preview, side, onClose }: TitleHoverCard
           {title.mediaType === "tv" ? "TV" : "Film"}
           {details?.seriesType === "Miniseries" ? " · Limited" : ""}
         </span>
-        <span className={styles.availability}>{availabilityLabels[title.availability]}</span>
+        <span className={styles.availability}>{availabilityLabels[availability]}</span>
       </div>
       <div className={styles.body}>
         <div className={styles.name}>{title.name}</div>
         <div className={styles.meta}>{meta}</div>
+        {availabilityDetail ? <p className={styles.meta}>{availabilityDetail}</p> : null}
+        {airing ? <p className={styles.meta}>{airing}</p> : null}
         {details ? <Scores details={details} /> : null}
         <div className={styles.genres}>
           {(details?.genres ?? title.genres).slice(0, 4).map((genre) => (
@@ -208,6 +214,17 @@ export function TitleHoverCard({ title, preview, side, onClose }: TitleHoverCard
               id={title.id}
               mediaType={title.mediaType}
               onWatchlist={details.onWatchlist}
+              title={title.name}
+              compact
+            />
+          ) : null}
+          {details?.canManageBlocklist ? (
+            <BlocklistButton
+              blocklisted={availability === "blocklisted"}
+              className={`${styles.action} ${styles.iconAction}`}
+              id={title.id}
+              mediaType={title.mediaType}
+              onChanged={onBlocklistChange}
               title={title.name}
               compact
             />

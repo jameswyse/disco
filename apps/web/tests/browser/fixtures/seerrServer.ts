@@ -63,6 +63,34 @@ const seriesOne = {
   mediaInfo: mediaInfo(201, 3),
 } satisfies JsonValue;
 
+const airingShows = [205, 206].map((id) => ({
+  id,
+  mediaType: "tv",
+  name: id === 205 ? "Airing and up to date" : "Airing with missing episodes",
+  firstAirDate: "2025-01-01",
+  posterPath: "/airing-show.jpg",
+  inProduction: true,
+  nextEpisodeToAir: { airDate: "2099-09-20" },
+  seasons: [
+    { id: id * 10, seasonNumber: 1, name: "Season 1", episodeCount: 7, airDate: "2025-01-01" },
+    { id: id * 10 + 1, seasonNumber: 2, name: "Season 2", episodeCount: 8, airDate: "2099-10-01" },
+  ],
+  mediaInfo: {
+    ...mediaInfo(id, 4),
+    ratingKey: String(id),
+    mediaUrl: `https://plex.example.test/${id}`,
+    seasons: [{ seasonNumber: 1, status: 4 }],
+  },
+}));
+const airingEpisodes = {
+  episodes: Array.from({ length: 7 }, (_, index) => ({
+    id: 9000 + index,
+    episodeNumber: index + 1,
+    name: `Episode ${index + 1}`,
+    airDate: index < 6 ? "2025-01-01" : "2099-09-20",
+  })),
+};
+
 const person = { id: 301, mediaType: "person", name: "Fixture Person" } satisfies JsonValue;
 
 function page(results: readonly JsonValue[]): JsonValue {
@@ -184,10 +212,18 @@ const decodeMutationBody = Schema.decodeUnknownSync(Schema.parseJson(MutationBod
 const recordedRequests: (MutationBody & { userId: number })[] = [];
 const recordedWatchlist: ((MutationBody | Readonly<{ removed: string }>) & { userId: number })[] =
   [];
+const blocklistedTitles = new Set<string>();
+const recordedBlocklist: JsonValue[] = [];
+const BlocklistBody = Schema.Struct({
+  tmdbId: Schema.Number,
+  mediaType: Schema.Literal("movie", "tv"),
+  title: Schema.String,
+  user: Schema.Number,
+});
 const users = [
   {
     id: 2,
-    permissions: 8192,
+    permissions: 8192 | 268435456,
     displayName: "Fixture User",
     email: "fixture@example.test",
     avatar: null,
@@ -521,7 +557,11 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
   const url = new URL(request.url ?? "/", `http://127.0.0.1:${seerrFixturePort}`);
 
   if (url.pathname === "/__fixture/requests") {
-    send(response, 200, { requests: recordedRequests, watchlist: recordedWatchlist });
+    send(response, 200, {
+      requests: recordedRequests,
+      watchlist: recordedWatchlist,
+      blocklist: recordedBlocklist,
+    });
 
     return;
   }
@@ -574,6 +614,62 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
       `connect.sid=${encodeURIComponent(session)}; Path=/; HttpOnly; Expires=Wed, 01 Jan 2031 00:00:00 GMT`,
     );
     send(response, 200, user);
+
+    return;
+  }
+
+  if (url.pathname === "/" && request.headers["x-plex-token"] === "plex-fixture-token") {
+    send(response, 200, { MediaContainer: { machineIdentifier: "fixture-plex" } });
+
+    return;
+  }
+
+  if (url.pathname.startsWith("/library/metadata/")) {
+    if (
+      request.headers["x-plex-token"] !== "plex-fixture-token" ||
+      request.headers["x-api-key"] !== undefined
+    ) {
+      send(response, 403, {});
+
+      return;
+    }
+
+    const count = url.pathname.includes("/205/") ? 6 : 4;
+    send(response, 200, {
+      MediaContainer: {
+        size: count,
+        totalSize: count,
+        Metadata: Array.from({ length: count }, (_, index) => ({
+          parentIndex: 1,
+          index: index + 1,
+          Media: [{ id: index }],
+        })),
+      },
+    });
+
+    return;
+  }
+
+  if (
+    url.pathname === "/api/v1/settings/plex" ||
+    url.pathname === "/api/v1/settings/plex/devices/servers"
+  ) {
+    if (
+      request.headers["x-api-key"] !== seerrFixtureApiKey ||
+      request.headers["x-api-user"] !== undefined
+    ) {
+      send(response, 403, {});
+
+      return;
+    }
+
+    send(
+      response,
+      200,
+      url.pathname.endsWith("/servers")
+        ? [{ clientIdentifier: "fixture-plex", accessToken: "plex-fixture-token" }]
+        : { machineId: "fixture-plex", ip: "127.0.0.1", port: seerrFixturePort, useSsl: false },
+    );
 
     return;
   }
@@ -665,6 +761,92 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
     return;
   }
 
+  if (url.pathname === "/api/v1/blocklist" && request.method === "POST") {
+    const body = Schema.decodeUnknownSync(Schema.parseJson(BlocklistBody))(
+      await readRawBody(request),
+    );
+
+    if ((user.permissions & (2 | 268435456)) === 0 || body.tmdbId === 30102) {
+      send(response, 403, { message: "Blocklist rejected" });
+
+      return;
+    }
+
+    if (body.user !== user.id) {
+      send(response, 400, { message: "Wrong blocklist user" });
+
+      return;
+    }
+
+    blocklistedTitles.add(`${body.mediaType}:${body.tmdbId}`);
+    recordedBlocklist.push({ ...body, userId: user.id });
+    response.writeHead(201);
+    response.end();
+
+    return;
+  }
+
+  if (url.pathname.startsWith("/api/v1/blocklist/") && request.method === "DELETE") {
+    if ((user.permissions & (2 | 268435456)) === 0) {
+      send(response, 403, { message: "Blocklist rejected" });
+
+      return;
+    }
+
+    const tmdbId = Number(url.pathname.split("/").at(-1));
+    const mediaType = url.searchParams.get("mediaType");
+    blocklistedTitles.delete(`${mediaType}:${tmdbId}`);
+    recordedBlocklist.push({ removed: tmdbId, mediaType, userId: user.id });
+    response.writeHead(204);
+    response.end();
+
+    return;
+  }
+
+  const blocklistMovie = {
+    ...filmTwo,
+    id: 30101,
+    title: "Blocklist Film",
+    mediaInfo: mediaInfo(30101, blocklistedTitles.has("movie:30101") ? 6 : 1),
+  };
+
+  if (url.pathname === "/api/v1/discover/movies" && url.searchParams.get("language") === "fr") {
+    send(response, 200, page([blocklistMovie]));
+
+    return;
+  }
+
+  if (url.pathname === "/api/v1/search" && url.searchParams.get("query") === "blocklist") {
+    send(response, 200, page([blocklistMovie]));
+
+    return;
+  }
+
+  const blocklistTitle = /^\/api\/v1\/(movie|tv)\/(30101|30102)(.*)$/.exec(url.pathname);
+
+  if (blocklistTitle) {
+    const mediaType = blocklistTitle[1];
+    const id = Number(blocklistTitle[2]);
+    const suffix = blocklistTitle[3];
+
+    if (suffix === "") {
+      send(response, 200, {
+        ...(mediaType === "movie" ? filmTwoDetails : seriesOneDetails),
+        id,
+        ...(mediaType === "movie" ? { title: "Blocklist Film" } : { name: "Blocklist Series" }),
+        mediaInfo: mediaInfo(id, blocklistedTitles.has(`${mediaType}:${id}`) ? 6 : 1),
+      });
+    } else if (suffix === "/recommendations") {
+      send(response, 200, page([]));
+    } else if (suffix === "/ratings" || suffix === "/ratingscombined") {
+      send(response, 200, {});
+    } else {
+      send(response, 200, { episodes: [] });
+    }
+
+    return;
+  }
+
   if (request.method === "DELETE" && url.pathname.startsWith("/api/v1/watchlist/")) {
     recordedWatchlist.push({ removed: url.pathname.split("/").at(-1) ?? "", userId: user.id });
     send(response, 204, null);
@@ -700,6 +882,12 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
         status: recordedRequests.some((entry) => entry.mediaId === 103) ? 3 : 1,
       },
     });
+
+    return;
+  }
+
+  if (url.pathname === "/api/v1/search" && url.searchParams.get("query") === "airing") {
+    send(response, 200, page(airingShows));
 
     return;
   }
@@ -789,6 +977,24 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
 
   if (url.pathname === "/api/v1/discover/movies" && url.searchParams.get("genre") === "999") {
     send(response, 200, page([]));
+
+    return;
+  }
+
+  const airingShow = airingShows.find((show) => url.pathname.startsWith(`/api/v1/tv/${show.id}`));
+
+  if (airingShow) {
+    let body: JsonValue = airingShow;
+
+    if (url.pathname.endsWith("/season/1")) {
+      body = airingEpisodes;
+    } else if (url.pathname.endsWith("/recommendations")) {
+      body = page([]);
+    } else if (url.pathname.endsWith("/ratings")) {
+      body = {};
+    }
+
+    send(response, 200, body);
 
     return;
   }

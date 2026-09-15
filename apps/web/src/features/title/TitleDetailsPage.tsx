@@ -6,9 +6,11 @@ import { loadSettings } from "@/features/settings/loadSettings";
 import { defaultPreviewMode } from "@/features/settings/settings";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
+import { BlocklistButton } from "./BlocklistButton";
 import { RequestButton } from "./RequestButton";
 import { requestTimeline } from "./requestTimeline";
 import { SeasonEpisodes } from "./SeasonEpisodes";
+import { availabilityLabels as titleAvailabilityLabels } from "./title";
 import { TitleCard } from "./TitleCard";
 import { withTitleFacts } from "./titleFacts";
 import { TrailerButton } from "./TrailerButton";
@@ -28,15 +30,18 @@ type TitleDetailsPageProperties = Readonly<{
 }>;
 
 const availabilityLabels = {
-  available: "Available",
-  "partially-available": "Partly Available",
+  ...titleAvailabilityLabels,
   processing: "Requested · processing",
   pending: "Requested · awaiting approval",
   "not-in-library": undefined,
 } satisfies Record<Availability, string | undefined>;
 
 const pillClasses = {
+  blocklisted: styles.pillNone,
   available: styles.pillAvailable,
+  "up-to-date": styles.pillAvailable,
+  "some-available": styles.pillAvailable,
+  "not-yet-aired": styles.pillNone,
   "partially-available": styles.pillAvailable,
   processing: styles.pillRequested,
   pending: styles.pillPending,
@@ -122,7 +127,7 @@ function requestLabel(details: TitleDetails): string {
     return "↓ Request";
   }
 
-  return details.availability === "partially-available"
+  return details.availability === "partially-available" || details.availability === "some-available"
     ? "↓ Request remaining seasons"
     : "↓ Request all seasons";
 }
@@ -140,6 +145,9 @@ const stepMarkerSymbols = { done: "✓", active: "↓", pending: "" } satisfies 
 
 function PrimaryAction({ details }: Readonly<{ details: TitleDetails }>) {
   switch (details.availability) {
+    case "blocklisted":
+      return <span className={`${styles.button} ${styles.requestedButton}`}>Blocklisted</span>;
+    case "up-to-date":
     case "available":
       return details.plexUrl ? (
         <a className={`${styles.button} ${styles.plexButton}`} href={details.plexUrl}>
@@ -151,6 +159,8 @@ function PrimaryAction({ details }: Readonly<{ details: TitleDetails }>) {
     case "processing":
     case "pending":
       return <span className={`${styles.button} ${styles.requestedButton}`}>✓ Requested</span>;
+    case "some-available":
+    case "not-yet-aired":
     case "partially-available":
     case "not-in-library":
       return (
@@ -226,7 +236,10 @@ function SeasonRow({
   season,
   details,
 }: Readonly<{ season: SeasonSummary; details: TitleDetails }>) {
-  const label = availabilityLabels[season.availability];
+  const label =
+    details.availability === "blocklisted"
+      ? "Blocklisted"
+      : availabilityLabels[season.availability];
 
   return (
     <SeasonEpisodes
@@ -234,7 +247,19 @@ function SeasonRow({
       season={season}
       status={
         label ? (
-          <span className={`${styles.pill} ${pillClasses[season.availability]}`}>{label}</span>
+          <>
+            <span className={`${styles.pill} ${pillClasses[season.availability]}`}>{label}</span>
+            {details.availability !== "blocklisted" && season.availability === "not-yet-aired" ? (
+              <RequestButton
+                className={styles.seasonRequest}
+                id={details.id}
+                label="Request"
+                mediaType="tv"
+                pendingClassName={`${styles.pill} ${styles.pillRequested}`}
+                season={season.number}
+              />
+            ) : null}
+          </>
         ) : (
           <RequestButton
             className={styles.seasonRequest}
@@ -321,6 +346,10 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
             </h1>
             {details.tagline ? <p className={styles.tagline}>{details.tagline}</p> : null}
             <Meta details={details} />
+            {details.availabilityDetail ? (
+              <p className={styles.meta}>{details.availabilityDetail}</p>
+            ) : null}
+            {details.airing ? <p className={styles.meta}>{details.airing}</p> : null}
             <div className={styles.actions}>
               <PrimaryAction details={details} />
               {details.trailerEmbedUrl ? (
@@ -337,6 +366,15 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
                 onWatchlist={details.onWatchlist}
                 title={details.name}
               />
+              {result.canManageBlocklist ? (
+                <BlocklistButton
+                  blocklisted={details.availability === "blocklisted"}
+                  className={`${styles.button} ${styles.ghostButton}`}
+                  id={details.id}
+                  mediaType={details.mediaType}
+                  title={details.name}
+                />
+              ) : null}
               <a
                 className={`${styles.button} ${styles.ghostButton}`}
                 href={`${seerrOrigin}/${details.mediaType}/${details.id}`}

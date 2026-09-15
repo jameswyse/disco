@@ -1,5 +1,7 @@
 import { Schema } from "effect";
 
+import { availabilityValues } from "./title";
+
 import type { TitleDetails } from "./titleDetails";
 
 const OptionalText = Schema.optional(Schema.String);
@@ -7,6 +9,9 @@ const OptionalNumber = Schema.optional(Schema.Number);
 
 /** The subset of `TitleDetails` the title hover card needs, validated when it crosses the wire. */
 export const TitlePreview = Schema.Struct({
+  availability: Schema.Literal(...availabilityValues),
+  availabilityDetail: OptionalText,
+  airing: OptionalText,
   name: Schema.String,
   year: OptionalNumber,
   overview: Schema.String,
@@ -20,6 +25,7 @@ export const TitlePreview = Schema.Struct({
   country: OptionalText,
   genres: Schema.Array(Schema.String),
   onWatchlist: Schema.Boolean,
+  canManageBlocklist: Schema.Boolean,
   cast: Schema.Array(
     Schema.Struct({ id: Schema.Number, name: Schema.String, profilePath: OptionalText }),
   ),
@@ -40,8 +46,14 @@ function defined<Value>(value: Value | undefined): value is Value {
   return value !== undefined;
 }
 
-export function titlePreviewFromDetails(details: TitleDetails): TitlePreview {
+export function titlePreviewFromDetails(
+  details: TitleDetails,
+  canManageBlocklist: boolean,
+): TitlePreview {
   return {
+    availability: details.availability,
+    availabilityDetail: details.availabilityDetail,
+    airing: details.airing,
     name: details.name,
     year: details.year,
     overview: details.overview,
@@ -55,6 +67,7 @@ export function titlePreviewFromDetails(details: TitleDetails): TitlePreview {
     country: details.countries[0],
     genres: details.genres,
     onWatchlist: details.onWatchlist,
+    canManageBlocklist,
     cast: details.cast.slice(0, 4).map((person) => ({
       id: person.id,
       name: person.name,

@@ -4,12 +4,15 @@ import { Effect } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
-import { runAuthenticated } from "@/platform/auth/session";
+import { requireSession, runAuthenticated } from "@/platform/auth/session";
 
+import { canManageBlocklist } from "./blocklist";
 import { requestedProfileName } from "./qualityProfiles";
 import { titleFromResult } from "./title";
 import { titleDetailsFromMovie, titleDetailsFromTv } from "./titleDetails";
+import { tvAvailabilityProgram } from "./tvAvailability";
 
+import type { PlexLibrary } from "@/integrations/plex/library";
 import type { MediaType } from "@/integrations/seerr/client";
 import type { SeerrError } from "@/integrations/seerr/errors";
 import type { SeerrIdentity } from "@/integrations/seerr/identity";
@@ -24,6 +27,7 @@ export type TitleDetailsResult =
       related: readonly Title[];
       region: string;
       seerrOrigin: string;
+      canManageBlocklist: boolean;
     }>
   | Readonly<{ kind: "not-found" }>
   | Readonly<{ kind: "error"; message: string }>;
@@ -31,7 +35,8 @@ export type TitleDetailsResult =
 function detailsProgram(
   mediaType: MediaType,
   id: number,
-): Effect.Effect<TitleDetailsResult, SeerrError, SeerrClient | SeerrIdentity> {
+  canManage: boolean,
+): Effect.Effect<TitleDetailsResult, SeerrError, SeerrClient | SeerrIdentity | PlexLibrary> {
   return Effect.gen(function* () {
     const client = yield* SeerrClient;
     const settings = yield* client.publicSettings();
@@ -49,7 +54,14 @@ function detailsProgram(
               ),
             )
           : Effect.all([client.tv(id), ratingsOrNothing(client.tvRatings(id))]).pipe(
-              Effect.map(([tv, ratings]) => titleDetailsFromTv(tv, ratings, region, today)),
+              Effect.flatMap(([tv, ratings]) =>
+                tvAvailabilityProgram(tv, today).pipe(
+                  Effect.map((availability) => ({
+                    ...titleDetailsFromTv(tv, ratings, region, today),
+                    ...availability,
+                  })),
+                ),
+              ),
             ),
         client.recommendations(mediaType, id),
         client.genres("movie"),
@@ -80,6 +92,7 @@ function detailsProgram(
         .map((result) => titleFromResult(result, genreNames)),
       region,
       seerrOrigin: client.origin.origin,
+      canManageBlocklist: canManage,
     };
   });
 }
@@ -89,9 +102,10 @@ export async function loadTitleDetails(
   id: number,
 ): Promise<TitleDetailsResult> {
   await connection();
+  const { user } = await requireSession();
 
   return runAuthenticated(
-    detailsProgram(mediaType, id).pipe(
+    detailsProgram(mediaType, id, canManageBlocklist(user.permissions)).pipe(
       Effect.catchTag("SeerrRejected", (error) =>
         error.status === 404 && error.path === `${mediaType}/${id}`
           ? Effect.succeed<TitleDetailsResult>({ kind: "not-found" })

@@ -10,7 +10,7 @@ const cases = [
   { status: "approved", availability: "not-in-library", label: "Approved" },
   { status: "approved", availability: "pending", label: "Approved" },
   { status: "approved", availability: "processing", label: "Processing" },
-  { status: "approved", availability: "partially-available", label: "Partially available" },
+  { status: "approved", availability: "partially-available", label: "Partly Available" },
   { status: "approved", availability: "available", label: "Available" },
   { status: "completed", availability: "available", label: "Available" },
   { status: "completed", availability: "not-in-library", label: "Completed" },

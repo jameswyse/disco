@@ -6,8 +6,9 @@ import { Effect, Schema } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
 import { SeerrRejected, describeSeerrError } from "@/integrations/seerr/errors";
-import { runAuthenticated } from "@/platform/auth/session";
+import { requireSession, runAuthenticated } from "@/platform/auth/session";
 
+import { canManageBlocklist } from "./blocklist";
 import { requestProfiles } from "./qualityProfiles";
 
 import type { CreateRequestBody } from "@/integrations/seerr/client";
@@ -129,5 +130,37 @@ export async function toggleWatchlist(
         : client.removeFromWatchlist(input.id, input.mediaType),
     ),
     [`/title/${input.mediaType}/${input.id}`],
+  );
+}
+
+export async function toggleBlocklist(
+  _previous: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const decoded = Schema.decodeUnknownEither(WatchlistInput)(Object.fromEntries(formData));
+
+  if (decoded._tag === "Left") {
+    return { ok: false, message: "Choose a valid title and blocklist action." };
+  }
+
+  const { user } = await requireSession();
+
+  if (!canManageBlocklist(user.permissions)) {
+    return { ok: false, message: "You don't have permission to manage Seerr's blocklist." };
+  }
+
+  const input = decoded.right;
+
+  return run(
+    Effect.flatMap(SeerrClient, (client) =>
+      input.action === "add"
+        ? client.addToBlocklist({
+            tmdbId: input.id,
+            mediaType: input.mediaType,
+            title: input.title,
+          })
+        : client.removeFromBlocklist(input.id, input.mediaType),
+    ),
+    ["/"],
   );
 }

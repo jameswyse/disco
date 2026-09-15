@@ -245,6 +245,20 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
       addToWatchlist: (item: WatchlistItem) => post("watchlist", NoContent, item),
       removeFromWatchlist: (tmdbId: number, mediaType: MediaType) =>
         del(`watchlist/${tmdbId}`, { mediaType }),
+      addToBlocklist: (item: WatchlistItem) =>
+        Effect.gen(function* () {
+          const identity = yield* SeerrIdentity;
+          const client = yield* userClient;
+
+          // Seerr returns an empty 201 response, with no JSON body to decode.
+          yield* client
+            .post(new URL("blocklist", apiBase), {
+              body: HttpBody.unsafeJson({ ...item, user: identity.userId }),
+            })
+            .pipe(Effect.mapError((error) => translateHttpError("blocklist", error)));
+        }),
+      removeFromBlocklist: (tmdbId: number, mediaType: MediaType) =>
+        del(`blocklist/${tmdbId}`, { mediaType }),
       genres: (mediaType: MediaType) => get(`genres/${mediaType}`, Genres),
       genreSlider: (mediaType: MediaType) => get(`discover/genreslider/${mediaType}`, GenreSlider),
       languages: () => get("languages", Languages),

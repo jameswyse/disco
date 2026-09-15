@@ -24,7 +24,7 @@ describe("title trailers", () => {
     expect(details.trailerEmbedUrl).toBe(
       "https://www.youtube.com/embed/M7lc1UVf-VE?autoplay=1&playsinline=1&controls=0&fs=1&rel=0",
     );
-    expect(titlePreviewFromDetails(details).trailerEmbedUrl).toBe(
+    expect(titlePreviewFromDetails(details, false).trailerEmbedUrl).toBe(
       "https://www.youtube.com/embed/M7lc1UVf-VE?autoplay=1&playsinline=1&controls=0&fs=1&rel=0",
     );
   });

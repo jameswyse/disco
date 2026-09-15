@@ -22,7 +22,15 @@ import styles from "./TitleCard.module.css";
 type AvailabilityBadge = Readonly<{ className: string | undefined; label: string; symbol: string }>;
 
 const availabilityBadges = {
+  blocklisted: { className: styles.pending, label: "Blocklisted", symbol: "⊘" },
   available: { className: styles.available, label: "Available", symbol: "✓" },
+  "up-to-date": { className: styles.available, label: "Up to date", symbol: "✓" },
+  "some-available": {
+    className: styles.partiallyAvailable,
+    label: "Some episodes available",
+    symbol: "◐",
+  },
+  "not-yet-aired": { className: styles.pending, label: "Not yet aired", symbol: "◷" },
   "partially-available": {
     className: styles.partiallyAvailable,
     label: "Partly Available",
@@ -228,7 +236,16 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
           i
         </button>
         {open ? (
-          <TitleHoverCard onClose={hide} preview={preview} side={side} title={title} />
+          <TitleHoverCard
+            onBlocklistChange={() => {
+              setPreview({ kind: "idle" });
+              hide();
+            }}
+            onClose={hide}
+            preview={preview}
+            side={side}
+            title={title}
+          />
         ) : null}
       </div>
     </li>

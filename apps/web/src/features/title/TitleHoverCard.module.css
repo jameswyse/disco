@@ -207,18 +207,23 @@
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 12px;
 }
 
 .action {
+  align-items: center;
   background: var(--color-border-strong);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
   color: var(--color-text);
+  display: inline-flex;
   flex: 1;
   font-size: 13px;
   font-weight: 600;
+  justify-content: center;
+  min-height: 40px;
   padding: 9px 0;
   text-align: center;
 }

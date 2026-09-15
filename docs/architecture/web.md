@@ -1,7 +1,8 @@
 # Web architecture
 
 Disco owns browsing and saved views. Seerr owns accounts, metadata, requests, permissions,
-and watchlists. Radarr, Sonarr, and Plex remain behind Seerr.
+and watchlists. Radarr and Sonarr remain behind Seerr. Disco reads Plex episode availability
+through an instance-level connection discovered from Seerr.
 
 ## Ownership boundaries
 
@@ -43,8 +44,24 @@ The default language comes from instance preferences. URLs name a language only 
 ## Title data and requests
 
 List endpoints omit runtime and season counts, so cards fetch and cache those facts separately.
+TV facts also include availability and refresh on the minutes cache profile.
 Ratings with fewer than 10 votes stay hidden. Posters load directly from TMDB with unoptimised
 Next.js images, matching Seerr's image delivery.
+
+TV availability compares Seerr episode air dates with Plex season and episode numbers. Unaired
+episodes and specials do not count as missing. Complete aired coverage shows “Up to date” while
+more episodes are expected. Missing aired episodes show “Partly Available”. Incomplete source data
+shows “Some episodes available” when Seerr confirms partial coverage.
+Seasons Seerr confirms as complete remain complete, including when Plex combines episode entries.
+Plex episode checks refine incomplete seasons and assume the same season and episode numbering.
+Combined files with Plex's `s01e01-e02` naming convention cover every episode in that range.
+
+Plex discovery reads Seerr's administrator endpoints with the server API key, matches the configured
+server ID, and keeps its redacted token in process memory for five minutes. Only this integration
+uses instance-level access. Title reads authenticate before Plex checks, and ordinary Seerr calls
+keep the verified user ID. Plex discovery tries the configured address, then advertised HTTPS addresses for the same server.
+It verifies the server ID before reading episode files. Tokens never enter client data or diagnostics. If Plex cannot be reached, Seerr availability
+remains usable without invented episode counts.
 
 Request progress derives from Seerr's media status, requests, and download progress. Release dates
 distinguish waiting for release from waiting for a download. Advanced request choices are checked

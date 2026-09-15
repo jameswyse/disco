@@ -2,7 +2,7 @@ import { connection } from "next/server";
 
 import { Effect } from "effect";
 
-import { titleFromResult } from "@/features/title/title";
+import { isInLibrary, titleFromResult } from "@/features/title/title";
 import { viewMediaTypes } from "@/features/views/views";
 import { SeerrClient } from "@/integrations/seerr/client";
 import { describeSeerrError } from "@/integrations/seerr/errors";
@@ -130,14 +130,13 @@ function interleave(lists: readonly (readonly Title[])[]): Title[] {
 
 export function combineSources(pages: readonly SourcePage[], genreNames: GenreNames): Title[] {
   const titlesBySource = pages.map((page) =>
-    page.results.filter(isMedia).map((result) => titleFromResult(result, genreNames)),
+    page.results
+      .filter(isMedia)
+      .filter((result) => result.mediaInfo?.status !== 6)
+      .map((result) => titleFromResult(result, genreNames)),
   );
 
   return dedupe(interleave(titlesBySource));
-}
-
-function isInLibrary(title: Title): boolean {
-  return title.availability === "available" || title.availability === "partially-available";
 }
 
 function browseProgram(
@@ -168,7 +167,7 @@ function browseProgram(
     );
     const allTitles = combineSources(sourcePages, genreNames);
     const titles = filters.hideAvailable
-      ? allTitles.filter((title) => !isInLibrary(title))
+      ? allTitles.filter((title) => !isInLibrary(title.availability))
       : allTitles;
     const mediaTypes = viewMediaTypes(view).filter(
       (type) => filters.mediaType === "all" || filters.mediaType === type,

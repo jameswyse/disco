@@ -325,3 +325,32 @@ test("a request dialog opened from a hover card stays open", async ({ page }) =>
   await dialog.getByRole("button", { name: "Cancel" }).click();
   await expect(dialog).toBeHidden();
 });
+
+for (const width of [320, 1440]) {
+  test(`aired episode availability uses automatically discovered Plex at ${width}px`, async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto("/title/tv/205");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Airing and up to date");
+    await expect(page.getByText("All 6 aired episodes available").first()).toBeVisible();
+    await expect(page.getByText("Next episode airs 20 September")).toBeVisible();
+    await expect(page.getByRole("link", { name: "▶ Watch", exact: true })).toBeVisible();
+    const nextSeason = page.getByRole("listitem").filter({ hasText: "Season 2" });
+    await expect(nextSeason.getByText("Not yet aired", { exact: true })).toBeVisible();
+    await expect(nextSeason.getByRole("button", { name: "Request", exact: true })).toBeVisible();
+    const preview = await context.request.get("/api/titles/tv/205");
+    expect(await preview.json()).toMatchObject({
+      availability: "up-to-date",
+      availabilityDetail: "All 6 aired episodes available",
+    });
+    expect(await preview.text()).not.toContain("plex-fixture-token");
+
+    await page.goto("/title/tv/206");
+    await expect(page.getByText("4 of 6 aired episodes available").first()).toBeVisible();
+    await expect(page.getByText("Partly Available", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Next episode airs 20 September")).toBeVisible();
+    await expect(page.getByText("Up to date", { exact: true })).toHaveCount(0);
+  });
+}

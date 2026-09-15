@@ -42,7 +42,8 @@ describe("availabilityFromStatus", () => {
     expect(availabilityFromStatus(3)).toBe("processing");
     expect(availabilityFromStatus(4)).toBe("partially-available");
     expect(availabilityFromStatus(5)).toBe("available");
-    expect(availabilityFromStatus(6)).toBe("not-in-library");
+    expect(availabilityFromStatus(6)).toBe("blocklisted");
+    expect(availabilityFromStatus(7)).toBe("not-in-library");
   });
 });
 

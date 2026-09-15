@@ -5,6 +5,22 @@ const OptionalText = Schema.optional(Schema.NullOr(Schema.String));
 const OptionalNumber = Schema.optional(Schema.NullOr(Schema.Number));
 const OptionalBoolean = Schema.optional(Schema.NullOr(Schema.Boolean));
 
+/** Metadata providers use ISO calendar dates, null, or an empty string when a date is unknown. */
+const calendarDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+const OptionalAirDate = Schema.optional(
+  Schema.NullOr(
+    Schema.String.pipe(
+      Schema.filter(
+        (date) =>
+          date === "" ||
+          (calendarDatePattern.test(date) &&
+            !Number.isNaN(Date.parse(date)) &&
+            new Date(date).toISOString().slice(0, 10) === date),
+      ),
+    ),
+  ),
+);
+
 export const DownloadStatus = Schema.Struct({
   title: OptionalText,
   status: OptionalText,
@@ -48,8 +64,9 @@ export const MediaSeasonInfo = Schema.Struct({
 
 export const MediaInfo = Schema.Struct({
   tmdbId: Schema.Number,
-  /** 1 unknown, 2 pending, 3 processing, 4 partially available, 5 available, 6 deleted. */
+  /** 1 unknown, 2 pending, 3 processing, 4 partial, 5 available, 6 blocklisted, 7 deleted. */
   status: Schema.Number,
+  ratingKey: OptionalText,
   mediaUrl: OptionalText,
   mediaAddedAt: OptionalText,
   downloadStatus: Schema.optional(Schema.Array(DownloadStatus)),
@@ -83,7 +100,7 @@ export const TvResult = Schema.Struct({
   ...ResultBase,
   mediaType: Schema.Literal("tv"),
   name: Schema.String,
-  firstAirDate: OptionalText,
+  firstAirDate: OptionalAirDate,
   originCountry: Schema.optional(Schema.Array(Schema.String)),
 });
 export type TvResult = typeof TvResult.Type;
@@ -328,7 +345,7 @@ const Season = Schema.Struct({
   seasonNumber: Schema.Number,
   name: OptionalText,
   episodeCount: OptionalNumber,
-  airDate: OptionalText,
+  airDate: OptionalAirDate,
   posterPath: OptionalText,
 });
 export type Season = typeof Season.Type;
@@ -340,7 +357,7 @@ export const SeasonDetails = Schema.Struct({
       episodeNumber: Schema.Number,
       name: Schema.String,
       overview: OptionalText,
-      airDate: OptionalText,
+      airDate: OptionalAirDate,
       stillPath: OptionalText,
     }),
   ),
@@ -352,8 +369,9 @@ const ContentRating = Schema.Struct({ iso_3166_1: Schema.String, rating: Optiona
 export const TvDetails = Schema.Struct({
   ...DetailsBase,
   name: Schema.String,
-  firstAirDate: OptionalText,
-  lastAirDate: OptionalText,
+  firstAirDate: OptionalAirDate,
+  lastAirDate: OptionalAirDate,
+  nextEpisodeToAir: Schema.optional(Schema.NullOr(Schema.Struct({ airDate: OptionalAirDate }))),
   numberOfSeasons: OptionalNumber,
   numberOfEpisodes: OptionalNumber,
   episodeRunTime: Schema.optional(Schema.Array(Schema.Number)),

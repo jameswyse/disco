@@ -1,3 +1,5 @@
+import { availabilityLabels, isInLibrary } from "./title";
+
 import type { TitleDetails } from "./titleDetails";
 
 export type TimelineStep = Readonly<{
@@ -52,9 +54,12 @@ function waitingDetail(details: TitleDetails): string {
  * title has never been requested and is not in the library.
  */
 export function requestTimeline(details: TitleDetails): readonly TimelineStep[] {
+  if (details.availability === "blocklisted") {
+    return [];
+  }
+
   const [latest] = [...details.requests].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
-  const available =
-    details.availability === "available" || details.availability === "partially-available";
+  const available = isInLibrary(details.availability);
 
   if (!latest && !available) {
     return [];
@@ -123,8 +128,8 @@ export function requestTimeline(details: TitleDetails): readonly TimelineStep[] 
     },
     {
       id: "available",
-      label: details.availability === "partially-available" ? "Partly Available" : "Available",
-      detail: available ? undefined : "You'll see it here once it's available",
+      label: available ? availabilityLabels[details.availability] : "Available",
+      detail: available ? details.availabilityDetail : "You'll see it here once it's available",
       state: stepState(available, false),
     },
   ];

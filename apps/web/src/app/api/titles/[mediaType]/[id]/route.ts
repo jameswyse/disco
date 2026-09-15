@@ -25,9 +25,12 @@ export async function GET(
 
   switch (result.kind) {
     case "ok":
-      return new Response(serialisePreview(titlePreviewFromDetails(result.details)), {
-        headers: jsonHeaders,
-      });
+      return new Response(
+        serialisePreview(titlePreviewFromDetails(result.details, result.canManageBlocklist)),
+        {
+          headers: jsonHeaders,
+        },
+      );
     case "not-found":
       return Response.json(result, { status: 404 });
     case "error":

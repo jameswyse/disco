@@ -39,7 +39,6 @@ export function SeasonEpisodes({
   const [open, setOpen] = useState(false);
   const [result, load, pending] = useActionState(loadSeasonEpisodes, undefined);
   const panelId = useId();
-  const aired = formatDate(season.airDate);
 
   function fetchEpisodes() {
     startTransition(() => load({ id, season: season.number }));
@@ -66,7 +65,8 @@ export function SeasonEpisodes({
           <span className={styles.name}>{season.name}</span>
           <span className={styles.count}>
             {season.episodeCount} {season.episodeCount === 1 ? "episode" : "episodes"}
-            {aired ? ` · aired ${aired}` : ""}
+            {season.airDateLabel ? ` · ${season.airDateLabel}` : ""}
+            {season.availabilityDetail ? ` · ${season.availabilityDetail}` : ""}
           </span>
           <svg aria-hidden="true" className={styles.chevron} viewBox="0 0 20 20">
             <path d="m5 7.5 5 5 5-5" />

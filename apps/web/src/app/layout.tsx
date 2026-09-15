@@ -4,6 +4,12 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  applicationName: "Disco",
+  appleWebApp: {
+    capable: true,
+    title: "Disco",
+    statusBarStyle: "default",
+  },
   description: "Browse, filter and request movies and TV shows through Seerr.",
   title: {
     default: "Disco",

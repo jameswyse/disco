@@ -32,24 +32,40 @@ through to Radarr, Sonarr, and Plex.
 
 ## Get started
 
-You need a running Seerr instance and an existing Seerr account. Save
-[`compose.yaml`](compose.yaml) and [`.env.example`](.env.example) in the same directory,
-then run:
+You need Docker Compose, a running Seerr instance, and an existing Seerr account.
+Save this as `compose.yaml`:
 
-```sh
-cp .env.example .env
+```yaml
+services:
+  disco:
+    image: ghcr.io/jameswyse/disco:latest
+    container_name: disco
+    restart: unless-stopped
+    ports:
+      - "8785:3000"
+    environment:
+      SEERR_URL: "http://your-seerr-host:5055"
+      SEERR_API_KEY: "your-seerr-api-key"
+    volumes:
+      - disco-data:/data
+
+volumes:
+  disco-data:
 ```
 
-Set `SEERR_URL` to your Seerr address and `SEERR_API_KEY` to the key in **Settings → General**.
-Then start Disco:
+Replace `SEERR_URL` with a Seerr address reachable from the container, and `SEERR_API_KEY` with
+the key from Seerr's **Settings → General → API Key**. Then start Disco:
 
 ```sh
 docker compose up --detach --pull always
 ```
 
-Open [localhost:8785](http://localhost:8785) and sign in. The image supports AMD64 and ARM64.
-Set `DISCO_VERSION` in `.env` to `latest`, a minor series such as `0.1`, or an exact release such
-as `0.1.0`. Run the same command to update within the selected series.
+Open [localhost:8785](http://localhost:8785), or your server's address on port `8785`, and sign in
+with your Seerr account. The image supports AMD64 and ARM64.
+
+Run the same command to update to the latest stable release. Keep the `disco-data` volume to preserve
+saved views and preferences. To pin a version, replace `:latest` in the image with an exact tag
+such as `:1.0.0`.
 
 See the [setup guide](docs/setup.md) for updates, storage, and building from source.
 See [release instructions](docs/releases.md) for publishing a new version.

@@ -76,6 +76,7 @@ RUN apt-get update \
 COPY --from=base /usr/local/bin/node-runtime /usr/local/bin/node
 COPY --from=builder --chown=node:node /workspace/apps/web/.next/standalone /app
 COPY --from=builder --chown=node:node /workspace/apps/web/.next/static /app/apps/web/.next/static
+COPY --from=builder --chown=node:node /workspace/apps/web/public /app/apps/web/public
 COPY --chown=node:node deploy/healthcheck.mjs /app/healthcheck.mjs
 
 USER node

@@ -50,6 +50,7 @@ RUN --mount=type=cache,id=disco-next-cache,target=/workspace/apps/web/.next/cach
 FROM debian:stable-slim AS runner
 
 ARG APPLICATION_VERSION=development
+ARG APPLICATION_REVISION=unknown
 
 ENV DISCO_DATA_DIR=/data
 ENV HOSTNAME=0.0.0.0
@@ -59,6 +60,9 @@ ENV PORT=3000
 
 LABEL org.opencontainers.image.title=disco
 LABEL org.opencontainers.image.version=${APPLICATION_VERSION}
+LABEL org.opencontainers.image.revision=${APPLICATION_REVISION}
+LABEL org.opencontainers.image.source=https://github.com/jameswyse/disco
+LABEL org.opencontainers.image.licenses=MIT
 
 WORKDIR /app/apps/web
 

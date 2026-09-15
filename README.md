@@ -32,7 +32,9 @@ through to Radarr, Sonarr, and Plex.
 
 ## Get started
 
-You need a running Seerr instance and an existing Seerr account. To run Disco with Docker Compose:
+You need a running Seerr instance and an existing Seerr account. Save
+[`compose.yaml`](compose.yaml) and [`.env.example`](.env.example) in the same directory,
+then run:
 
 ```sh
 cp .env.example .env
@@ -42,11 +44,15 @@ Set `SEERR_URL` to your Seerr address and `SEERR_API_KEY` to the key in **Settin
 Then start Disco:
 
 ```sh
-docker compose up --build --detach
+docker compose up --detach --pull always
 ```
 
-Open [localhost:3000](http://localhost:3000) and sign in. See the [setup guide](docs/setup.md)
-for local development and storage configuration.
+Open [localhost:8785](http://localhost:8785) and sign in. The image supports AMD64 and ARM64.
+Set `DISCO_VERSION` in `.env` to `latest`, a minor series such as `0.1`, or an exact release such
+as `0.1.0`. Run the same command to update within the selected series.
+
+See the [setup guide](docs/setup.md) for updates, storage, and building from source.
+See [release instructions](docs/releases.md) for publishing a new version.
 
 ## Licence
 

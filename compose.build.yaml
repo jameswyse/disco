@@ -1,0 +1,10 @@
+# Use with: docker compose -f compose.yaml -f compose.build.yaml up --build --detach
+services:
+  disco:
+    image: disco:development
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+      args:
+        APPLICATION_VERSION: development

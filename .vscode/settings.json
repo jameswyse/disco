@@ -9,5 +9,5 @@
     "source.fixAll.oxc": "always"
   },
   "js/ts.experimental.useTsgo": true,
-  "js/ts.tsdk.path": "./node_modules/@typescript/native"
+  "js/ts.tsdk.path": "./node_modules/typescript"
 }

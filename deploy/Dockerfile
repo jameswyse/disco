@@ -67,7 +67,7 @@ LABEL org.opencontainers.image.licenses=MIT
 WORKDIR /app/apps/web
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates \
+    && apt-get install -y --no-install-recommends ca-certificates libatomic1 \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --uid 1000 --create-home --user-group node \
     && mkdir /data \

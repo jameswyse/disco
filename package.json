@@ -38,14 +38,13 @@
     "@oxlint/plugins": "catalog:",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/node": "catalog:",
-    "@typescript/native": "catalog:",
     "eslint-plugin-react-you-might-not-need-an-effect": "1.0.2",
     "husky": "9.1.7",
     "lint-staged.sh": "0.6.9",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "7.0.2001",
-    "turbo": "2.10.12",
+    "turbo": "2.10.13",
     "typescript": "catalog:"
   },
   "devEngines": {
@@ -55,12 +54,12 @@
     },
     "runtime": {
       "name": "node",
-      "version": "24.21.0",
+      "version": "26.9.0",
       "onFail": "download"
     }
   },
   "engines": {
-    "node": "24.21.0"
+    "node": "26.9.0"
   },
   "packageManager": "pnpm@12.4.1"
 }

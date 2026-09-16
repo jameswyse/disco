@@ -44,7 +44,7 @@ export default defineConfig({
   ],
   quiet: !process.env.DEBUG && process.env.DISCO_HUMAN_OUTPUT !== "1",
   reporter: testReporters(),
-  retries: process.env.CI ? 1 : 0,
+  retries: 0,
   snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
   testDir: "./tests/browser",
   testIgnore: ["fixtures/**"],

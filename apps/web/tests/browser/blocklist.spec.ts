@@ -22,6 +22,7 @@ test("blocklist a browse result, find it in search, and restore it from details"
   await expect(preview.getByRole("button", { name: "Remove from blocklist" })).toBeVisible();
   await expect(preview.getByRole("button", { name: /Request/ })).toHaveCount(0);
   await preview.getByRole("link", { name: "Details", exact: true }).click();
+  await expect(page).toHaveURL("/title/movie/30101");
   await expect(page.getByRole("button", { name: /Request/ })).toHaveCount(0);
   await page.getByRole("button", { name: "Remove from blocklist" }).click();
   await page

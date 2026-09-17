@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/jameswyse/disco/compare/v1.0.0...v1.0.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ci:** separate package pagination from JSON filtering ([33f78c0](https://github.com/jameswyse/disco/commit/33f78c033224393f401c642ca704c4147fa16301))
+
 ## 1.0.0 (2026-09-15)
 
 

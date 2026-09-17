@@ -31,7 +31,6 @@ update:
     - "@types/node"
 
 allowBuilds:
-  esbuild: true
   # Optional native accelerator pulled in by @effect/platform; the JS fallback is sufficient.
   msgpackr-extract: false
   sharp: true

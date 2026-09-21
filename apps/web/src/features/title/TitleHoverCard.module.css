@@ -282,3 +282,17 @@
   display: block;
   margin-top: 6px;
 }
+
+@media (max-width: 40rem) {
+  .card {
+    position: fixed;
+    inset: 16px 16px auto;
+    width: auto;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+  }
+
+  .card::before {
+    display: none;
+  }
+}

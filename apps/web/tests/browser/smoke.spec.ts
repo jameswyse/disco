@@ -17,8 +17,8 @@ test("the root redirects to the first view and renders titles from Seerr", async
     /ncQ8D4j8GSuL9CzncLEXnhHDxHy/,
   );
   const grid = page.getByRole("list", { name: "Trending titles" });
-  await expect(grid.getByText("Fixture Film One")).toBeVisible();
-  await expect(grid.getByRole("img", { name: "Available" })).toBeVisible();
+  await expect(grid.getByRole("link", { name: /Fixture Film Two/ })).toBeVisible();
+  await expect(grid.getByText("Fixture Film One")).toHaveCount(0);
   await expect(page.getByText("Fixture User")).toBeVisible();
   const sidebar = page.getByRole("complementary", { name: "Views" });
   await expect(sidebar.getByRole("link", { name: /Add a view/ })).toHaveCount(0);
@@ -110,7 +110,7 @@ test("primary navigation hides the sidebar on Requests and Preferences", async (
 });
 
 test("provider views mix movies and series", async ({ page }) => {
-  await page.goto("/netflix?list=popular");
+  await page.goto("/netflix?list=popular&hide=0&hideRequested=0");
 
   const grid = page.getByRole("list", { name: "Popular titles" });
   await expect(grid.getByText("Fixture Film One")).toBeVisible();
@@ -134,7 +134,7 @@ test("health endpoint reports ok when Seerr is configured", async ({ request }) 
 });
 
 test("cards show runtime for films and season counts for series", async ({ page }) => {
-  await page.goto("/netflix?list=popular");
+  await page.goto("/netflix?list=popular&hide=0&hideRequested=0");
 
   const grid = page.getByRole("list", { name: "Popular titles" });
   await expect(grid.getByRole("link", { name: /Fixture Film One/ })).toContainText("1h 58m");

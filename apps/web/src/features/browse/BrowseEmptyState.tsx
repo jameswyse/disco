@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { browseHref } from "./browseHref";
-import { hasDiscoverFilters, noFilters } from "./filters";
+import { hasDiscoverFilters, defaultFilters } from "./filters";
 import { providerOriginals } from "./providerOriginals";
 
 import type { View } from "@/features/views/views";
@@ -13,20 +13,20 @@ import styles from "./BrowseEmptyState.module.css";
 export function BrowseEmptyState({
   location,
   hiddenAvailable,
+  hiddenRequested,
   view,
 }: Readonly<{
   location: BrowseLocation;
   hiddenAvailable: number;
+  hiddenRequested: number;
   view: View;
 }>) {
   const unsupported =
     location.listId === "upcoming" &&
     view.source.kind === "provider" &&
     providerOriginals(view.source.providerId, "tv") === undefined;
-  const filtered =
-    hasDiscoverFilters(location.filters) ||
-    location.filters.mediaType !== "all" ||
-    location.filters.hideAvailable;
+  const filtered = hasDiscoverFilters(location.filters) || location.filters.mediaType !== "all";
+  const hidden = hiddenAvailable + hiddenRequested > 0;
   const listHeading = {
     upcoming: "No upcoming titles listed",
     recent: "No recent premieres listed",
@@ -41,6 +41,17 @@ export function BrowseEmptyState({
   if (hiddenAvailable > 0) {
     heading = "These titles are already available";
     description = "Turn off Hide already available to see the titles on this page.";
+  }
+
+  if (hiddenRequested > 0) {
+    heading =
+      hiddenAvailable > 0
+        ? "These titles are already available or requested"
+        : "These titles are already requested";
+    description =
+      hiddenAvailable > 0
+        ? "Turn off Hide already available and Hide already requested to see the titles on this page."
+        : "Turn off Hide already requested to see the titles on this page.";
   }
 
   if (unsupported) {
@@ -66,23 +77,28 @@ export function BrowseEmptyState({
       </h2>
       <p className={styles.description}>{description}</p>
       <div className={styles.emptyActions}>
-        {filtered && !unsupported ? (
+        {(filtered || hidden) && !unsupported ? (
           <Link
             className={styles.action}
             href={browseHref({
               ...location,
-              filters:
-                hiddenAvailable > 0 ? { ...location.filters, hideAvailable: false } : noFilters,
-              page: hiddenAvailable > 0 ? location.page : 1,
+              filters: hidden
+                ? {
+                    ...location.filters,
+                    hideAvailable: hiddenAvailable > 0 ? false : location.filters.hideAvailable,
+                    hideRequested: hiddenRequested > 0 ? false : location.filters.hideRequested,
+                  }
+                : defaultFilters,
+              page: hidden ? location.page : 1,
             })}
           >
-            {hiddenAvailable > 0 ? "Show available titles" : "Clear filters"}
+            {hidden ? "Show hidden titles" : "Clear filters"}
           </Link>
         ) : null}
         {location.listId !== "popular" ? (
           <Link
             className={styles.action}
-            href={browseHref({ ...location, listId: "popular", filters: noFilters, page: 1 })}
+            href={browseHref({ ...location, listId: "popular", filters: defaultFilters, page: 1 })}
           >
             Browse Popular
           </Link>

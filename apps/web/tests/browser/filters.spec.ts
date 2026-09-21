@@ -42,6 +42,8 @@ for (const width of [390, 1440]) {
     await expect(panel).toBeVisible();
     await page.getByLabel("Hide already available", { exact: true }).focus();
     await page.keyboard.press("Tab");
+    await expect(page.getByLabel("Hide already requested", { exact: true })).toBeFocused();
+    await page.keyboard.press("Tab");
     await expect(panel).toBeHidden();
 
     await page.getByText(/^Filters \d+$/).click();
@@ -52,14 +54,14 @@ for (const width of [390, 1440]) {
 }
 
 test("the media type filter narrows mixed views and is kept in the URL", async ({ page }) => {
-  await page.goto("/netflix?list=popular");
+  await page.goto("/netflix?list=popular&hideRequested=0");
   await page.getByText(/^Filters \d+$/).click();
   await page
     .getByRole("navigation", { name: "Media type" })
     .getByRole("link", { name: "TV" })
     .click();
 
-  await expect(page).toHaveURL(/\/netflix\?list=popular&type=tv$/);
+  await expect(page).toHaveURL(/\/netflix\?list=popular&type=tv&hideRequested=0$/);
   const grid = page.getByRole("list", { name: "Popular titles" });
   await expect(grid.getByText("Fixture Series One")).toBeVisible();
   await expect(grid.getByText("Fixture Film One")).toHaveCount(0);
@@ -76,20 +78,55 @@ test("genre, language and rating filters navigate with query parameters", async 
   await expect(page.getByLabel("Rating")).toHaveValue("7");
 });
 
-test("hiding library titles removes them and reports the count", async ({ page }) => {
-  await page.goto("/movies?list=popular");
-  await page.getByText(/^Filters \d+$/).click();
-  await page.getByLabel("Hide already available").click();
-
-  await expect(page).toHaveURL(/hide=1/);
+test("availability and request filters default on and can be toggled independently", async ({
+  page,
+}) => {
+  await page.goto("/netflix?list=popular&lang=any");
+  const grid = page.getByRole("list", { name: "Popular titles" });
+  await expect(grid.getByRole("link", { name: /Fixture Film Two/ })).toBeVisible();
+  await expect(grid.getByText("Fixture Film One")).toHaveCount(0);
+  await expect(grid.getByText("Fixture Series One")).toHaveCount(0);
   await expect(page.getByText(/1 hidden because they're already available/)).toBeVisible();
+  await expect(page.getByText(/1 hidden because they're already requested/)).toBeVisible();
+  await page.getByText(/^Filters 2$/).click();
+  const available = page.getByLabel("Hide already available", { exact: true });
+  const requested = page.getByLabel("Hide already requested", { exact: true });
+  await expect(available).toBeChecked();
+  await expect(requested).toBeChecked();
+  await requested.click();
+  await expect(page).toHaveURL(/hideRequested=0/);
+  await expect(requested).not.toBeChecked();
+  await expect(grid.getByText("Fixture Series One")).toBeVisible();
+  await expect(grid.getByText("Fixture Film One")).toHaveCount(0);
+  await available.click();
+  await expect(page).toHaveURL(/hide=0&hideRequested=0/);
+  await expect(available).not.toBeChecked();
+  await expect(grid.getByText("Fixture Film One")).toBeVisible();
+  await requested.click();
+  await expect(page).not.toHaveURL(/hideRequested=/);
+  await expect(requested).toBeChecked();
+  await expect(grid.getByText("Fixture Series One")).toHaveCount(0);
+  await expect(grid.getByText("Fixture Film One")).toBeVisible();
+  await page.reload();
+  await page.getByText(/^Filters 1$/).click();
+  await expect(available).not.toBeChecked();
+  await expect(requested).toBeChecked();
+});
+
+test("an empty requested list can reveal its hidden titles", async ({ page }) => {
+  await page.goto("/tv?list=popular&lang=any");
   await expect(
-    page.getByRole("list", { name: "Popular titles" }).getByText("Fixture Film One"),
-  ).toHaveCount(0);
+    page.getByRole("heading", { name: "These titles are already requested" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Show hidden titles", exact: true }).click();
+  await expect(page).toHaveURL(/hideRequested=0/);
+  await expect(
+    page.getByRole("list", { name: "Popular titles" }).getByText("Fixture Series One"),
+  ).toBeVisible();
 });
 
 test("provider upcoming lists identify originals without explanatory text", async ({ page }) => {
-  await page.goto("/netflix?list=upcoming&lang=any");
+  await page.goto("/netflix?list=upcoming&lang=any&hideRequested=0");
   await expect(page.getByRole("link", { name: "Upcoming originals", exact: true })).toHaveAttribute(
     "aria-current",
     "page",
@@ -142,7 +179,7 @@ for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/movies?list=popular&genre=18&lang=any");
     const search = page.getByRole("banner").getByRole("combobox", { name: "Search", exact: true });
-    const filters = page.getByText(/^Filters 1$/);
+    const filters = page.getByText(/^Filters 3$/);
     const menu = page.getByRole("group", { name: "Filters", exact: true });
     await expect(search).toBeVisible();
     await expect(menu).toBeHidden();
@@ -151,17 +188,17 @@ for (const width of [390, 1440]) {
     await expect(menu).toBeVisible();
     await page.getByLabel("Language", { exact: true }).selectOption("en");
     await expect(page).toHaveURL(/genre=18&lang=en/);
-    await expect(page.getByText(/^Filters 2$/)).toBeVisible();
+    await expect(page.getByText(/^Filters 4$/)).toBeVisible();
     await page.getByLabel("Hide already available", { exact: true }).click();
-    await expect(page).toHaveURL(/hide=1/);
-    await expect(page.getByLabel("Hide already available", { exact: true })).toBeChecked();
+    await expect(page).toHaveURL(/hide=0/);
+    await expect(page.getByLabel("Hide already available", { exact: true })).not.toBeChecked();
     await expect(page.getByText(/^Filters 3$/)).toBeVisible();
     await page.getByLabel("Hide already available", { exact: true }).click();
-    await expect(page).not.toHaveURL(/hide=1/);
-    await expect(page.getByLabel("Hide already available", { exact: true })).not.toBeChecked();
+    await expect(page).not.toHaveURL(/hide=0/);
+    await expect(page.getByLabel("Hide already available", { exact: true })).toBeChecked();
     await page.keyboard.press("Escape");
     await expect(menu).toBeHidden();
-    await expect(page.getByText(/^Filters 2$/)).toBeFocused();
+    await expect(page.getByText(/^Filters 4$/)).toBeFocused();
 
     const footer = page.getByRole("main").locator("footer");
     const summary = footer.getByText(/Popular on Movies · 101 titles · page \d of 3/);
@@ -187,7 +224,7 @@ for (const width of [390, 1440]) {
     }
 
     await page.screenshot({ path: testInfo.outputPath("browse-layout.png"), fullPage: true });
-    await page.getByText(/^Filters 2$/).click();
+    await page.getByText(/^Filters 4$/).click();
     await search.click();
     await expect(menu).toBeHidden();
     await search.fill("fixture");
@@ -203,7 +240,7 @@ test("extra filters are counted and mixed views require a media type before sort
   page,
 }) => {
   await page.goto("/netflix?list=popular&lang=any");
-  await page.getByText(/^Filters 0$/).click();
+  await page.getByText(/^Filters 2$/).click();
   await expect(page.getByLabel("Sort order", { exact: true })).toBeDisabled();
   await page
     .getByRole("navigation", { name: "Media type" })
@@ -218,5 +255,5 @@ test("extra filters are counted and mixed views require a media type before sort
   await expect(page).toHaveURL(/year=2020/);
   await page.getByLabel("Minimum votes", { exact: true }).selectOption("500");
   await expect(page).toHaveURL(/votes=500/);
-  await expect(page.getByText(/^Filters 4$/)).toBeVisible();
+  await expect(page.getByText(/^Filters 6$/)).toBeVisible();
 });

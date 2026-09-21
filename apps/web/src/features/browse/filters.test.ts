@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { browseHref } from "./browseHref";
-import { filterEntries, noFilters, parseBrowseFilters } from "./filters";
+import { filterEntries, defaultFilters, parseBrowseFilters } from "./filters";
 
 describe("parseBrowseFilters", () => {
   it("reads every supported filter", () => {
@@ -16,6 +16,7 @@ describe("parseBrowseFilters", () => {
       language: "ko",
       ratingAtLeast: 7,
       hideAvailable: true,
+      hideRequested: true,
     });
   });
 
@@ -25,7 +26,26 @@ describe("parseBrowseFilters", () => {
         { type: "person", genre: "-1", lang: "english", rating: "10", hide: "yes" },
         undefined,
       ),
-    ).toEqual(noFilters);
+    ).toEqual(defaultFilters);
+  });
+
+  it("defaults both hiding filters on and allows each to be disabled", () => {
+    expect(parseBrowseFilters({}, undefined)).toMatchObject({
+      hideAvailable: true,
+      hideRequested: true,
+    });
+    expect(parseBrowseFilters({ hide: "0" }, undefined)).toMatchObject({
+      hideAvailable: false,
+      hideRequested: true,
+    });
+    expect(parseBrowseFilters({ hideRequested: "0" }, undefined)).toMatchObject({
+      hideAvailable: true,
+      hideRequested: false,
+    });
+    expect(parseBrowseFilters({ hide: "1", hideRequested: "1" }, undefined)).toMatchObject({
+      hideAvailable: true,
+      hideRequested: true,
+    });
   });
 
   it("applies the saved default language unless the URL overrides or clears it", () => {
@@ -41,7 +61,7 @@ describe("browseHref", () => {
       browseHref({
         viewId: "netflix",
         listId: "trending",
-        filters: noFilters,
+        filters: defaultFilters,
         defaultLanguage: undefined,
         page: 1,
       }),
@@ -50,11 +70,11 @@ describe("browseHref", () => {
       browseHref({
         viewId: "netflix",
         listId: "popular",
-        filters: { ...noFilters, genreId: 18, hideAvailable: true },
+        filters: { ...defaultFilters, genreId: 18, hideAvailable: false, hideRequested: false },
         defaultLanguage: undefined,
         page: 3,
       }),
-    ).toBe("/netflix?list=popular&genre=18&hide=1&page=3");
+    ).toBe("/netflix?list=popular&genre=18&hide=0&hideRequested=0&page=3");
   });
 
   it("only names the language when it differs from the saved default", () => {
@@ -65,15 +85,17 @@ describe("browseHref", () => {
       page: 1,
     };
 
-    expect(browseHref({ ...location, filters: { ...noFilters, language: "en" } })).toBe("/movies");
-    expect(browseHref({ ...location, filters: { ...noFilters, language: "ko" } })).toBe(
+    expect(browseHref({ ...location, filters: { ...defaultFilters, language: "en" } })).toBe(
+      "/movies",
+    );
+    expect(browseHref({ ...location, filters: { ...defaultFilters, language: "ko" } })).toBe(
       "/movies?lang=ko",
     );
-    expect(browseHref({ ...location, filters: noFilters })).toBe("/movies?lang=any");
+    expect(browseHref({ ...location, filters: defaultFilters })).toBe("/movies?lang=any");
   });
 
   it("round-trips through the parser", () => {
-    const filters = { ...noFilters, mediaType: "movie" as const, ratingAtLeast: 8 };
+    const filters = { ...defaultFilters, mediaType: "movie" as const, ratingAtLeast: 8 };
 
     expect(
       parseBrowseFilters(Object.fromEntries(filterEntries(filters, undefined)), undefined),

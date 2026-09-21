@@ -10,6 +10,7 @@ export type BrowseFilters = Readonly<{
   language: string | undefined;
   ratingAtLeast: number | undefined;
   hideAvailable: boolean;
+  hideRequested: boolean;
   year?: number | undefined;
   sort?: "popular" | "rating" | "newest" | "oldest" | undefined;
   votesAtLeast?: number | undefined;
@@ -20,12 +21,13 @@ export type SearchParameters = Readonly<Record<string, SearchParameter>>;
 
 export const ratingOptions = [5, 6, 7, 8, 9] as const;
 
-export const noFilters: BrowseFilters = {
+export const defaultFilters: BrowseFilters = {
   mediaType: "all",
   genreId: undefined,
   language: undefined,
   ratingAtLeast: undefined,
-  hideAvailable: false,
+  hideAvailable: true,
+  hideRequested: true,
 };
 
 function first(value: SearchParameter): string | undefined {
@@ -87,7 +89,8 @@ export function parseBrowseFilters(
       rating !== undefined && ratingOptions.some((option) => option === rating)
         ? rating
         : undefined,
-    hideAvailable: first(query.hide) === "1",
+    hideAvailable: first(query.hide) !== "0",
+    hideRequested: first(query.hideRequested) !== "0",
     year: parseYear(first(query.year)),
     sort: sortOptions.find((option) => option.id === first(query.sort))?.id,
     votesAtLeast: voteOptions.find((option) => option === positiveInteger(first(query.votes))),
@@ -117,8 +120,12 @@ export function filterEntries(
     entries.push(["rating", String(filters.ratingAtLeast)]);
   }
 
-  if (filters.hideAvailable) {
-    entries.push(["hide", "1"]);
+  if (!filters.hideAvailable) {
+    entries.push(["hide", "0"]);
+  }
+
+  if (!filters.hideRequested) {
+    entries.push(["hideRequested", "0"]);
   }
 
   if (filters.year !== undefined) {

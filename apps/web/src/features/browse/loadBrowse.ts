@@ -29,6 +29,8 @@ export type BrowseResult =
       titles: readonly Title[];
       /** Titles removed by the "Hide already available" filter. */
       hiddenAvailable: number;
+      /** Titles removed by the "Hide already requested" filter. */
+      hiddenRequested: number;
       page: number;
       totalPages: number;
       totalResults: number;
@@ -166,9 +168,26 @@ function browseProgram(
       [...movieGenres, ...tvGenres].map((genre) => [genre.id, genre.name]),
     );
     const allTitles = combineSources(sourcePages, genreNames);
-    const titles = filters.hideAvailable
-      ? allTitles.filter((title) => !isInLibrary(title.availability))
-      : allTitles;
+    let hiddenAvailable = 0;
+    let hiddenRequested = 0;
+    const titles = allTitles.filter((title) => {
+      if (filters.hideAvailable && isInLibrary(title.availability)) {
+        hiddenAvailable += 1;
+
+        return false;
+      }
+
+      if (
+        filters.hideRequested &&
+        (title.availability === "pending" || title.availability === "processing")
+      ) {
+        hiddenRequested += 1;
+
+        return false;
+      }
+
+      return true;
+    });
     const mediaTypes = viewMediaTypes(view).filter(
       (type) => filters.mediaType === "all" || filters.mediaType === type,
     );
@@ -181,7 +200,8 @@ function browseProgram(
     return {
       kind: "ok",
       titles,
-      hiddenAvailable: allTitles.length - titles.length,
+      hiddenAvailable,
+      hiddenRequested,
       page,
       totalPages: Math.max(0, ...sourcePages.map((source) => source.totalPages)),
       totalResults: sourcePages.reduce((sum, source) => sum + source.totalResults, 0),

@@ -52,6 +52,10 @@ test("adding and removing a view updates the sidebar, with links only outside Ma
   await page.goto("/movies");
   await sidebar.getByRole("link", { name: "HBO", exact: true }).click();
   await expect(page).toHaveURL(/\/hbo$/);
+  await expect(
+    page.getByRole("heading", { name: "These titles are already requested" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Show hidden titles", exact: true }).click();
   await expect(page.getByText(/Trending on HBO/)).toBeVisible();
 
   await page.goto("/views");

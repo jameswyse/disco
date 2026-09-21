@@ -67,6 +67,7 @@ export function FilterMenu({
     !lockedLanguage && filters.language !== undefined,
     filters.ratingAtLeast !== undefined,
     filters.hideAvailable,
+    filters.hideRequested,
     filters.year !== undefined,
     filters.sort !== undefined,
     filters.votesAtLeast !== undefined,
@@ -282,6 +283,16 @@ export function FilterMenu({
             checked={filters.hideAvailable}
             className={styles.toggleInput}
             onChange={(event) => navigate({ hideAvailable: event.target.checked })}
+            type="checkbox"
+          />
+          <span aria-hidden="true" className={styles.toggleTrack} />
+        </label>
+        <label className={styles.toggle}>
+          Hide already requested
+          <input
+            checked={filters.hideRequested}
+            className={styles.toggleInput}
+            onChange={(event) => navigate({ hideRequested: event.target.checked })}
             type="checkbox"
           />
           <span aria-hidden="true" className={styles.toggleTrack} />

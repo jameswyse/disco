@@ -53,7 +53,7 @@ async function makeBatch(
       id: `${title.mediaType}-${title.id}`,
       content: <TitleCard title={title} previewMode={previewMode} />,
     })),
-    summary: `${browseListLabel(view, listId)} on ${view.label} · ${result.totalResults.toLocaleString("en-AU")} titles · page ${result.page} of ${Math.max(1, result.totalPages)}${result.hiddenAvailable ? ` · ${result.hiddenAvailable} hidden because they're already available` : ""}`,
+    summary: `${browseListLabel(view, listId)} on ${view.label} · ${result.totalResults.toLocaleString("en-AU")} titles · page ${result.page} of ${Math.max(1, result.totalPages)}${result.hiddenAvailable ? ` · ${result.hiddenAvailable} hidden because they're already available` : ""}${result.hiddenRequested ? ` · ${result.hiddenRequested} hidden because they're already requested` : ""}`,
   };
 }
 
@@ -117,6 +117,7 @@ export async function BrowsePage({
           empty={
             <BrowseEmptyState
               hiddenAvailable={result.kind === "ok" ? result.hiddenAvailable : 0}
+              hiddenRequested={result.kind === "ok" ? result.hiddenRequested : 0}
               location={location}
               view={view}
             />

@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/jameswyse/disco/compare/v1.0.0...v1.1.0) (2026-09-22)
+
+
+### Features
+
+* add branded Disco loading states ([ce98006](https://github.com/jameswyse/disco/commit/ce98006ec80bf6c2f569e7e184df1ff1e4d3160e))
+* **browse:** hide available and requested titles by default ([a9ab99e](https://github.com/jameswyse/disco/commit/a9ab99e848ddcef545d62abfa16686729e19448f))
+
+
+### Bug Fixes
+
+* **ci:** separate package pagination from JSON filtering ([33f78c0](https://github.com/jameswyse/disco/commit/33f78c033224393f401c642ca704c4147fa16301))
+
 ## 1.0.0 (2026-09-15)
 
 

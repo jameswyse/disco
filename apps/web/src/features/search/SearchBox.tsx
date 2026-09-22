@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useEffect, useId, useRef, useState } from "react";
 
+import { DiscoLoader } from "@/features/feedback/DiscoLoader";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
 import { autocomplete } from "./autocomplete";
@@ -167,9 +168,9 @@ function SearchInput({ initialQuery }: Readonly<{ initialQuery: string }>) {
           role="dialog"
         >
           {!result ? (
-            <p className={styles.message} role="status">
-              Searching…
-            </p>
+            <div className={styles.message}>
+              <DiscoLoader label="Searching" size="inline" />
+            </div>
           ) : null}
           {result?.kind === "error" ? (
             <p className={styles.message} role="alert">

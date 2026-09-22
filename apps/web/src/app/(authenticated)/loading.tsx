@@ -1,5 +1,5 @@
-import { ContentSkeleton } from "@/features/feedback/ContentState";
+import { DiscoLoader } from "@/features/feedback/DiscoLoader";
 
 export default function Loading() {
-  return <ContentSkeleton />;
+  return <DiscoLoader />;
 }

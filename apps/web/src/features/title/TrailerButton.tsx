@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { DiscoLoader } from "@/features/feedback/DiscoLoader";
+
 import { attachTrailer, toggleTrailerFullscreen } from "./trailerPlayer";
 
 import type { TrailerPlayback } from "./trailerPlayer";
@@ -48,9 +50,9 @@ function TrailerPlayer({
     <div className={styles.player} ref={player}>
       <div className={styles.video} ref={video} />
       {state === "loading" ? (
-        <p className={styles.message} role="status">
-          Loading trailer…
-        </p>
+        <div className={styles.message}>
+          <DiscoLoader label="Loading trailer…" size="inline" />
+        </div>
       ) : null}
       {state === "error" ? (
         <p className={styles.message} role="alert">

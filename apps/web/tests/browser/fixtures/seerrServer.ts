@@ -231,6 +231,7 @@ const users = [
   { id: 3, permissions: 0, displayName: "Second User", email: "second@example.test", avatar: null },
 ];
 const sessions = new Map<string, number>();
+const heldSessions = new Map<string, (() => void)[]>();
 const rejectedLogouts = new Set<string>();
 const csrfCookie = "fixture-csrf-secret";
 const csrfToken = "fixture-csrf-token";
@@ -677,6 +678,22 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
   const session = cookie(request, "connect.sid");
   const sessionUserId = session === undefined ? undefined : sessions.get(session);
 
+  if (url.pathname === "/__fixture/hold-session" && session !== undefined) {
+    if (request.method === "POST") {
+      heldSessions.set(session, []);
+    } else if (request.method === "DELETE") {
+      for (const release of heldSessions.get(session) ?? []) {
+        release();
+      }
+
+      heldSessions.delete(session);
+    }
+
+    send(response, 200, {});
+
+    return;
+  }
+
   if (url.pathname === "/__fixture/expire") {
     if (session !== undefined) {
       sessions.delete(session);
@@ -710,6 +727,12 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
   }
 
   if (url.pathname === "/api/v1/auth/me") {
+    const waiters = session === undefined ? undefined : heldSessions.get(session);
+
+    if (waiters) {
+      await new Promise<void>((resolve) => waiters.push(resolve));
+    }
+
     issueCsrf(response);
     send(response, 200, user);
 

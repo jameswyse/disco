@@ -43,3 +43,8 @@
     padding: 16px;
   }
 }
+
+.loadingMore {
+  min-width: 91px;
+  padding-block: 0;
+}

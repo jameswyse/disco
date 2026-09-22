@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 
 import { Suspense } from "react";
 
-import { ContentSkeleton, ContentState } from "@/features/feedback/ContentState";
+import { ContentState } from "@/features/feedback/ContentState";
+import { DiscoLoader } from "@/features/feedback/DiscoLoader";
 import { loadPerson } from "@/features/person/loadPerson";
 import { PersonPage } from "@/features/person/PersonPage";
 import { parseTmdbId } from "@/features/title/titleRoute";
@@ -29,7 +30,7 @@ async function Person({ params }: PageProps<"/person/[id]">) {
 
 export default function Page(properties: PageProps<"/person/[id]">) {
   return (
-    <Suspense fallback={<ContentSkeleton />}>
+    <Suspense fallback={<DiscoLoader />}>
       <Person {...properties} />
     </Suspense>
   );

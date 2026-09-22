@@ -35,23 +35,3 @@ export function ContentState({
     </section>
   );
 }
-
-export function ContentSkeleton() {
-  return (
-    <section
-      aria-busy="true"
-      aria-label="Loading content"
-      className={styles.skeleton}
-      role="status"
-    >
-      <span className={styles.loadingLabel}>Loading content…</span>
-      {Array.from({ length: 12 }, (_, index) => (
-        <div aria-hidden="true" className={styles.placeholder} key={index}>
-          <div />
-          <span />
-          <span />
-        </div>
-      ))}
-    </section>
-  );
-}

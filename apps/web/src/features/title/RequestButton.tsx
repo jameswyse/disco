@@ -2,6 +2,8 @@
 
 import { useActionState, useId, useRef, useState } from "react";
 
+import { DiscoLoader } from "@/features/feedback/DiscoLoader";
+
 import { requestTitle } from "./actions";
 import { loadQualityProfiles } from "./loadQualityProfiles";
 
@@ -81,7 +83,7 @@ export function RequestButton({
           <input name="mediaType" type="hidden" value={mediaType} />
           <input name="id" type="hidden" value={id} />
           {season === undefined ? null : <input name="season" type="hidden" value={season} />}
-          {!options ? <p role="status">Loading quality profiles…</p> : null}
+          {!options ? <DiscoLoader label="Loading quality profiles" size="inline" /> : null}
           {options?.kind === "error" ? (
             <div role="alert">
               <p>{options.message}</p>

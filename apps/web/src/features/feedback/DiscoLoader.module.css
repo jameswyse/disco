@@ -1,0 +1,70 @@
+.loader {
+  align-items: center;
+  justify-items: center;
+  display: inline-grid;
+  isolation: isolate;
+  position: relative;
+}
+
+.screen {
+  background: var(--color-background);
+  display: grid;
+  inset: 0;
+  min-height: 100svh;
+  overflow: hidden;
+  position: fixed;
+  z-index: 100;
+}
+
+.screen::before {
+  background: radial-gradient(ellipse at center, rgb(99 102 241 / 9%), transparent 65%);
+  content: "";
+  height: min(90vw, 680px);
+  pointer-events: none;
+  position: absolute;
+  width: min(100vw, 900px);
+  z-index: -1;
+}
+
+.artwork {
+  background: url("/brand/disco-logo.webp") center / contain no-repeat;
+}
+
+.ball {
+  aspect-ratio: 1;
+  display: block;
+  height: auto;
+  object-fit: contain;
+  width: clamp(240px, 34vw, 360px);
+}
+
+.content {
+  display: grid;
+  min-height: min(65svh, 560px);
+  padding: 32px 16px;
+  width: 100%;
+}
+
+.content .ball {
+  width: clamp(200px, 26vw, 280px);
+}
+
+.inline {
+  height: 44px;
+  vertical-align: middle;
+  width: 44px;
+}
+
+.inline .ball {
+  height: 44px;
+  width: 44px;
+}
+
+.visuallyHidden {
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

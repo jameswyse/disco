@@ -2,6 +2,8 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState, useTransition } from "react";
 
+import { DiscoLoader } from "./DiscoLoader";
+
 import type { ReactNode } from "react";
 
 import stateStyles from "./ContentState.module.css";
@@ -107,8 +109,16 @@ function AccumulatedList({
         <div ref={sentinel}>
           {error ? <p role="alert">{error}</p> : null}
           {hasMore ? (
-            <button className={stateStyles.button} disabled={pending} onClick={load} type="button">
-              {pending ? "Loading more…" : idleLabel}
+            <button
+              aria-label={pending ? "Loading more results" : idleLabel}
+              className={
+                pending ? `${stateStyles.button} ${styles.loadingMore}` : stateStyles.button
+              }
+              disabled={pending}
+              onClick={load}
+              type="button"
+            >
+              {pending ? <DiscoLoader label="Loading more results" size="inline" /> : idleLabel}
             </button>
           ) : (
             <span className={styles.summary}>

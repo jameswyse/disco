@@ -78,7 +78,7 @@ for (const width of [320, 1440]) {
     await expect(article.getByRole("link", { name: "Open in Seerr" })).toBeVisible();
     await expect(article.getByRole("heading", { name: "Details", exact: true })).toBeVisible();
     await expect(article.getByRole("definition").filter({ hasText: /^en$/ })).toBeVisible();
-    await expect(article.locator("img")).toHaveCount(0);
+    await expect(article.locator("img:visible")).toHaveCount(0);
     await expect(
       article.getByRole("heading", { name: /Overview|Cast|Where to watch|Keywords/ }),
     ).toHaveCount(0);

@@ -2,6 +2,8 @@ import Image from "next/image";
 
 import { Suspense } from "react";
 
+import { DiscoLoader } from "@/features/feedback/DiscoLoader";
+
 import { AccountMenu } from "./AccountMenu";
 import { loadAccount } from "./loadAccount";
 
@@ -40,7 +42,7 @@ async function AccountContent() {
 
 export function Account() {
   return (
-    <Suspense fallback={<span className={styles.accountNote}>Loading account…</span>}>
+    <Suspense fallback={<DiscoLoader label="Loading account" size="inline" />}>
       <AccountContent />
     </Suspense>
   );

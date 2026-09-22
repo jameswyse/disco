@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { Account } from "@/features/auth/Account";
+import { DiscoLoader } from "@/features/feedback/DiscoLoader";
 import { RequestCount } from "@/features/requests/RequestCount";
 import { loadViews } from "@/features/views/loadViews";
 import { Sidebar } from "@/features/views/Sidebar";
@@ -26,7 +27,7 @@ async function AuthenticatedShell({ children }: Readonly<{ children: ReactNode }
 
 export default function AuthenticatedLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <Suspense fallback={<p role="status">Loading Disco…</p>}>
+    <Suspense fallback={<DiscoLoader size="screen" />}>
       <AuthenticatedShell>{children}</AuthenticatedShell>
     </Suspense>
   );

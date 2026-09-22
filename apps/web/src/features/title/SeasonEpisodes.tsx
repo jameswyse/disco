@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import { startTransition, useActionState, useId, useState } from "react";
 
+import { DiscoLoader } from "@/features/feedback/DiscoLoader";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
 import { loadSeasonEpisodes } from "./loadSeasonEpisodes";
@@ -75,9 +76,7 @@ export function SeasonEpisodes({
         <div className={styles.status}>{status}</div>
       </div>
       <div className={styles.panel} hidden={!open} id={panelId}>
-        <p className={styles.message} role="status">
-          {pending ? "Loading episodes…" : ""}
-        </p>
+        {pending ? <DiscoLoader label="Loading episodes" size="inline" /> : null}
         {pending ? (
           <div aria-hidden="true" className={styles.loadingEpisode}>
             <span />

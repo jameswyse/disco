@@ -14,6 +14,7 @@ export async function LoginPage() {
           <p className={styles.brand}>Disco</p>
           <h1>Sign-in unavailable</h1>
           <p role="alert">{result.message}</p>
+          {/* oxlint-disable-next-line nextjs/no-html-link-for-pages -- Reload the failed sign-in request instead of reusing the client router cache. */}
           <a className={styles.link} href="/login">
             Try again
           </a>

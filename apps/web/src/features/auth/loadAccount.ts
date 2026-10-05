@@ -18,6 +18,7 @@ export type SeerrAccount =
 
 const accountProgram = Effect.gen(function* () {
   const client = yield* SeerrClient;
+
   const [user, requests] = yield* Effect.all([client.currentUser(), client.requestCount()], {
     concurrency: "unbounded",
   });

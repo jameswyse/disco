@@ -12,7 +12,7 @@ for (const width of [390, 1440]) {
       const year = page.getByLabel("Release year", { exact: true });
 
       await year.click();
-      // Clicking panel padding must blur the field without dismissing the filters.
+
       await panel.click({ position: { x: 8, y: 8 } });
       await expect(year).not.toBeFocused();
       await expect(panel).toBeVisible();
@@ -150,6 +150,7 @@ test("empty filtered results can clear filters on mobile", async ({ page }) => {
   await page.goto("/movies?list=popular&genre=999&lang=any");
   await expect(page.getByRole("heading", { name: "No titles match your filters" })).toBeVisible();
   const empty = page.getByRole("region", { name: "No titles match your filters" });
+
   const dimensions = await empty.evaluate((element) => {
     const style = getComputedStyle(element);
     const icon = element.querySelector("svg")?.getBoundingClientRect();
@@ -162,6 +163,7 @@ test("empty filtered results can clear filters on mobile", async ({ page }) => {
       iconHeight: icon?.height,
     };
   });
+
   expect(dimensions.width).toBeLessThanOrEqual(358);
   expect(dimensions.padding).toBeGreaterThanOrEqual(24);
   expect(dimensions.gap).toBeGreaterThanOrEqual(12);

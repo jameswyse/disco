@@ -20,16 +20,13 @@ import type { BrowseSource } from "./browsePlan";
 import type { DiscoverListId } from "./discoverLists";
 import type { BrowseFilters } from "./filters";
 
-/** Seerr returns 20 results per page; a browse page shows two of them. */
 const seerrPagesPerBrowsePage = 2;
 
 export type BrowseResult =
   | Readonly<{
       kind: "ok";
       titles: readonly Title[];
-      /** Titles removed by the "Hide already available" filter. */
       hiddenAvailable: number;
-      /** Titles removed by the "Hide already requested" filter. */
       hiddenRequested: number;
       page: number;
       totalPages: number;
@@ -79,6 +76,7 @@ function fetchSource(
   browsePage: number,
 ): Effect.Effect<SourcePage, SeerrError, SeerrIdentity> {
   const firstSeerrPage = (browsePage - 1) * seerrPagesPerBrowsePage + 1;
+
   const seerrPages = Array.from(
     { length: seerrPagesPerBrowsePage },
     (_, offset) => firstSeerrPage + offset,
@@ -114,10 +112,6 @@ function dedupe(titles: readonly Title[]): Title[] {
   });
 }
 
-/**
- * Alternate between sources so movies and series mix while each keeps Seerr's ordering. TMDB
- * popularity scores are not comparable across media types, so sorting by them would not work.
- */
 function interleave(lists: readonly (readonly Title[])[]): Title[] {
   const longest = Math.max(0, ...lists.map((list) => list.length));
 
@@ -153,6 +147,7 @@ function browseProgram(
     const region = settings.streamingRegion || settings.discoverRegion || "US";
     const today = new Date().toISOString().slice(0, 10);
     const sources = planBrowseSources(view, list, filters, { today, region });
+
     const [movieGenres, tvGenres, sourcePages] = yield* Effect.all(
       [
         client.genres("movie"),
@@ -164,12 +159,15 @@ function browseProgram(
       ],
       { concurrency: "unbounded" },
     );
+
     const genreNames: GenreNames = new Map(
       [...movieGenres, ...tvGenres].map((genre) => [genre.id, genre.name]),
     );
+
     const allTitles = combineSources(sourcePages, genreNames);
     let hiddenAvailable = 0;
     let hiddenRequested = 0;
+
     const titles = allTitles.filter((title) => {
       if (filters.hideAvailable && isInLibrary(title.availability)) {
         hiddenAvailable += 1;
@@ -188,13 +186,16 @@ function browseProgram(
 
       return true;
     });
+
     const mediaTypes = viewMediaTypes(view).filter(
       (type) => filters.mediaType === "all" || filters.mediaType === type,
     );
+
     const applicableGenres = [
       ...(mediaTypes.includes("movie") ? movieGenres : []),
       ...(mediaTypes.includes("tv") ? tvGenres : []),
     ];
+
     const genresById = new Map(applicableGenres.map((genre) => [genre.id, genre] as const));
 
     return {
@@ -205,7 +206,7 @@ function browseProgram(
       page,
       totalPages: Math.max(0, ...sourcePages.map((source) => source.totalPages)),
       totalResults: sourcePages.reduce((sum, source) => sum + source.totalResults, 0),
-      genres: [...genresById.values()].sort((a, b) => a.name.localeCompare(b.name)),
+      genres: [...genresById.values()].toSorted((a, b) => a.name.localeCompare(b.name)),
       region,
       seerrOrigin: client.origin.origin,
     };
@@ -218,8 +219,6 @@ export async function loadBrowse(
   filters: BrowseFilters,
   page: number,
 ): Promise<BrowseResult> {
-  // Seerr data is request-time; opting in explicitly keeps the Effect runtime's clock access out
-  // of the static prerender.
   await connection();
 
   return runAuthenticated(

@@ -35,7 +35,6 @@ export default defineConfig({
       use: devices["Desktop Chrome"],
     },
     {
-      // Preferences are instance-wide, so their mutations must follow every other browser test.
       name: "settings",
       dependencies: ["chromium"],
       testMatch: "**/settings.spec.ts",
@@ -61,7 +60,6 @@ export default defineConfig({
       command: "node tests/browser/fixtures/seerrServer.ts",
       reuseExistingServer: false,
       timeout: 30_000,
-      // Seerr exposes status without authentication.
       url: `${seerrFixtureOrigin}/api/v1/status`,
       ignoreHTTPSErrors: false,
     },

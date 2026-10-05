@@ -12,7 +12,6 @@ import type { SeerrUserId } from "@/integrations/seerr/schemas";
 
 import type { ViewSource } from "./views";
 
-/** Something a user can turn into a sidebar view. */
 export type LibraryEntry = Readonly<{
   label: string;
   source: ViewSource;
@@ -25,19 +24,20 @@ export type LibrarySection = "streaming" | "networks" | "studios" | "genres";
 
 export type Library = Readonly<Record<LibrarySection, readonly LibraryEntry[]>>;
 
-/** TMDB network ids shown by default; Seerr supplies current names and logos. */
 const featuredNetworkIds = [
   213, 49, 2739, 1024, 2552, 453, 4330, 3353, 174, 4, 56, 80, 13, 19, 88, 67, 318, 2, 6, 16, 47,
   1112,
 ];
-/** TMDB production company ids shown by default. */
+
 const featuredStudioIds = [
   2, 3, 4, 33, 174, 420, 521, 1, 41077, 923, 1632, 10342, 3172, 90733, 10146, 12, 21, 43, 297, 6704,
   14, 25,
 ];
+
 const libraryProgram = (region: string) =>
   Effect.gen(function* () {
     const client = yield* SeerrClient;
+
     const [movieProviders, tvProviders, networks, studios, movieGenres, tvGenres] =
       yield* Effect.all(
         [
@@ -61,7 +61,7 @@ const libraryProgram = (region: string) =>
     const movieProviderIds = new Set(movieProviders.map((provider) => provider.id));
     const tvProviderIds = new Set(tvProviders.map((provider) => provider.id));
 
-    for (const provider of [...movieProviders, ...tvProviders].sort(
+    for (const provider of [...movieProviders, ...tvProviders].toSorted(
       (a, b) => (a.displayPriority ?? 0) - (b.displayPriority ?? 0),
     )) {
       if (!providersById.has(provider.id)) {
@@ -124,13 +124,11 @@ const libraryProgram = (region: string) =>
         backdropPath: undefined,
         note: undefined,
       })),
-      genres: [...genresByName.values()].sort((a, b) => a.label.localeCompare(b.label)),
+      genres: [...genresByName.values()].toSorted((a, b) => a.label.localeCompare(b.label)),
     } satisfies Library;
 
     return library;
   });
-
-/** The catalogue changes rarely and costs dozens of Seerr calls, so it is cached for a day. */
 
 async function cachedLibrary(region: string, userId: SeerrUserId): Promise<Library> {
   "use cache";

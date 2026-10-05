@@ -13,7 +13,6 @@ import type { MutableSettings } from "./settings";
 
 const languagePattern = /^[a-z]{2}$/;
 
-/** An empty value clears the default. */
 const UpdateSettingsInput = Schema.Struct({
   defaultLanguage: Schema.optional(
     Schema.Union([
@@ -24,6 +23,7 @@ const UpdateSettingsInput = Schema.Struct({
   previewMode: Schema.optional(PreviewMode),
   sidebarStyle: Schema.optional(SidebarStyle),
 });
+
 const decodeUpdate = Schema.decodeUnknownSync(UpdateSettingsInput);
 
 export async function updateSettings(formData: FormData): Promise<void> {

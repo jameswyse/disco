@@ -15,6 +15,7 @@ const PlexSettings = Schema.Struct({
   ),
   useSsl: Schema.Boolean,
 });
+
 const PlexDevices = Schema.Array(
   Schema.Struct({
     clientIdentifier: Schema.String,
@@ -33,9 +34,11 @@ const PlexDevices = Schema.Array(
     ),
   }),
 );
+
 const PlexIdentity = Schema.Struct({
   MediaContainer: Schema.Struct({ machineIdentifier: Schema.String }),
 });
+
 const EpisodePage = Schema.Struct({
   MediaContainer: Schema.Struct({
     size: Schema.Number.pipe(
@@ -75,21 +78,21 @@ const EpisodePage = Schema.Struct({
   }),
 });
 
-/** Never include an HTTP error or schema parse error here: those may contain a Plex token. */
 export class PlexLibraryUnavailable extends Data.TaggedError("PlexLibraryUnavailable")<{
   message: string;
 }> {}
 
-/** Instance-level, read-only Plex access. Seerr user requests remain in SeerrClient. */
 export class PlexLibrary extends Context.Service<PlexLibrary>()("PlexLibrary", {
   make: Effect.gen(function* () {
     const environment = yield* seerrEnvironmentConfig;
     const http = (yield* HttpClient.HttpClient).pipe(HttpClient.filterStatusOk);
+
     const seerr = http.pipe(
       HttpClient.mapRequest(
         HttpClientRequest.setHeader("X-Api-Key", Redacted.value(environment.apiKey)),
       ),
     );
+
     const discover = Effect.gen(function* () {
       const [settings, devices] = yield* Effect.all(
         [
@@ -102,6 +105,7 @@ export class PlexLibrary extends Context.Service<PlexLibrary>()("PlexLibrary", {
         ],
         { concurrency: "unbounded" },
       );
+
       const device = devices.find((candidate) => candidate.clientIdentifier === settings.machineId);
 
       if (!device?.accessToken) {
@@ -114,20 +118,24 @@ export class PlexLibrary extends Context.Service<PlexLibrary>()("PlexLibrary", {
         settings.ip.includes(":") && !settings.ip.startsWith("[")
           ? `[${settings.ip}]`
           : settings.ip;
+
       const origin = yield* Effect.try(
         () => new URL(`${settings.useSsl ? "https" : "http"}://${hostname}:${settings.port}`),
       );
 
       const token = device.accessToken;
+
       const secureConnections = (device.connection ?? [])
         .filter((connection) => connection.uri.protocol === "https:")
-        .sort((a, b) => Number(a.local) - Number(b.local));
+        .toSorted((a, b) => Number(a.local) - Number(b.local));
+
       const candidates = [
         ...new Set([
           origin.origin,
           ...secureConnections.map((connection) => connection.uri.origin),
         ]),
       ];
+
       const reachable = yield* Effect.firstSuccessOf(
         candidates.map((candidate) =>
           http
@@ -166,6 +174,7 @@ export class PlexLibrary extends Context.Service<PlexLibrary>()("PlexLibrary", {
       ),
       Effect.provideService(FetchHttpClient.RequestInit, { redirect: "error" }),
     );
+
     const connection = yield* Effect.cachedWithTTL(discover, "5 minutes");
 
     return {
@@ -180,8 +189,10 @@ export class PlexLibrary extends Context.Service<PlexLibrary>()("PlexLibrary", {
               `/library/metadata/${encodeURIComponent(ratingKey)}/allLeaves`,
               origin,
             );
+
             url.searchParams.set("X-Plex-Container-Start", String(offset));
             url.searchParams.set("X-Plex-Container-Size", "500");
+
             const response = yield* http
               .get(url, {
                 headers: {
@@ -192,6 +203,7 @@ export class PlexLibrary extends Context.Service<PlexLibrary>()("PlexLibrary", {
                 },
               })
               .pipe(Effect.flatMap(HttpClientResponse.schemaBodyJson(EpisodePage)));
+
             const page = response.MediaContainer;
 
             for (const episode of page.Metadata ?? []) {
@@ -200,7 +212,6 @@ export class PlexLibrary extends Context.Service<PlexLibrary>()("PlexLibrary", {
 
                 for (const media of episode.Media) {
                   for (const part of media.Part ?? []) {
-                    // Plex's documented multi-episode filename convention: s01e01-e02.
                     const filename = part.file?.split(pathSeparator).at(-1);
                     const range = filename?.match(episodeRange);
 

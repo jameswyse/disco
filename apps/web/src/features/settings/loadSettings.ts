@@ -9,9 +9,7 @@ import { SettingsStore } from "./settingsStore";
 
 import type { Settings } from "./settings";
 
-/** Saved preferences, falling back to the defaults when the data file cannot be read. */
 export async function loadSettings(): Promise<Settings> {
-  // Preferences are request-time data; opting in keeps them out of the static prerender.
   await connection();
 
   return runAuthenticated(

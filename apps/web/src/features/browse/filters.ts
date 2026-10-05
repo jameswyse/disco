@@ -2,11 +2,9 @@ import type { MediaType } from "@/integrations/seerr/client";
 
 export type MediaFilter = "all" | MediaType;
 
-/** Grid filters carried in the URL so every browse screen is shareable. */
 export type BrowseFilters = Readonly<{
   mediaType: MediaFilter;
   genreId: number | undefined;
-  /** ISO 639-1 original-language code. */
   language: string | undefined;
   ratingAtLeast: number | undefined;
   hideAvailable: boolean;
@@ -42,7 +40,6 @@ function positiveInteger(value: string | undefined): number | undefined {
 
 const languagePattern = /^[a-z]{2}$/;
 
-/** Value of `lang` that switches the language filter off despite a saved default. */
 export const anyLanguage = "any";
 
 function resolveLanguage(
@@ -66,6 +63,7 @@ export const sortOptions = [
   { id: "newest", label: "Newest first" },
   { id: "oldest", label: "Oldest first" },
 ] as const;
+
 export const voteOptions = [100, 500, 1000, 5000] as const;
 
 function parseYear(value: string | undefined): number | undefined {
@@ -97,7 +95,6 @@ export function parseBrowseFilters(
   };
 }
 
-/** Query-string entries for filters that differ from the defaults. */
 export function filterEntries(
   filters: BrowseFilters,
   defaultLanguage: string | undefined,
@@ -143,7 +140,6 @@ export function filterEntries(
   return entries;
 }
 
-/** Whether any filter changes which titles Seerr returns (as opposed to hiding them locally). */
 export function hasDiscoverFilters(filters: BrowseFilters): boolean {
   return (
     filters.genreId !== undefined ||

@@ -5,7 +5,6 @@ import { readSession } from "@/platform/auth/session";
 
 const jsonHeaders = { "Cache-Control": "private, no-store", "Content-Type": "application/json" };
 
-/** Preview data for the browse hover card. */
 export async function GET(
   _request: Request,
   { params }: RouteContext<"/api/titles/[mediaType]/[id]">,
@@ -25,12 +24,9 @@ export async function GET(
 
   switch (result.kind) {
     case "ok":
-      return new Response(
-        serialisePreview(titlePreviewFromDetails(result.details, result.canManageBlocklist)),
-        {
-          headers: jsonHeaders,
-        },
-      );
+      return new Response(serialisePreview(titlePreviewFromDetails(result)), {
+        headers: jsonHeaders,
+      });
     case "not-found":
       return Response.json(result, { status: 404 });
     case "error":

@@ -17,6 +17,7 @@ export async function PersonPage({
 }: Readonly<{ result: Extract<Awaited<ReturnType<typeof loadPerson>>, { kind: "ok" }> }>) {
   const { person, titles } = result;
   const settings = await loadSettings();
+
   const facts = [
     ["Known for", person.knownForDepartment],
     ["Born", person.birthday],
@@ -99,7 +100,7 @@ export async function PersonPage({
             <TitleGrid
               label="Known for"
               previewMode={settings.previewMode ?? defaultPreviewMode}
-              titles={[...titles].sort((a, b) => b.popularity - a.popularity).slice(0, 6)}
+              titles={titles.toSorted((a, b) => b.popularity - a.popularity).slice(0, 6)}
             />
           </section>
         ) : null}

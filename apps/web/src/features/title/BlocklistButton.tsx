@@ -32,6 +32,7 @@ export function BlocklistButton({
   const dialog = useRef<HTMLDialogElement>(null);
   const headingId = useId();
   const descriptionId = useId();
+
   const [result, submit, pending] = useActionState<ActionResult | undefined, FormData>(
     async (previous, formData) => {
       const next = await toggleBlocklist(previous, formData);
@@ -45,6 +46,7 @@ export function BlocklistButton({
     },
     undefined,
   );
+
   const label = blocklisted ? "Remove from blocklist" : "Blocklist";
 
   return (

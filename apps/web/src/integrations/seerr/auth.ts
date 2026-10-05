@@ -20,12 +20,12 @@ function responseCsrf(response: HttpClientResponse.HttpClientResponse): SeerrCsr
   return secret && token ? { cookie: secret.value, token: token.value } : undefined;
 }
 
-/** Session operations deliberately have no access to API-key authentication. */
 export class SeerrAuth extends Context.Service<SeerrAuth>()("SeerrAuth", {
   make: Effect.gen(function* () {
     const environment = yield* seerrEnvironmentConfig;
     const base = new URL("api/v1/", environment.origin);
     const http = (yield* HttpClient.HttpClient).pipe(HttpClient.filterStatusOk);
+
     const response = (
       path: string,
       request: Effect.Effect<
@@ -33,6 +33,7 @@ export class SeerrAuth extends Context.Service<SeerrAuth>()("SeerrAuth", {
         HttpClientError.HttpClientError
       >,
     ) => request.pipe(Effect.mapError((error) => translateHttpError(path, error)));
+
     const decode = <A, I>(
       path: string,
       schema: Schema.Codec<A, I>,
@@ -43,16 +44,19 @@ export class SeerrAuth extends Context.Service<SeerrAuth>()("SeerrAuth", {
           () => new SeerrMalformed({ path, description: "Invalid authentication response." }),
         ),
       );
+
     const sessionHeaders = (session: Redacted.Redacted, csrf?: SeerrCsrf) => ({
       ...csrfHeaders(csrf),
       Cookie: `connect.sid=${encodeURIComponent(Redacted.value(session))}${csrf ? `; _csrf=${encodeURIComponent(csrf.cookie)}` : ""}`,
     });
+
     const verify = (session: Redacted.Redacted) =>
       Effect.gen(function* () {
         const incoming = yield* response(
           "auth/me",
           http.get(new URL("auth/me", base), { headers: sessionHeaders(session) }),
         );
+
         const user = yield* decode("auth/me", CurrentUser, incoming);
 
         return { user, csrf: responseCsrf(incoming) };
@@ -66,12 +70,13 @@ export class SeerrAuth extends Context.Service<SeerrAuth>()("SeerrAuth", {
           | Readonly<{ kind: "plex"; token: Redacted.Redacted }>,
       ) =>
         Effect.gen(function* () {
-          // A fresh cookie/token pair also supports Seerr installations with CSRF protection enabled.
           const initial = yield* response(
             "settings/public",
             http.get(new URL("settings/public", base)),
           );
+
           const settings = yield* decode("settings/public", LoginSettings, initial);
+
           const enabled =
             credentials.kind === "local"
               ? settings.localLogin
@@ -82,10 +87,12 @@ export class SeerrAuth extends Context.Service<SeerrAuth>()("SeerrAuth", {
           }
 
           const path = `auth/${credentials.kind}`;
+
           const body =
             credentials.kind === "local"
               ? { email: credentials.email, password: Redacted.value(credentials.password) }
               : { authToken: Redacted.value(credentials.token) };
+
           const incoming = yield* response(
             path,
             http.post(new URL(path, base), {
@@ -93,6 +100,7 @@ export class SeerrAuth extends Context.Service<SeerrAuth>()("SeerrAuth", {
               headers: csrfHeaders(responseCsrf(initial)),
             }),
           );
+
           yield* decode(path, CurrentUser, incoming);
           const cookie = incoming.cookies.cookies["connect.sid"];
 
@@ -108,10 +116,10 @@ export class SeerrAuth extends Context.Service<SeerrAuth>()("SeerrAuth", {
       logout: (session: Redacted.Redacted) =>
         Effect.gen(function* () {
           const verified = yield* verify(session).pipe(
-            Effect.catchIf(
-              (error) =>
-                error._tag === "SeerrRejected" && (error.status === 401 || error.status === 403),
-              () => Effect.succeed(undefined),
+            Effect.catchTag("SeerrRejected", (error) =>
+              error.status === 401 || error.status === 403
+                ? Effect.succeed(undefined)
+                : Effect.fail(error),
             ),
           );
 

@@ -183,6 +183,7 @@ function PrimaryAction({ details }: Readonly<{ details: TitleDetails }>) {
 
 function Scores({ details }: Readonly<{ details: TitleDetails }>) {
   const { tmdb, rottenTomatoes, imdb } = details.scores;
+
   const cards = [
     tmdb
       ? {
@@ -285,6 +286,7 @@ export async function TitleDetailsPage({ result }: TitleDetailsPageProperties) {
   const previewMode = settings.previewMode ?? defaultPreviewMode;
   const timeline = requestTimeline(details);
   const statusLabel = availabilityLabels[details.availability];
+
   const facts = [
     ["Status", details.status],
     [

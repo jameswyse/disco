@@ -3,21 +3,18 @@ import path from "node:path";
 
 import { Config, Data, Effect, Schema } from "effect";
 
-/** A JSON data file could not be read or written. */
 export class DataFileError extends Data.TaggedError("DataFileError")<{
   readonly file: string;
   readonly operation: "read" | "write";
   readonly cause: unknown;
 }> {}
 
-/** Directory holding Disco's own data (saved views, preferences). Mount it as a volume in Docker. */
 export const dataDirectoryConfig = Config.String("DISCO_DATA_DIR").pipe(Config.withDefault("data"));
 
 function isMissingFile(error: unknown): boolean {
   return error instanceof Error && "code" in error && error.code === "ENOENT";
 }
 
-/** Read and validate a JSON file under the data directory, or return `fallback` when absent. */
 export function readJsonFile<A, I>(
   directory: string,
   file: string,
@@ -42,7 +39,6 @@ export function readJsonFile<A, I>(
   });
 }
 
-/** Atomically replace a JSON file under the data directory, creating the directory if needed. */
 export function writeJsonFile<A, I>(
   directory: string,
   file: string,

@@ -20,13 +20,16 @@ export async function loadLoginPage(): Promise<LoginPageResult> {
   return appRuntime.runPromise(
     Effect.flatMap(SeerrClient, (client) => client.publicSettings()).pipe(
       Effect.map((settings): LoginPageResult => ({ kind: "ok", settings })),
-      Effect.catch((error) =>
+      Effect.catchTag("SeerrMalformed", () =>
         Effect.succeed<LoginPageResult>({
           kind: "error",
-          message:
-            error._tag === "SeerrMalformed"
-              ? "Seerr's sign-in configuration is invalid. Ask the administrator to check it."
-              : "Seerr could not be reached. Try again shortly.",
+          message: "Seerr's sign-in configuration is invalid. Ask the administrator to check it.",
+        }),
+      ),
+      Effect.catch(() =>
+        Effect.succeed<LoginPageResult>({
+          kind: "error",
+          message: "Seerr could not be reached. Try again shortly.",
         }),
       ),
     ),

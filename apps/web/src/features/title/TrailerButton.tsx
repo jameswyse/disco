@@ -153,7 +153,15 @@ export function TrailerButton({
         }}
         ref={dialog}
       >
-        {open ? <TrailerPlayer embedUrl={embedUrl} title={title} onClose={close} /> : null}
+        {open ? (
+          <TrailerPlayer
+            embedUrl={embedUrl}
+            title={title}
+            onClose={() => {
+              void close();
+            }}
+          />
+        ) : null}
       </dialog>
     </>
   );

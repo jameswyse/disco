@@ -3,7 +3,6 @@ import { seerrFixtureOrigin } from "./browserTestEnvironment";
 
 import type { APIRequestContext } from "@playwright/test";
 
-/** Assert against the mutations the fixture Seerr has recorded so far. */
 async function expectRecorded(
   request: APIRequestContext,
   expected: Readonly<{ requests?: unknown; watchlist?: unknown }>,
@@ -85,6 +84,7 @@ for (const width of [320, 1440]) {
 
     const articleBounds = await article.boundingBox();
     const headingBounds = await heading.boundingBox();
+
     const detailsBounds = await article
       .getByRole("heading", { name: "Details", exact: true })
       .boundingBox();
@@ -132,6 +132,7 @@ for (const width of [320, 1440]) {
     page,
   }, testInfo) => {
     await page.setViewportSize({ width, height: 1000 });
+
     const artworkUrls = [
       "https://image.tmdb.org/t/p/w500/outside.jpg",
       "https://artworks.thetvdb.com/banners/v4/episode/8868133/screencap/61fcad53ee9f2.jpg",
@@ -284,16 +285,20 @@ test("quality profile is sent with a season request and appears on existing requ
 }) => {
   await page.goto("/title/tv/201");
   await expect(page.getByText(/Quality profile · HD-1080p/)).toBeVisible();
+
   const season = page
     .getByRole("listitem")
     .filter({ has: page.getByRole("button", { name: /^Season 2/ }) });
+
   await season.getByRole("button", { name: "Request", exact: true }).click();
   await page.getByLabel("Quality profile", { exact: true }).selectOption("0:2");
   await page.getByRole("button", { name: "Confirm request" }).click();
   await expect(season.getByText("✓ Requested")).toBeVisible();
+
   const recorded: unknown = await (
     await request.get(`${seerrFixtureOrigin}/__fixture/requests`)
   ).json();
+
   expect(recorded).toMatchObject({
     requests: expect.arrayContaining([
       {
@@ -313,9 +318,11 @@ test("quality profile is sent with a season request and appears on existing requ
 
 test("a request dialog opened from a hover card stays open", async ({ page }) => {
   await page.goto("/movies?list=popular");
+
   const card = page
     .getByRole("listitem")
     .filter({ has: page.getByRole("link", { name: /Fixture Film Two/ }) });
+
   await card.getByRole("button", { name: /info/i }).click();
   await card.getByRole("button", { name: /Request/ }).click();
   const dialog = page.getByRole("dialog", { name: "Request title", exact: true });

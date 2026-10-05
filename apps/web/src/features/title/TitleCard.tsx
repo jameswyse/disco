@@ -18,7 +18,6 @@ import type { PreviewState } from "./TitleHoverCard";
 
 import styles from "./TitleCard.module.css";
 
-// CSS module classes are `string | undefined` under `noUncheckedIndexedAccess`.
 type AvailabilityBadge = Readonly<{ className: string | undefined; label: string; symbol: string }>;
 
 const availabilityBadges = {
@@ -54,7 +53,6 @@ function formatRuntime(minutes: number): string {
   return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
 }
 
-/** "★ 8.0 · S3 · 2025" for series, "★ 7.1 · 2026 · 1h 55m" for films. */
 function captionDetail(title: Title): string {
   const parts: string[] = [];
 
@@ -77,11 +75,10 @@ function captionDetail(title: Title): string {
   return parts.join(" · ");
 }
 
-/** Delay before a hover opens the preview, so scanning the grid does not flash cards. */
 const hoverDelayMs = 350;
-/** Delay before a hover closes, so the pointer can cross the gap to the preview. */
+
 const hoverHideDelayMs = 120;
-/** Preview card width plus its gap, used to decide which side has room. */
+
 const previewFootprint = 400;
 
 type TitleCardProperties = Readonly<{ title: Title; previewMode: PreviewMode }>;
@@ -162,7 +159,6 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
         }
       : {};
 
-  // Close on Escape or a click outside the card.
   useEffect(() => {
     if (!open) {
       return undefined;
@@ -191,7 +187,6 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
 
   return (
     <li className={open ? `${styles.card} ${styles.open}` : styles.card} ref={card}>
-      {/* The hover area spans the card and its preview so the pointer can move between them. */}
       <div className={styles.hoverArea} {...hoverHandlers}>
         <Link className={styles.link} href={titleHref(title.mediaType, title.id)}>
           <div className={styles.poster}>

@@ -4,5 +4,10 @@
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["apps/*/vitest.config.ts", "packages/*/vitest.config.ts", "tools/vitest/**/*.ts"]
+  "include": [
+    "apps/*/vitest.config.ts",
+    "packages/*/vitest.config.ts",
+    "tools/vitest/**/*.ts",
+    "*.config.ts"
+  ]
 }

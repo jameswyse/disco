@@ -1,7 +1,3 @@
-/**
- * Minimal stand-in for the Seerr API used by browser tests. It serves deterministic fixtures for
- * the endpoints Disco reads, records mutations by user, and enforces session or explicit API-key user authentication.
- */
 import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 
@@ -82,6 +78,7 @@ const airingShows = [205, 206].map((id) => ({
     seasons: [{ seasonNumber: 1, status: 4 }],
   },
 }));
+
 const airingEpisodes = {
   episodes: Array.from({ length: 7 }, (_, index) => ({
     id: 9000 + index,
@@ -194,7 +191,6 @@ const seriesOneDetails = {
   externalIds: { imdbId: "tt0000201", tvdbId: 4444 },
 } satisfies JsonValue;
 
-/** Bodies Disco sends to Seerr's request and watchlist endpoints. */
 const MutationBody = Schema.Struct({
   mediaType: Schema.optional(Schema.String),
   mediaId: Schema.optional(Schema.Number),
@@ -208,18 +204,21 @@ const MutationBody = Schema.Struct({
 type MutationBody = typeof MutationBody.Type;
 const decodeMutationBody = Schema.decodeUnknownSync(Schema.fromJsonString(MutationBody));
 
-/** Mutations recorded for assertions, exposed at `/__fixture/requests`. */
 const recordedRequests: (MutationBody & { userId: number })[] = [];
+
 const recordedWatchlist: ((MutationBody | Readonly<{ removed: string }>) & { userId: number })[] =
   [];
+
 const blocklistedTitles = new Set<string>();
 const recordedBlocklist: JsonValue[] = [];
+
 const BlocklistBody = Schema.Struct({
   tmdbId: Schema.Number,
   mediaType: Schema.Literals(["movie", "tv"]),
   title: Schema.String,
   user: Schema.Number,
 });
+
 const users = [
   {
     id: 2,
@@ -230,11 +229,13 @@ const users = [
   },
   { id: 3, permissions: 0, displayName: "Second User", email: "second@example.test", avatar: null },
 ];
+
 const sessions = new Map<string, number>();
 const heldSessions = new Map<string, (() => void)[]>();
 const rejectedLogouts = new Set<string>();
 const csrfCookie = "fixture-csrf-secret";
 const csrfToken = "fixture-csrf-token";
+
 const LoginBody = Schema.Struct({
   email: Schema.optional(Schema.String),
   password: Schema.optional(Schema.String),
@@ -323,7 +324,6 @@ const staticRoutes = {
     cast: [filmOne, seriesOne],
     crew: [filmOne, filmTwo],
   },
-  // Person 302 exists but its credits return 404; person 303 itself is missing.
   "/api/v1/person/302": { id: 302, name: "Credits unavailable" },
   "/api/v1/person/303/combined_credits": { id: 303, cast: [], crew: [] },
   "/api/v1/service/radarr": [
@@ -351,10 +351,8 @@ const staticRoutes = {
     imdb: { url: null, criticsScore: 7.9, criticsScoreCount: 1200 },
   },
   "/api/v1/movie/102/recommendations": page([filmOne]),
-  // These titles exist but their recommendations return 404.
   "/api/v1/movie/105": { id: 105, title: "Recommendations unavailable" },
   "/api/v1/tv/203": { id: 203, name: "Recommendations unavailable" },
-  // Only the primary title is missing for these IDs.
   "/api/v1/movie/106/recommendations": page([]),
   "/api/v1/tv/204/recommendations": page([]),
   "/api/v1/movie/1765392": {
@@ -594,7 +592,9 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
     const credentials = Schema.decodeUnknownSync(Schema.fromJsonString(LoginBody))(
       await readRawBody(request),
     );
+
     const plexUser = credentials.authToken === "fixture-plex-token" ? users[0] : undefined;
+
     const user = url.pathname.endsWith("/local")
       ? users.find(
           (candidate) =>
@@ -718,6 +718,7 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
     request.headers["x-api-key"] === seerrFixtureApiKey
       ? Number(request.headers["x-api-user"])
       : sessionUserId;
+
   const user = users.find((candidate) => candidate.id === userId);
 
   if (user === undefined) {
@@ -1038,5 +1039,5 @@ createServer((request, response) => {
     send(response, 500, { message: error instanceof Error ? error.message : "Fixture failure" });
   });
 }).listen(seerrFixturePort, "127.0.0.1", () => {
-  console.log(`Seerr fixture listening on http://127.0.0.1:${seerrFixturePort}`);
+  process.stdout.write(`Seerr fixture listening on http://127.0.0.1:${seerrFixturePort}\n`);
 });

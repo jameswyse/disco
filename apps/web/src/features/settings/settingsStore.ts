@@ -15,6 +15,7 @@ export class SettingsStore extends Context.Service<SettingsStore>()("SettingsSto
   make: Effect.gen(function* () {
     const dataDirectory = path.resolve(yield* dataDirectoryConfig);
     const mutex = yield* Semaphore.make(1);
+
     const read = () =>
       readJsonFile(dataDirectory, fileName, SettingsFile, emptyFile).pipe(
         Effect.map((file) => file.settings),

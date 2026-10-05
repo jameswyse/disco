@@ -72,6 +72,7 @@ function SearchInput({ initialQuery }: Readonly<{ initialQuery: string }>) {
     }
 
     let cancelled = false;
+
     const timer = window.setTimeout(() => {
       void autocomplete(term)
         .then((next) => {

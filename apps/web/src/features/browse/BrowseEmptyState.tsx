@@ -25,15 +25,27 @@ export function BrowseEmptyState({
     location.listId === "upcoming" &&
     view.source.kind === "provider" &&
     providerOriginals(view.source.providerId, "tv") === undefined;
+
   const filtered = hasDiscoverFilters(location.filters) || location.filters.mediaType !== "all";
   const hidden = hiddenAvailable + hiddenRequested > 0;
+
+  const resetFilters = hidden
+    ? {
+        ...location.filters,
+        hideAvailable: hiddenAvailable > 0 ? false : location.filters.hideAvailable,
+        hideRequested: hiddenRequested > 0 ? false : location.filters.hideRequested,
+      }
+    : defaultFilters;
+
   const listHeading = {
     upcoming: "No upcoming titles listed",
     recent: "No recent premieres listed",
     popular: "No titles listed yet",
     trending: "No titles listed yet",
   }[location.listId];
+
   let heading = filtered ? "No titles match your filters" : listHeading;
+
   let description = filtered
     ? "Try clearing your filters to see more titles in this view."
     : "There are no titles to show in this list right now. Explore another list or check back later.";
@@ -82,13 +94,7 @@ export function BrowseEmptyState({
             className={styles.action}
             href={browseHref({
               ...location,
-              filters: hidden
-                ? {
-                    ...location.filters,
-                    hideAvailable: hiddenAvailable > 0 ? false : location.filters.hideAvailable,
-                    hideRequested: hiddenRequested > 0 ? false : location.filters.hideRequested,
-                  }
-                : defaultFilters,
+              filters: resetFilters,
               page: hidden ? location.page : 1,
             })}
           >

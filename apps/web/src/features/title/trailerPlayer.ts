@@ -56,7 +56,6 @@ function loadApi(): Promise<YouTubeApi> {
 
 export type TrailerPlayback = "loading" | "playing" | "paused" | "error";
 
-/** Own the external player and its DOM so closing during SDK loading cannot restart playback. */
 export function attachTrailer({
   container,
   embedUrl,
@@ -74,7 +73,7 @@ export function attachTrailer({
   iframe.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
   iframe.allowFullscreen = true;
   iframe.referrerPolicy = "strict-origin-when-cross-origin";
-  // YouTube is cross-origin; scripts and its own origin are required by its player.
+
   iframe.sandbox.add("allow-scripts", "allow-same-origin", "allow-presentation");
   iframe.tabIndex = -1;
   container.append(iframe);

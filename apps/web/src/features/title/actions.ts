@@ -16,6 +16,7 @@ import type { SeerrError } from "@/integrations/seerr/errors";
 import type { SeerrIdentity } from "@/integrations/seerr/identity";
 
 const MediaTypeInput = Schema.Literals(["movie", "tv"]);
+
 const TmdbId = Schema.NumberFromString.pipe(
   Schema.check(Schema.isInt()),
   Schema.check(Schema.isGreaterThan(0)),
@@ -24,10 +25,10 @@ const TmdbId = Schema.NumberFromString.pipe(
 const RequestInput = Schema.Struct({
   mediaType: MediaTypeInput,
   id: TmdbId,
-  /** Season number for a partial series request; omitted means every season. */
   season: Schema.optional(TmdbId),
   quality: Schema.optional(Schema.String.pipe(Schema.check(Schema.isPattern(/^(?:\d+:\d+)?$/)))),
 });
+
 const WatchlistInput = Schema.Struct({
   mediaType: MediaTypeInput,
   id: TmdbId,
@@ -69,7 +70,6 @@ function run(
   );
 }
 
-/** Ask Seerr to request a film, a whole series or one season. */
 export async function requestTitle(
   _previous: ActionResult | undefined,
   formData: FormData,
@@ -81,6 +81,7 @@ export async function requestTitle(
   }
 
   const input = decoded.success;
+
   const body: CreateRequestBody =
     input.mediaType === "tv"
       ? {

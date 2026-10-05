@@ -34,6 +34,7 @@ export function RequestButton({
     requestTitle,
     undefined,
   );
+
   const [options, setOptions] = useState<Awaited<ReturnType<typeof loadQualityProfiles>>>();
   const dialog = useRef<HTMLDialogElement>(null);
   const headingId = useId();

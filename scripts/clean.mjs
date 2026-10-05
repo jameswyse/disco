@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
 const cleanableRelativePaths = [
   ".next",
   ".next-dev",
@@ -12,6 +13,7 @@ const cleanableRelativePaths = [
   "node_modules/.vite",
   "tests/results",
 ];
+
 const cleanableFilePaths = ["apps/web/next-env.d.ts"];
 const workspaceContainers = ["apps", "packages"];
 

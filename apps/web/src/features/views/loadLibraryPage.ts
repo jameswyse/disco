@@ -39,16 +39,15 @@ function matches(entry: LibraryEntry, query: string): boolean {
 function groupsFor(library: Library, category: LibraryCategory, query: string): LibraryGroup[] {
   const sections: readonly LibrarySection[] = ["streaming", "networks", "studios", "genres"];
 
-  return sections
-    .filter((section) => category === "all" || category === section)
-    .map((section) => {
-      return {
-        section,
-        label: sectionLabels[section],
-        entries: library[section].filter((entry) => matches(entry, query)),
-      };
-    })
-    .filter((group) => group.entries.length > 0);
+  return sections.flatMap((section) => {
+    if (category !== "all" && category !== section) {
+      return [];
+    }
+
+    const entries = library[section].filter((entry) => matches(entry, query));
+
+    return entries.length > 0 ? [{ section, label: sectionLabels[section], entries }] : [];
+  });
 }
 
 export async function loadLibraryPage(
@@ -73,7 +72,8 @@ export async function loadLibraryPage(
         ),
       ),
     );
-    countries = [...regions].sort((a, b) => a.english_name.localeCompare(b.english_name));
+
+    countries = regions.toSorted((a, b) => a.english_name.localeCompare(b.english_name));
     const preferred = requestedCountry ?? (seerr.streamingRegion || seerr.discoverRegion);
     country =
       regions.find((item) => item.iso_3166_1 === preferred)?.iso_3166_1 ??
@@ -90,7 +90,6 @@ export async function loadLibraryPage(
       error: undefined,
     };
   } catch (error) {
-    // Failures are logged where they happen (see `library.ts`); the page only needs a summary.
     return {
       country,
       countries,

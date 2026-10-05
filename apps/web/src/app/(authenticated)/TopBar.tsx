@@ -21,6 +21,7 @@ export function TopBar({
   requestCount,
 }: Readonly<{ account: ReactNode; requestCount: ReactNode }>) {
   const segment = useSelectedLayoutSegment();
+
   const activeSegment =
     segment === "settings" || segment === "views" || segment === "requests" ? segment : null;
 

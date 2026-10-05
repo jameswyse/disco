@@ -34,7 +34,6 @@ export type Scores = Readonly<{
   imdb: Readonly<{ score: number; votes: number | undefined; url: string | undefined }> | undefined;
 }>;
 
-/** Seerr request status: 1 pending approval, 2 approved, 3 declined, 4 failed, 5 completed. */
 export type RequestSummary = Readonly<{
   id: number;
   status: "pending" | "approved" | "declined" | "failed" | "completed";
@@ -48,7 +47,6 @@ export type RequestSummary = Readonly<{
 
 export type Download = Readonly<{
   title: string;
-  /** 0–1, or undefined when Seerr reports no size. */
   progress: number | undefined;
   timeLeft: string | undefined;
 }>;
@@ -65,20 +63,12 @@ export type SeasonSummary = Readonly<{
 
 export type ExternalLink = Readonly<{ label: string; url: string }>;
 
-/**
- * Whether the title exists somewhere a download client could find it. Films count once a digital
- * or physical release date has passed (matching Radarr's "released" availability); series once
- * their first episode has aired.
- */
 export type Release = Readonly<{
-  /** Cinema or first-air date. */
   premiere: string | undefined;
-  /** Earliest digital or physical release date across regions (films only). */
   home: string | undefined;
   released: boolean;
 }>;
 
-/** Everything the details screen and hover preview show for one movie or series. */
 export type TitleDetails = Readonly<{
   id: number;
   mediaType: MediaType;
@@ -92,7 +82,6 @@ export type TitleDetails = Readonly<{
   originalLanguage: string | undefined;
   countries: readonly string[];
   status: string | undefined;
-  /** Film runtime or typical episode runtime, in minutes. */
   runtimeMinutes: number | undefined;
   episodeCount: number | undefined;
   seasonCount: number | undefined;
@@ -243,8 +232,7 @@ function sharedDetails(details: MovieDetails | TvDetails, region: string) {
     countries: (details.productionCountries ?? []).map((country) => country.name),
     status: text(details.status),
     cast: (details.credits?.cast ?? [])
-      .slice()
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0))
       .slice(0, 14)
       .map((member) => ({
         id: member.id,
@@ -265,7 +253,6 @@ function sharedDetails(details: MovieDetails | TvDetails, region: string) {
   };
 }
 
-/** TMDB release types: 1 premiere, 2 limited theatrical, 3 theatrical, 4 digital, 5 physical, 6 TV. */
 const homeReleaseTypes = new Set([4, 5]);
 
 function isoDate(value: string | null | undefined): string | undefined {
@@ -283,7 +270,8 @@ function movieRelease(details: MovieDetails, today: string): Release {
 
       return iso === undefined ? [] : [iso];
     })
-    .sort();
+    .toSorted();
+
   const home = homeDates[0];
 
   return {

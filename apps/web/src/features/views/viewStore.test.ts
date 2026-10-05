@@ -9,6 +9,7 @@ import { ViewStore } from "./viewStore";
 
 it("preserves both views when updates overlap", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "disco-views-test-"));
+
   const runtime = ManagedRuntime.make(
     ViewStore.layer.pipe(
       Layer.provide(
@@ -16,6 +17,7 @@ it("preserves both views when updates overlap", async () => {
       ),
     ),
   );
+
   onTestFinished(async () => {
     await runtime.dispose();
 
@@ -25,10 +27,12 @@ it("preserves both views when updates overlap", async () => {
 
     await rmdir(directory);
   });
+
   const result = await runtime.runPromise(
     Effect.gen(function* () {
       const store = yield* ViewStore;
       yield* store.update(() => []);
+
       const updates = yield* Effect.all(
         [
           store
@@ -49,9 +53,10 @@ it("preserves both views when updates overlap", async () => {
 
       return {
         updates: updates.map((outcome) => outcome._tag),
-        ids: (yield* store.read()).map((view) => view.id).sort(),
+        ids: (yield* store.read()).map((view) => view.id).toSorted(),
       };
     }),
   );
+
   expect(result).toEqual({ updates: ["Success", "Success"], ids: ["films", "series"] });
 });

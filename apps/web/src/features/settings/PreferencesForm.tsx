@@ -18,7 +18,6 @@ type PreferencesFormProperties = Readonly<{
   noteClassName: string | undefined;
 }>;
 
-/** Preferences save as soon as a value changes; there is nothing else to confirm. */
 export function PreferencesForm({
   settings,
   languages,
@@ -35,7 +34,6 @@ export function PreferencesForm({
       action={updateSettings}
       className={className}
       onReset={(event) => {
-        // Autosave must retain the selections after React completes the form action.
         event.preventDefault();
       }}
       ref={form}
@@ -56,7 +54,6 @@ export function PreferencesForm({
           ))}
         </select>
       </label>
-      {/* Rendered from the saved value, so it confirms the preference reached the server. */}
       <small className={noteClassName}>
         {current
           ? `Views open filtered to ${current.label}; pick “Any language” on a view to see everything.`

@@ -22,6 +22,7 @@ function testAuth(respond: (request: Incoming) => Stub) {
         headers: new Headers(request.headers),
         body: request.body,
       });
+
       const headers = new Headers({ "content-type": "application/json" });
 
       for (const cookie of stub.cookies ?? []) {
@@ -34,6 +35,7 @@ function testAuth(respond: (request: Incoming) => Stub) {
       );
     }),
   );
+
   const layer = Layer.effect(SeerrAuth, SeerrAuth.make).pipe(
     Layer.provide(Layer.succeed(HttpClient.HttpClient, http)),
     Layer.provide(
@@ -85,6 +87,7 @@ describe("SeerrAuth", () => {
       ),
       Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetch)),
     );
+
     const result = await Effect.runPromise(
       Effect.flatMap(SeerrAuth, (auth) =>
         auth.login({
@@ -155,14 +158,17 @@ describe("SeerrAuth", () => {
 
   it("rejects disabled sign-in methods before submitting credentials", async () => {
     const paths: string[] = [];
+
     const run = testAuth(({ path }) => {
       paths.push(path);
 
       return { body: localOnly };
     });
+
     const error = await run((auth) =>
       Effect.flip(auth.login({ kind: "plex", token: Redacted.make("token") })),
     );
+
     expect(error).toMatchObject({ _tag: "SeerrRejected", status: 403 });
     expect(paths).toEqual(["/api/v1/settings/public"]);
   });
@@ -173,6 +179,7 @@ describe("SeerrAuth", () => {
         ? { body: localOnly }
         : { status: 403, body: { message: "Invalid credentials" } },
     );
+
     const error = await run((auth) =>
       Effect.flip(
         auth.login({
@@ -182,11 +189,13 @@ describe("SeerrAuth", () => {
         }),
       ),
     );
+
     expect(error).toMatchObject({ _tag: "SeerrRejected", status: 403 });
   });
 
   it("does not authenticate when Seerr omits the session cookie", async () => {
     const run = testAuth(({ path }) => ({ body: path.endsWith("/public") ? localOnly : user }));
+
     const error = await run((auth) =>
       Effect.flip(
         auth.login({
@@ -196,6 +205,7 @@ describe("SeerrAuth", () => {
         }),
       ),
     );
+
     expect(error._tag).toBe("SeerrMalformed");
   });
 
@@ -207,6 +217,7 @@ describe("SeerrAuth", () => {
 
       return { body: user, cookies: csrfCookies };
     });
+
     expect(await run((auth) => auth.verify(Redacted.make("s:opaque.signature")))).toEqual({
       user,
       csrf: { cookie: "secret", token: "token" },
@@ -219,6 +230,7 @@ describe("SeerrAuth", () => {
 
       return { status: 403, body: { message: "Forbidden" } };
     });
+
     const error = await run((auth) => Effect.flip(auth.verify(Redacted.make("expired"))));
     expect(error).toMatchObject({ _tag: "SeerrRejected", status: 403 });
   });
@@ -227,6 +239,7 @@ describe("SeerrAuth", () => {
     "allows clearing a session that Seerr already rejects with %i",
     async (status) => {
       const paths: string[] = [];
+
       const run = testAuth(({ path }) => {
         paths.push(path);
 
@@ -240,6 +253,7 @@ describe("SeerrAuth", () => {
 
   it("preserves a rejected logout after Seerr verifies the session", async () => {
     const paths: string[] = [];
+
     const run = testAuth(({ path }) => {
       paths.push(path);
 
@@ -247,6 +261,7 @@ describe("SeerrAuth", () => {
         ? { body: user, cookies: csrfCookies }
         : { status: 403, body: { message: "Logout rejected" } };
     });
+
     const error = await run((auth) => Effect.flip(auth.logout(Redacted.make("session"))));
 
     expect(error).toMatchObject({ _tag: "SeerrRejected", path: "auth/logout", status: 403 });
@@ -255,6 +270,7 @@ describe("SeerrAuth", () => {
 
   it("logs out the verified Seerr session with its CSRF credentials", async () => {
     const paths: string[] = [];
+
     const run = testAuth(({ path, headers }) => {
       paths.push(path);
       expect(headers.has("x-api-key")).toBe(false);
@@ -268,6 +284,7 @@ describe("SeerrAuth", () => {
 
       return { body: {} };
     });
+
     await run((auth) => auth.logout(Redacted.make("session")));
     expect(paths).toEqual(["/api/v1/auth/me", "/api/v1/auth/logout"]);
   });
@@ -290,6 +307,6 @@ describe("Seerr login settings", () => {
         mediaServerLogin: false,
         mediaServerType: 1,
       }),
-    ).toThrow();
+    ).toThrow(Schema.SchemaError);
   });
 });

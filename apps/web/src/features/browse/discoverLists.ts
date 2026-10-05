@@ -7,7 +7,6 @@ export const discoverListLabels = {
 
 export type DiscoverListId = keyof typeof discoverListLabels;
 
-/** Display order of the list tabs. */
 export const discoverListIds = [
   "upcoming",
   "recent",
@@ -21,7 +20,6 @@ function isDiscoverListId(value: string): value is DiscoverListId {
   return Object.hasOwn(discoverListLabels, value);
 }
 
-/** Resolve the `list` search parameter, falling back to the default list for unknown values. */
 export function parseDiscoverListId(value: string | string[] | undefined): DiscoverListId {
   const candidate = Array.isArray(value) ? value[0] : value;
 

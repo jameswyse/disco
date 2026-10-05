@@ -2,7 +2,6 @@ import { Schema } from "effect";
 
 import type { MediaType } from "@/integrations/seerr/client";
 
-/** What a view filters on. Ids are TMDB ids as exposed through Seerr. */
 export const ViewSource = Schema.Union([
   Schema.Struct({ kind: Schema.Literal("media"), mediaType: Schema.Literals(["movie", "tv"]) }),
   Schema.Struct({ kind: Schema.Literal("provider"), providerId: Schema.Number }),
@@ -23,18 +22,15 @@ export const ViewSource = Schema.Union([
 ]);
 export type ViewSource = typeof ViewSource.Type;
 
-/** A saved filter shown in the sidebar. */
 export const View = Schema.Struct({
   id: Schema.String,
   label: Schema.String,
   source: ViewSource,
-  /** TMDB logo path for provider, network and studio views. */
   logoPath: Schema.optional(Schema.String),
-  /** TMDB backdrop path used as card artwork. */
   backdropPath: Schema.optional(Schema.String),
 });
 export type View = typeof View.Type;
-/** A view under construction, before it is frozen into the saved list. */
+
 export type MutableView = { -readonly [Key in keyof View]: View[Key] };
 
 export const defaultViews: readonly View[] = [
@@ -54,7 +50,6 @@ export const defaultViews: readonly View[] = [
   },
 ];
 
-/** Media types a view can show. Networks are series-only and studios are film-only on TMDB. */
 export function viewMediaTypes(view: View): readonly MediaType[] {
   const { source } = view;
 
@@ -83,7 +78,6 @@ export function viewMediaTypes(view: View): readonly MediaType[] {
   }
 }
 
-/** Two sources are the same when they filter on the same thing, regardless of label. */
 export function sameSource(a: ViewSource, b: ViewSource): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
@@ -96,7 +90,6 @@ export function slugify(label: string): string {
   return slug === "" ? "view" : slug;
 }
 
-/** Route-safe id for a new view that does not collide with existing ones. */
 export function uniqueViewId(label: string, existing: readonly View[]): string {
   const base = slugify(label);
   const taken = new Set(existing.map((view) => view.id));

@@ -46,6 +46,7 @@ async function ViewBrowse(properties: ViewPageProperties) {
 
   const parsed = parseBrowseFilters(query, settings.defaultLanguage);
   const types = viewMediaTypes(view);
+
   const filters = {
     ...parsed,
     sort: types.length > 1 && parsed.mediaType === "all" ? undefined : parsed.sort,
@@ -66,7 +67,6 @@ async function ViewBrowse(properties: ViewPageProperties) {
   );
 }
 
-/** Everything here is request-time, so the page body streams behind a static shell. */
 export default function Page(properties: ViewPageProperties) {
   return (
     <Suspense fallback={<Loading />}>

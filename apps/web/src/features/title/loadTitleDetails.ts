@@ -42,6 +42,7 @@ function detailsProgram(
     const settings = yield* client.publicSettings();
     const region = settings.streamingRegion || settings.discoverRegion || "US";
     const today = new Date().toISOString().slice(0, 10);
+
     const ratingsOrNothing = <A>(ratings: Effect.Effect<A, SeerrError, SeerrIdentity>) =>
       ratings.pipe(Effect.catch(() => Effect.succeed(undefined)));
 
@@ -69,6 +70,7 @@ function detailsProgram(
       ],
       { concurrency: "unbounded" },
     );
+
     const genreNames: GenreNames = new Map(
       [...movieGenres, ...tvGenres].map((genre) => [genre.id, genre.name]),
     );

@@ -41,6 +41,7 @@ function AccumulatedList({
   const sentinel = useRef<HTMLDivElement>(null);
   const hasMore = data.page < data.totalPages;
   const idleLabel = error ? "Try again" : "Load more";
+
   const load = useCallback(() => {
     if (busy.current || !hasMore) {
       return;
@@ -89,6 +90,7 @@ function AccumulatedList({
       },
       { rootMargin: "200px" },
     );
+
     observer.observe(element);
 
     return () => observer.disconnect();
@@ -134,7 +136,6 @@ function AccumulatedList({
   );
 }
 
-/** A refreshed server payload replaces the old result set, including any appended pages. */
 export function InfiniteList(properties: Parameters<typeof AccumulatedList>[0]) {
   const [source, setSource] = useState({ initial: properties.initial, revision: 0 });
 

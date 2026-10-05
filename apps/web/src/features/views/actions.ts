@@ -19,10 +19,12 @@ const AddViewInput = Schema.Struct({
   backdropPath: Schema.optional(Schema.NonEmptyString),
   beforeId: Schema.optional(Schema.NonEmptyString),
 });
+
 const PlaceViewInput = Schema.Struct({
   id: Schema.NonEmptyString,
   beforeId: Schema.optional(Schema.NonEmptyString),
 });
+
 const RemoveViewInput = Schema.Struct({ id: Schema.NonEmptyString });
 
 const decodeAdd = Schema.decodeUnknownSync(AddViewInput);

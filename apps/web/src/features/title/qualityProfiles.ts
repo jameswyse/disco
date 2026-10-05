@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
+import { seerrPermissions } from "@/integrations/seerr/permissions";
 
 import type { MediaType } from "@/integrations/seerr/client";
 import type { SeerrIdentity } from "@/integrations/seerr/identity";
@@ -19,8 +20,13 @@ export function requestProfiles(mediaType: MediaType) {
   return Effect.gen(function* () {
     const client = yield* SeerrClient;
     const user = yield* client.currentUser();
-    // Match Seerr's advanced-request controls: admin, manage requests, or advanced requests.
-    const canChoose = ((user.permissions ?? 0) & (2 | 16 | 8192)) !== 0;
+
+    const canChoose =
+      ((user.permissions ?? 0) &
+        (seerrPermissions.admin |
+          seerrPermissions.manageRequests |
+          seerrPermissions.requestAdvanced)) !==
+      0;
 
     if (!canChoose) {
       const profiles: readonly QualityProfile[] = [];
@@ -29,6 +35,7 @@ export function requestProfiles(mediaType: MediaType) {
     }
 
     const servers = yield* client.requestServers(mediaType);
+
     const profiles = yield* Effect.all(
       servers.map((server) =>
         client.serviceProfiles(mediaType, server.id).pipe(

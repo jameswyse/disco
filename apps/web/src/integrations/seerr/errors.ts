@@ -2,7 +2,6 @@ import { Data } from "effect";
 
 import type { HttpClientError } from "effect/http";
 
-/** Seerr could not be reached (DNS, connection, timeout). */
 export class SeerrUnavailable extends Data.TaggedError("SeerrUnavailable")<{
   readonly path: string;
   readonly cause: string;
@@ -13,7 +12,6 @@ export class SeerrRejected extends Data.TaggedError("SeerrRejected")<{
   readonly status: number;
 }> {}
 
-/** Seerr answered 2xx but the body did not match the expected schema. */
 export class SeerrMalformed extends Data.TaggedError("SeerrMalformed")<{
   readonly path: string;
   readonly description: string;

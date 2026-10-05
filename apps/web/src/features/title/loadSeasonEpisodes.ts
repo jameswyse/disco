@@ -26,7 +26,7 @@ export async function loadSeasonEpisodes(
     Effect.flatMap(SeerrClient, (client) => client.tvSeason(id, season)).pipe(
       Effect.map((details): SeasonEpisodesResult => ({
         kind: "ok",
-        episodes: details.episodes.slice().sort((a, b) => b.episodeNumber - a.episodeNumber),
+        episodes: details.episodes.toSorted((a, b) => b.episodeNumber - a.episodeNumber),
       })),
       Effect.tapError((error) => Effect.logError("Seerr season request failed", error)),
       Effect.catch(() =>

@@ -9,26 +9,22 @@ import type { DiscoverQuery, MediaType } from "@/integrations/seerr/client";
 import type { DiscoverListId } from "./discoverLists";
 import type { BrowseFilters } from "./filters";
 
-/** One Seerr endpoint to page through for a browse screen. */
 export type BrowseSource =
   | Readonly<{ kind: "trending"; mediaType: MediaType }>
   | Readonly<{ kind: "upcoming"; mediaType: MediaType }>
   | Readonly<{ kind: "discover"; mediaType: MediaType; query: Omit<DiscoverQuery, "page"> }>;
 
 export type BrowseContext = Readonly<{
-  /** Today's date as YYYY-MM-DD in the viewer's region. */
   today: string;
-  /** Streaming region used for watch-provider filters, for example `AU`. */
   region: string;
 }>;
 
 type DiscoverConstraints = Omit<DiscoverQuery, "page" | "sortBy">;
 
-/** Recently released reaches back half a year so narrow views (one network, one studio) still fill. */
 const recentWindowDays = 180;
-/** Keeps very obscure releases out of date-sorted lists. */
+
 const minimumVotes = 5;
-/** A rating floor is only meaningful once enough people have voted. */
+
 const minimumVotesForRatingFilter = 50;
 
 function shiftDate(isoDate: string, days: number): string {
@@ -44,7 +40,6 @@ function dateSort(mediaType: MediaType, direction: "asc" | "desc"): DiscoverQuer
     : `first_air_date.${direction}`;
 }
 
-/** Discover parameters implied by the view itself. Empty for unfiltered media views. */
 function sourceConstraints(
   source: ViewSource,
   mediaType: MediaType,
@@ -137,8 +132,7 @@ function planForMediaType(
   }
 
   const constraints = mergeConstraints(source, filterConstraints(filters));
-  // Seerr's trending and upcoming endpoints take no filters, so anything constrained falls back
-  // to TMDB discover approximations.
+
   const constrained = view.source.kind !== "media" || hasDiscoverFilters(filters);
 
   const discover = (query: Omit<DiscoverQuery, "page">): BrowseSource | undefined => {
@@ -148,6 +142,7 @@ function planForMediaType(
       newest: dateSort(mediaType, "desc"),
       oldest: dateSort(mediaType, "asc"),
     } satisfies Record<NonNullable<BrowseFilters["sort"]>, DiscoverQuery["sortBy"]>;
+
     const sorted = { ...query, sortBy: filters.sort ? sorts[filters.sort] : query.sortBy };
 
     if (filters.year !== undefined) {
@@ -207,7 +202,6 @@ function planForMediaType(
   }
 }
 
-/** Decide which Seerr endpoints feed a view's list. Mixed views combine movies and series. */
 export function planBrowseSources(
   view: View,
   list: DiscoverListId,

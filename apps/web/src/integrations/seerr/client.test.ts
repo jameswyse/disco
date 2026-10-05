@@ -10,6 +10,7 @@ type StubResponse = Readonly<{ status: number; body: unknown }>;
 
 function testClient(respond: (url: URL, headers: Headers) => StubResponse) {
   const requests: URL[] = [];
+
   const httpClient = HttpClient.make((request, url) =>
     Effect.sync(() => {
       requests.push(url);
@@ -24,6 +25,7 @@ function testClient(respond: (url: URL, headers: Headers) => StubResponse) {
       );
     }),
   );
+
   const layer = Layer.effect(SeerrClient, SeerrClient.make).pipe(
     Layer.provide(Layer.succeed(HttpClient.HttpClient, httpClient)),
     Layer.provide(
@@ -35,6 +37,7 @@ function testClient(respond: (url: URL, headers: Headers) => StubResponse) {
       ),
     ),
   );
+
   const run = <A, E>(
     program: (client: typeof SeerrClient.Service) => Effect.Effect<A, E, SeerrIdentity>,
     userId = 42,
@@ -74,6 +77,7 @@ describe("SeerrClient", () => {
       ),
       Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetch)),
     );
+
     const result = await Effect.runPromise(
       Effect.flatMap(SeerrClient, (client) => client.requestCount()).pipe(
         Effect.result,
@@ -101,6 +105,7 @@ describe("SeerrClient", () => {
       status: 200,
       body: { page: 1, totalPages: 0, totalResults: 0, results: [] },
     }));
+
     await run((client) => client.search("Law & Order + café", 1));
     expect(requests[0]?.search).toBe("?query=Law%20%26%20Order%20%2B%20caf%C3%A9&page=1");
     expect(requests[0]?.searchParams.get("query")).toBe("Law & Order + café");
@@ -108,6 +113,7 @@ describe("SeerrClient", () => {
   it("sends the API key with the verified user and builds discover queries against /api/v1", async () => {
     let receivedKey: string | null = null;
     let receivedUser: string | null = null;
+
     const { requests, run } = testClient((_url, headers) => {
       receivedKey = headers.get("x-api-key");
       receivedUser = headers.get("x-api-user");
@@ -177,6 +183,7 @@ describe("SeerrClient", () => {
   });
   it("keeps concurrent API-key actions attributed to their supplied user", async () => {
     const userIds: string[] = [];
+
     const { run } = testClient((_url, headers) => {
       userIds.push(headers.get("x-api-user") ?? "missing");
       expect(headers.get("x-api-key")).toBe("test-key");
@@ -189,7 +196,7 @@ describe("SeerrClient", () => {
       run((client) => client.createRequest({ mediaType: "movie", mediaId: 101 }), 3),
     ]);
 
-    expect([...userIds].sort()).toEqual(["2", "3"]);
+    expect(userIds.toSorted()).toEqual(["2", "3"]);
   });
 
   it("reads public configuration without API-key authentication", async () => {
@@ -207,6 +214,7 @@ describe("SeerrClient", () => {
         },
       };
     });
+
     expect((await run((client) => client.publicSettings())).localLogin).toBe(true);
   });
 });

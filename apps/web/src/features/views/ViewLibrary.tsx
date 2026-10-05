@@ -48,6 +48,7 @@ export function ViewLibrary({
   const editor = useViewEditor();
   const router = useRouter();
   const [overLibrary, setOverLibrary] = useState(false);
+
   const groups = data.groups
     .map((group) => ({
       ...group,

@@ -18,7 +18,6 @@ function formatDay(date: string): string {
   });
 }
 
-/** Seerr's partial flag counts unaired episodes too. Only dated episode metadata can prove a gap. */
 export function tvAvailability(
   tv: TvDetails,
   today: string,
@@ -26,28 +25,36 @@ export function tvAvailability(
   libraryEpisodes?: ReadonlySet<string>,
 ) {
   const raw = availabilityFromStatus(tv.mediaInfo?.status);
+
   const statuses = new Map(
     tv.mediaInfo?.seasons?.map((season) => [season.seasonNumber, season.status]),
   );
+
   const coverage: { aired: number; available: number }[] = [];
+
   const seasons: SeasonSummary[] = (tv.seasons ?? [])
     .filter((season) => season.seasonNumber > 0)
     .map((season) => {
       const seasonStatus = statuses.get(season.seasonNumber);
       const episodes = episodesBySeason.get(season.seasonNumber)?.episodes;
+
       const airDate =
         season.airDate ||
-        episodes?.flatMap((episode) => (episode.airDate ? [episode.airDate] : [])).sort()[0];
+        episodes?.flatMap((episode) => (episode.airDate ? [episode.airDate] : [])).toSorted()[0];
+
       const unaired = Boolean(airDate && airDate > today);
+
       const status =
         seasonStatus === undefined && raw === "available" && !unaired
           ? raw
           : availabilityFromStatus(seasonStatus);
+
       const allAired =
         episodes !== undefined &&
         episodes.length > 0 &&
         episodes.length === season.episodeCount &&
         episodes.every((episode) => episode.airDate && episode.airDate <= today);
+
       let availability: Availability = status;
 
       if (status === "partially-available" && !allAired) {
@@ -62,13 +69,14 @@ export function tvAvailability(
         coverage.push({ aired: 0, available: 0 });
       } else if (episodes !== undefined && libraryEpisodes !== undefined) {
         const aired = episodes.filter((episode) => episode.airDate && episode.airDate <= today);
-        // Seerr's complete seasons also cover files containing multiple episodes.
+
         const available =
           status === "available"
             ? aired
             : aired.filter((episode) =>
                 libraryEpisodes.has(`${season.seasonNumber}:${episode.episodeNumber}`),
               );
+
         const completeDates =
           episodes.length === season.episodeCount && episodes.every((episode) => episode.airDate);
 
@@ -102,10 +110,13 @@ export function tvAvailability(
         airDateLabel: airDate ? `${unaired ? "airs" : "aired"} ${formatDay(airDate)}` : undefined,
       };
     });
+
   const next = tv.nextEpisodeToAir?.airDate;
+
   const upcoming =
     Boolean(next && next > today) ||
     seasons.some((season) => season.airDate && season.airDate > today);
+
   const continuing = tv.inProduction === true || tv.status === "Returning Series";
   const premiere = tv.firstAirDate;
   const notYetAired = Boolean(premiere && premiere > today);
@@ -125,6 +136,7 @@ export function tvAvailability(
     availability = "not-yet-aired";
   } else if (isInLibrary(raw)) {
     const airedSeasons = seasons.filter((season) => season.airDate && season.airDate <= today);
+
     const missingAired = airedSeasons.some(
       (season) =>
         season.availability === "partially-available" ||
@@ -133,6 +145,7 @@ export function tvAvailability(
           (tv.mediaInfo?.seasons !== undefined ||
             (libraryEpisodes !== undefined && episodesBySeason.has(season.number)))),
     );
+
     const allAiredAvailable =
       seasons.length > 0 &&
       airedSeasons.length > 0 &&
@@ -189,22 +202,24 @@ export function tvAvailability(
   };
 }
 
-/** Combine Seerr air dates with the configured Plex library. Missing service data stays uncertain. */
 export function tvAvailabilityProgram(tv: TvDetails, today: string) {
   return Effect.gen(function* () {
     const client = yield* SeerrClient;
     const ratingKey = tv.mediaInfo?.ratingKey;
+
     const libraryEpisodes = ratingKey
       ? yield* Effect.flatMap(PlexLibrary, (plex) => plex.episodes(ratingKey)).pipe(
           Effect.tapError((error) => Effect.logWarning(error.message)),
           Effect.catch(() => Effect.succeed(undefined)),
         )
       : undefined;
+
     const partial = new Set(
       (tv.mediaInfo?.seasons ?? [])
         .filter((season) => season.status === 4)
         .map((season) => season.seasonNumber),
     );
+
     const needed = (tv.seasons ?? []).filter(
       (season) =>
         season.seasonNumber > 0 &&
@@ -212,6 +227,7 @@ export function tvAvailabilityProgram(tv: TvDetails, today: string) {
           ? !season.airDate || season.airDate <= today
           : partial.has(season.seasonNumber)),
     );
+
     const episodes = yield* Effect.forEach(
       needed,
       (season) =>

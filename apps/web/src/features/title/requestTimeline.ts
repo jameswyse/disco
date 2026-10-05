@@ -49,16 +49,12 @@ function waitingDetail(details: TitleDetails): string {
     : "No release date yet";
 }
 
-/**
- * The request → Radarr/Sonarr → Plex journey as shown in the details side panel. Empty when the
- * title has never been requested and is not in the library.
- */
 export function requestTimeline(details: TitleDetails): readonly TimelineStep[] {
   if (details.availability === "blocklisted") {
     return [];
   }
 
-  const [latest] = [...details.requests].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
+  const [latest] = details.requests.toSorted((a, b) => b.requestedAt.localeCompare(a.requestedAt));
   const available = isInLibrary(details.availability);
 
   if (!latest && !available) {
@@ -81,6 +77,7 @@ export function requestTimeline(details: TitleDetails): readonly TimelineStep[] 
   const released = details.release.released || available || downloading;
   const processing = details.availability === "processing";
   const awaitingApproval = latest?.status === "pending";
+
   const requestedDetail = latest
     ? [
         latest.requestedBy,
@@ -91,6 +88,7 @@ export function requestTimeline(details: TitleDetails): readonly TimelineStep[] 
         .filter(Boolean)
         .join(" · ")
     : "Available without a Seerr request";
+
   const downloadDetail = downloading
     ? details.downloads
         .map((download) =>

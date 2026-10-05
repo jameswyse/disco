@@ -9,6 +9,7 @@ import { SettingsStore } from "./settingsStore";
 
 async function testStore() {
   const directory = await mkdtemp(path.join(tmpdir(), "disco-settings-test-"));
+
   const runtime = ManagedRuntime.make(
     SettingsStore.layer.pipe(
       Layer.provide(
@@ -16,6 +17,7 @@ async function testStore() {
       ),
     ),
   );
+
   onTestFinished(async () => {
     await runtime.dispose();
 
@@ -31,9 +33,11 @@ async function testStore() {
 
 it("preserves both preferences when updates overlap", async () => {
   const runtime = await testStore();
+
   const result = await runtime.runPromise(
     Effect.gen(function* () {
       const store = yield* SettingsStore;
+
       const updates = yield* Effect.all(
         [
           store.update((settings) => ({ ...settings, defaultLanguage: "fr" })).pipe(Effect.result),
@@ -45,6 +49,7 @@ it("preserves both preferences when updates overlap", async () => {
       return { updates: updates.map((outcome) => outcome._tag), settings: yield* store.read() };
     }),
   );
+
   expect(result).toEqual({
     updates: ["Success", "Success"],
     settings: { defaultLanguage: "fr", previewMode: "button" },
@@ -53,18 +58,22 @@ it("preserves both preferences when updates overlap", async () => {
 
 it("allows another save after an update fails", async () => {
   const runtime = await testStore();
+
   const result = await runtime.runPromise(
     Effect.gen(function* () {
       const store = yield* SettingsStore;
+
       const failed = yield* store
         .update(() => {
           throw new Error("Rejected update");
         })
         .pipe(Effect.exit);
+
       yield* store.update((settings) => ({ ...settings, defaultLanguage: "fr" }));
 
       return { failed: Exit.isFailure(failed), settings: yield* store.read() };
     }),
   );
+
   expect(result).toEqual({ failed: true, settings: { defaultLanguage: "fr" } });
 });

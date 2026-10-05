@@ -10,17 +10,21 @@ const moviesView: View = {
   label: "Movies",
   source: { kind: "media", mediaType: "movie" },
 };
+
 const netflixView: View = {
   id: "netflix",
   label: "Netflix",
   source: { kind: "provider", providerId: 8 },
 };
+
 const hboView: View = { id: "hbo", label: "HBO", source: { kind: "network", networkId: 49 } };
+
 const dramaView: View = {
   id: "drama",
   label: "Drama",
   source: { kind: "genre", movieGenreId: 18, tvGenreId: 18 },
 };
+
 const context = { today: "2026-09-13", region: "AU" };
 
 describe("planBrowseSources", () => {

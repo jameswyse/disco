@@ -35,6 +35,7 @@ function library(respond: (url: URL, headers: Headers) => { status: number; body
 describe("Plex library discovery", () => {
   it("uses an advertised HTTPS address when the configured private address is unreachable", async () => {
     const origins: string[] = [];
+
     const layer = library((url) => {
       origins.push(url.origin);
 
@@ -75,9 +76,11 @@ describe("Plex library discovery", () => {
         },
       };
     });
+
     const result = await Effect.runPromise(
       Effect.flatMap(PlexLibrary, (plex) => plex.episodes("123")).pipe(Effect.provide(layer)),
     );
+
     expect(result.size).toBe(0);
     expect(origins).toEqual([
       "https://seerr.example.test",
@@ -90,6 +93,7 @@ describe("Plex library discovery", () => {
 
   it("uses the configured server, keeps each credential on its service, and reads every episode page", async () => {
     const seen: { url: URL; headers: Headers }[] = [];
+
     const layer = library((url, headers) => {
       seen.push({ url, headers });
 
@@ -139,9 +143,11 @@ describe("Plex library discovery", () => {
         },
       };
     });
+
     const episodes = await Effect.runPromise(
       Effect.flatMap(PlexLibrary, (plex) => plex.episodes("123")).pipe(Effect.provide(layer)),
     );
+
     expect([...episodes]).toEqual(["1:1", "1:2", "1:3", "1:4"]);
     const discovery = seen.filter(({ url }) => url.hostname === "seerr.example.test");
     const plexRequests = seen.filter(({ url }) => url.hostname === "plex.example.test");
@@ -165,12 +171,14 @@ describe("Plex library discovery", () => {
 
   it("reports unavailable discovery without including credentials or the upstream body", async () => {
     const layer = library(() => ({ status: 403, body: { token: "private-upstream-value" } }));
+
     const result = await Effect.runPromise(
       Effect.flatMap(PlexLibrary, (plex) => plex.episodes("123")).pipe(
         Effect.result,
         Effect.provide(layer),
       ),
     );
+
     expect(result).toMatchObject({
       _tag: "Failure",
       failure: {
@@ -192,12 +200,14 @@ describe("Plex library discovery", () => {
           : { machineId: "configured", ip: "plex.example.test", port: 32400, useSsl: true },
       };
     });
+
     const result = await Effect.runPromise(
       Effect.flatMap(PlexLibrary, (plex) => plex.episodes("123")).pipe(
         Effect.result,
         Effect.provide(layer),
       ),
     );
+
     expect(result).toMatchObject({ _tag: "Failure" });
   });
 });

@@ -38,7 +38,6 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/oxlint.config.ts",
-        "$TURBO_ROOT$/tools/oxlint/**",
         "$TURBO_ROOT$/tsconfig.base.json"
       ],
       "outputLogs": "errors-only",
@@ -140,6 +139,7 @@
         "$TURBO_ROOT$/scripts/**",
         "$TURBO_ROOT$/tsconfig.json",
         "$TURBO_ROOT$/tsconfig.base.json",
+        "$TURBO_ROOT$/tsconfig.tooling.json",
         "$TURBO_ROOT$/oxfmt.config.ts",
         "$TURBO_ROOT$/oxlint.config.ts"
       ],
@@ -148,6 +148,7 @@
     },
     "//#typecheck:tooling": {
       "inputs": [
+        "$TURBO_ROOT$/*.config.ts",
         "$TURBO_ROOT$/apps/*/vitest.config.ts",
         "$TURBO_ROOT$/packages/*/vitest.config.ts",
         "$TURBO_ROOT$/tools/**",

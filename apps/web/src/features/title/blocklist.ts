@@ -1,4 +1,5 @@
-/** Seerr grants blocklist management to administrators and MANAGE_BLOCKLIST users. */
+import { seerrPermissions } from "@/integrations/seerr/permissions";
+
 export function canManageBlocklist(permissions: number | undefined): boolean {
-  return ((permissions ?? 0) & (2 | 268435456)) !== 0;
+  return ((permissions ?? 0) & (seerrPermissions.admin | seerrPermissions.manageBlocklist)) !== 0;
 }

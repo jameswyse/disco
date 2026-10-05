@@ -16,7 +16,6 @@ type RuntimeServices = Effect.Services<Parameters<typeof appRuntime.runPromise>[
 
 export const sessionCookieName = "disco_session";
 
-/** Only Seerr can validate its signed session. React deduplicates this within one request. */
 export const readSession = cache(async () => {
   const value = (await cookies()).get(sessionCookieName)?.value;
 
@@ -25,6 +24,7 @@ export const readSession = cache(async () => {
   }
 
   const session = Redacted.make(value);
+
   const result = await appRuntime.runPromise(
     Effect.flatMap(SeerrAuth, (auth) => auth.verify(session)).pipe(Effect.result),
   );
@@ -53,7 +53,6 @@ export async function requireSession() {
   return session;
 }
 
-/** Authorise at the operation boundary, including actions and route handlers. */
 export async function runAuthenticated<A, E>(
   program: Effect.Effect<A, E, SeerrIdentity | RuntimeServices>,
 ): Promise<A> {

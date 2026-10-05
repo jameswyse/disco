@@ -46,6 +46,7 @@ function runtimeLabel(details: TitlePreview, mediaType: Title["mediaType"]): str
 
 function Scores({ details }: Readonly<{ details: TitlePreview }>) {
   const { tmdb, rottenTomatoes, imdb } = details.scores;
+
   const items = [
     tmdb === undefined ? undefined : { label: "TMDB", value: tmdb.toFixed(1), good: tmdb >= 7.5 },
     rottenTomatoes === undefined
@@ -77,6 +78,7 @@ export function TitleHoverCard({
   onBlocklistChange,
 }: TitleHoverCardProperties) {
   const details = preview.kind === "ready" ? preview.preview : undefined;
+
   const meta = details
     ? [
         details.year,
@@ -88,6 +90,7 @@ export function TitleHoverCard({
         .filter((part) => part !== undefined)
         .join(" · ")
     : [title.year].filter((part) => part !== undefined).join(" · ");
+
   const availability = details?.availability ?? title.availability;
   const availabilityDetail = details?.availabilityDetail ?? title.availabilityDetail;
   const airing = details?.airing ?? title.airing;

@@ -5,6 +5,7 @@ import { tvAvailability } from "./tvAvailability";
 import type { SeasonDetails, TvDetails } from "@/integrations/seerr/schemas";
 
 const today = "2026-09-15";
+
 const returning: TvDetails = {
   id: 1,
   name: "Returning show",
@@ -43,6 +44,7 @@ describe("TV availability", () => {
     const seasons = returning.seasons?.map((season) =>
       season.seasonNumber === 2 ? { ...season, airDate: null } : season,
     );
+
     expect(tvAvailability({ ...returning, seasons }, today).availability).toBe("some-available");
   });
 
@@ -54,6 +56,7 @@ describe("TV availability", () => {
     seasons: [{ id: 21, seasonNumber: 1, episodeCount: 2, airDate: "2026-09-01" }],
     mediaInfo: { tmdbId: 2, status: 4, seasons: [{ seasonNumber: 1, status: 4 }] },
   };
+
   const episodes: SeasonDetails = {
     episodes: [
       { id: 101, episodeNumber: 1, name: "One", airDate: "2026-09-01" },
@@ -155,6 +158,7 @@ describe("aired episode counts from Plex", () => {
     seasons: [{ id: 31, seasonNumber: 1, episodeCount: 3, airDate: "2026-09-01" }],
     mediaInfo: { tmdbId: 3, status: 4, seasons: [{ seasonNumber: 1, status: 4 }] },
   };
+
   const episodes: ReadonlyMap<number, SeasonDetails> = new Map([
     [
       1,
@@ -167,6 +171,7 @@ describe("aired episode counts from Plex", () => {
       },
     ],
   ]);
+
   it("is up to date midway through a partial season", () => {
     expect(tvAvailability(show, today, episodes, new Set(["1:1", "1:2"]))).toMatchObject({
       availability: "up-to-date",
@@ -218,6 +223,7 @@ it("uses episode air dates when the provider leaves season dates blank", () => {
     seasons: [{ id: 41, seasonNumber: 1, episodeCount: 2, airDate: "" }],
     mediaInfo: { tmdbId: 4, status: 4, seasons: [{ seasonNumber: 1, status: 4 }] },
   };
+
   expect(
     tvAvailability(
       tv,

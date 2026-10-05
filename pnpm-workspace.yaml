@@ -3,7 +3,6 @@ packages:
   - packages/*
 
 catalog:
-  "@oxlint/plugins": 1.86.0
   "@playwright/test": 1.63.0
   "@types/node": 24.19.1
   "@types/react": 19.3.0
@@ -18,6 +17,8 @@ catalog:
   vitest: 5.0.3
 
 minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - "@jameswyse/oxc-config@0.2.0"
 minimumReleaseAgeExcludePrune: true
 strictDepBuilds: true
 blockExoticSubdeps: true

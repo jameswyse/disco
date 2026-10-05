@@ -2,7 +2,6 @@ import { networkInterfaces } from "node:os";
 
 import type { NextConfig } from "next";
 
-/** IPv4 hosts that may open this machine's `next dev` server, including LAN addresses. */
 function lanDevelopmentOrigins(): string[] {
   const origins = new Set<string>(["localhost", "127.0.0.1"]);
 

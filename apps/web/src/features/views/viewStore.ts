@@ -15,6 +15,7 @@ export class ViewStore extends Context.Service<ViewStore>()("ViewStore", {
   make: Effect.gen(function* () {
     const dataDirectory = path.resolve(yield* dataDirectoryConfig);
     const mutex = yield* Semaphore.make(1);
+
     const read = () =>
       readJsonFile(dataDirectory, fileName, ViewsFile, emptyFile).pipe(
         Effect.map((file) => file.views),
@@ -22,7 +23,6 @@ export class ViewStore extends Context.Service<ViewStore>()("ViewStore", {
 
     return {
       read,
-      /** Replace the saved views with the result of `update`, which sees the current list. */
       update: (update: (views: readonly View[]) => readonly View[]) =>
         read().pipe(
           Effect.flatMap((views) => {

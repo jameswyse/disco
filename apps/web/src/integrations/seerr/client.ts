@@ -55,27 +55,19 @@ export type DiscoverSort =
   | "first_air_date.desc"
   | "vote_average.desc";
 
-/** Query for Seerr's `/discover/movies` and `/discover/tv`, which proxy TMDB discover. */
 export type DiscoverQuery = Readonly<{
   page: number;
   sortBy: DiscoverSort;
-  /** ISO date (YYYY-MM-DD) bounds on release / first-air date. */
   releasedAfter?: string;
   releasedBefore?: string;
   voteCountAtLeast?: number;
   voteAverageAtLeast?: number;
-  /** TMDB genre ids, matched as "any of". */
   genres?: readonly number[];
-  /** ISO 639-1 original-language code. */
   originalLanguage?: string;
-  /** TMDB keyword ids, matched as "all of". */
   keywords?: readonly number[];
-  /** TMDB production company id (movies only). */
   studio?: number;
-  /** TMDB network id (series only). */
   network?: number;
   watchRegion?: string;
-  /** TMDB watch provider ids, matched as "any of". */
   watchProviders?: readonly number[];
 }>;
 
@@ -90,7 +82,6 @@ export type RequestListQuery = Readonly<{
 export type CreateRequestBody = Readonly<{
   mediaType: MediaType;
   mediaId: number;
-  /** Season numbers for a partial series request, or every season. */
   seasons?: readonly number[] | "all";
   serverId?: number;
   profileId?: number;
@@ -100,7 +91,7 @@ export type CreateRequestBody = Readonly<{
 export type WatchlistItem = Readonly<{ tmdbId: number; mediaType: MediaType; title: string }>;
 
 type QueryValue = string | number | undefined;
-/** Query-string parameters before empty values are dropped. */
+
 type QueryParameters = Readonly<Record<string, QueryValue>>;
 
 function discoverParameters(mediaType: MediaType, query: DiscoverQuery) {
@@ -138,6 +129,7 @@ export class SeerrClient extends Context.Service<SeerrClient>()("SeerrClient", {
     const environment = yield* seerrEnvironmentConfig;
     const apiBase = new URL("api/v1/", environment.origin);
     const httpClient = (yield* HttpClient.HttpClient).pipe(HttpClient.filterStatusOk);
+
     const userClient = Effect.map(SeerrIdentity, (identity) =>
       httpClient.pipe(
         HttpClient.mapRequest(
@@ -178,7 +170,6 @@ export class SeerrClient extends Context.Service<SeerrClient>()("SeerrClient", {
     ): Effect.Effect<A, SeerrError, SeerrIdentity> =>
       Effect.flatMap(userClient, (client) =>
         client
-          // Seerr's OpenAPI validator rejects form-encoded `+` spaces.
           .get(
             new URL(
               `${path}?${new URLSearchParams(definedParameters(parameters)).toString().replaceAll("+", "%20")}`,
@@ -211,7 +202,6 @@ export class SeerrClient extends Context.Service<SeerrClient>()("SeerrClient", {
       );
 
     return {
-      /** Public origin of the Seerr instance, for linking into its UI. */
       origin: environment.origin,
       status: () => httpClient.get(new URL("status", apiBase)).pipe(decode("status", Status)),
       publicSettings: () =>
@@ -241,7 +231,6 @@ export class SeerrClient extends Context.Service<SeerrClient>()("SeerrClient", {
           const identity = yield* SeerrIdentity;
           const client = yield* userClient;
 
-          // Seerr returns an empty 201 response, with no JSON body to decode.
           yield* client
             .post(new URL("blocklist", apiBase), {
               body: HttpBody.jsonUnsafe({ ...item, user: identity.userId }),

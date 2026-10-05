@@ -14,7 +14,6 @@ type WatchlistButtonProperties = Readonly<{
   title: string;
   onWatchlist: boolean;
   className: string | undefined;
-  /** Icon-only rendering for tight spaces such as the quick-info card. */
   compact?: boolean;
 }>;
 
@@ -30,7 +29,7 @@ export function WatchlistButton({
     toggleWatchlist,
     undefined,
   );
-  // The server re-renders with the new state after a successful toggle; until then flip locally.
+
   const listed = result?.ok ? !onWatchlist : onWatchlist;
   const fullLabel = listed ? "✓ Watchlisted" : "＋ Watchlist";
   const compactLabel = listed ? "✓" : "＋";

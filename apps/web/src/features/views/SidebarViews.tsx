@@ -17,6 +17,7 @@ export function SidebarViews({ sidebarStyle }: Readonly<{ sidebarStyle: SidebarS
   const editing = usePathname() === "/views";
   const editor = useViewEditor();
   const { views } = editor;
+
   const [target, setTarget] = useState<
     Readonly<{ kind: "end" }> | Readonly<{ kind: "before"; id: string }> | null
   >(null);

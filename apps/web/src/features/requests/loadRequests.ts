@@ -67,6 +67,7 @@ const requestsProgram = (filter: RequestFilter, page: number) =>
     const client = yield* SeerrClient;
     const today = new Date().toISOString().slice(0, 10);
     const list = yield* client.requests({ take: pageSize, skip: (page - 1) * pageSize, filter });
+
     const rows = yield* Effect.all(
       list.results.map((request) =>
         (request.media.mediaType === "movie"
@@ -91,7 +92,6 @@ const requestsProgram = (filter: RequestFilter, page: number) =>
               ),
             )
         ).pipe(
-          // A title Seerr can no longer resolve should not hide the rest of the list.
           Effect.catch(() =>
             Effect.succeed({
               name: `${request.media.mediaType === "movie" ? "Film" : "Series"} #${request.media.tmdbId}`,

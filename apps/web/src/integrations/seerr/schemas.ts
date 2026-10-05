@@ -1,12 +1,11 @@
 import { Schema, Tuple } from "effect";
 
-/** Optional string fields that Seerr may omit, null, or send as an empty string. */
 const OptionalText = Schema.optional(Schema.NullOr(Schema.String));
 const OptionalNumber = Schema.optional(Schema.NullOr(Schema.Number));
 const OptionalBoolean = Schema.optional(Schema.NullOr(Schema.Boolean));
 
-/** Metadata providers use ISO calendar dates, null, or an empty string when a date is unknown. */
 const calendarDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+
 const OptionalAirDate = Schema.optional(
   Schema.NullOr(
     Schema.String.pipe(
@@ -41,7 +40,6 @@ export const RequestUser = Schema.Struct({
   displayName: Schema.String,
 });
 
-/** A Seerr media request. `status`: 1 pending approval, 2 approved, 3 declined, 4 failed, 5 completed. */
 export const MediaRequest = Schema.Struct({
   id: Schema.Number,
   status: Schema.Number,
@@ -66,7 +64,6 @@ export const MediaSeasonInfo = Schema.Struct({
 
 export const MediaInfo = Schema.Struct({
   tmdbId: Schema.Number,
-  /** 1 unknown, 2 pending, 3 processing, 4 partial, 5 available, 6 blocklisted, 7 deleted. */
   status: Schema.Number,
   ratingKey: OptionalText,
   mediaUrl: OptionalText,
@@ -107,7 +104,6 @@ export const TvResult = Schema.Struct({
 });
 export type TvResult = typeof TvResult.Type;
 
-/** Search and trending include people alongside titles. */
 export const PersonResult = Schema.Struct({
   id: Schema.Number,
   mediaType: Schema.Literal("person"),
@@ -160,6 +156,7 @@ export const GenreWithBackdrops = Schema.Struct({
   name: Schema.String,
   backdrops: Schema.optional(Schema.Array(Schema.String)),
 });
+
 export const GenreSlider = Schema.Array(GenreWithBackdrops);
 
 export const Language = Schema.Struct({
@@ -174,7 +171,6 @@ export const Keyword = Schema.Struct({ id: Schema.Number, name: Schema.String })
 export type Keyword = typeof Keyword.Type;
 export const KeywordPage = Schema.Struct({ results: Schema.Array(Keyword) });
 
-/** Shared by `/network/{id}` and `/studio/{id}`. */
 export const Company = Schema.Struct({
   id: Schema.Number,
   name: Schema.String,
@@ -295,6 +291,7 @@ const RegionalWatchProviders = Schema.Struct({
 export type RegionalWatchProviders = typeof RegionalWatchProviders.Type;
 
 const ProductionCountry = Schema.Struct({ iso_3166_1: Schema.String, name: Schema.String });
+
 const SpokenLanguage = Schema.Struct({
   iso_639_1: Schema.String,
   englishName: OptionalText,
@@ -436,7 +433,6 @@ export type RequestListPage = typeof RequestListPage.Type;
 export const CreatedRequest = Schema.Struct({ id: Schema.Number, status: Schema.Number });
 export type CreatedRequest = typeof CreatedRequest.Type;
 
-/** Empty-body responses (watchlist mutations). */
 export const NoContent = Schema.Unknown;
 
 export const PersonDetails = Schema.Struct({
@@ -452,6 +448,7 @@ export const PersonDetails = Schema.Struct({
   imdbId: OptionalText,
 });
 export type PersonDetails = typeof PersonDetails.Type;
+
 export const PersonCredits = Schema.Struct({
   id: Schema.Number,
   cast: Schema.Array(Schema.Union([MovieResult, TvResult])),
@@ -465,7 +462,9 @@ export const RequestServer = Schema.Struct({
   isDefault: Schema.Boolean,
   activeProfileId: Schema.Number,
 });
+
 export const RequestServers = Schema.Array(RequestServer);
+
 export const ServiceProfiles = Schema.Struct({
   profiles: Schema.Array(Schema.Struct({ id: Schema.Number, name: Schema.String })),
 });

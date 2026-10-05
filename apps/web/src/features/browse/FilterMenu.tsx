@@ -15,7 +15,6 @@ import type { BrowseFilters, MediaFilter } from "./filters";
 
 import styles from "./FilterMenu.module.css";
 
-/** Original-language choices; the full TMDB list is far too long for a dropdown. */
 const languageOptions: readonly Readonly<{ code: string; label: string }>[] = [
   { code: "en", label: "English" },
   { code: "es", label: "Spanish" },
@@ -43,7 +42,6 @@ const mediaFilters: readonly Readonly<{ id: MediaFilter; label: string }>[] = [
 type FilterMenuProperties = Readonly<{
   location: BrowseLocation;
   genres: readonly Genre[];
-  /** Whether the view can show both films and series. */
   mixedMedia: boolean;
   lockedGenre?: string | undefined;
   lockedLanguage?: string | undefined;
@@ -61,6 +59,7 @@ export function FilterMenu({
   const canSort = !mixedMedia || filters.mediaType !== "all";
   const disclosure = useRef<HTMLDetailsElement>(null);
   const trigger = useRef<HTMLElement>(null);
+
   const activeCount = [
     filters.mediaType !== "all",
     !lockedGenre && filters.genreId !== undefined,
@@ -116,7 +115,6 @@ export function FilterMenu({
         </svg>
         Filters <span className={styles.count}>{activeCount}</span>
       </summary>
-      {/* Keep padding clicks focused inside the disclosure when an input blurs. */}
       <div aria-label="Filters" className={styles.panel} role="group" tabIndex={-1}>
         {mixedMedia ? (
           <nav aria-label="Media type" className={styles.segmentedControl}>

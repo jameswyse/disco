@@ -13,11 +13,14 @@ export async function loadPerson(id: number) {
   return runAuthenticated(
     Effect.gen(function* () {
       const client = yield* SeerrClient;
+
       const [person, credits, movies, tv] = yield* Effect.all(
         [client.person(id), client.personCredits(id), client.genres("movie"), client.genres("tv")],
         { concurrency: "unbounded" },
       );
+
       const genres = new Map([...movies, ...tv].map((genre) => [genre.id, genre.name]));
+
       const unique = new Map(
         [...credits.cast, ...credits.crew].map((credit) => [
           `${credit.mediaType}-${credit.id}`,
@@ -28,18 +31,19 @@ export async function loadPerson(id: number) {
       return {
         kind: "ok" as const,
         person,
-        titles: [...unique.values()].sort(
+        titles: [...unique.values()].toSorted(
           (a, b) => (b.year ?? 0) - (a.year ?? 0) || b.popularity - a.popularity,
         ),
       };
     }).pipe(
       Effect.tapError((error) => Effect.logError("Seerr person request failed", error)),
+      Effect.catchTag("SeerrRejected", (error) =>
+        error.status === 404 && error.path === `person/${id}`
+          ? Effect.succeed({ kind: "not-found" as const })
+          : Effect.fail(error),
+      ),
       Effect.catch((error) =>
-        Effect.succeed(
-          error._tag === "SeerrRejected" && error.status === 404 && error.path === `person/${id}`
-            ? { kind: "not-found" as const }
-            : { kind: "error" as const, message: describeSeerrError(error) },
-        ),
+        Effect.succeed({ kind: "error" as const, message: describeSeerrError(error) }),
       ),
     ),
   );

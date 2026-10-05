@@ -1,6 +1,5 @@
 import { expect, test } from "./authenticatedTest";
 
-// Settings persist across tests in this run, so mutations run in order and restore defaults.
 test.describe.configure({ mode: "serial" });
 
 test("preferences are reachable from the user menu and /settings", async ({ page }) => {

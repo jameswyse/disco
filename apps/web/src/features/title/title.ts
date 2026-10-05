@@ -35,7 +35,6 @@ export function isInLibrary(availability: Availability): boolean {
   );
 }
 
-/** A movie or series shown on a title card. Plain data so it can cross the RSC boundary. */
 export type Title = Readonly<{
   id: number;
   mediaType: MediaType;
@@ -51,17 +50,14 @@ export type Title = Readonly<{
   availability: Availability;
   availabilityDetail?: string | undefined;
   airing?: string | undefined;
-  /** Filled in from the details endpoints by `withTitleFacts`; list results omit them. */
   runtimeMinutes: number | undefined;
   seasonCount: number | undefined;
 }>;
 
 export type GenreNames = ReadonlyMap<number, string>;
 
-/** Averages over fewer votes than this say nothing useful, so the card omits them. */
 const minimumVotesForRating = 10;
 
-/** Seerr `MediaInfo.status`: 1 unknown, 2 pending, 3 processing, 4 partial, 5 available, 6 blocklisted, 7 deleted. */
 const availabilityByStatus: ReadonlyMap<number, Availability> = new Map([
   [2, "pending"],
   [3, "processing"],
@@ -86,6 +82,7 @@ function yearOf(date: string | null | undefined): number | undefined {
 
 export function titleFromResult(result: MovieResult | TvResult, genreNames: GenreNames): Title {
   const voteCount = result.voteCount ?? 0;
+
   const shared = {
     id: result.id,
     rating:

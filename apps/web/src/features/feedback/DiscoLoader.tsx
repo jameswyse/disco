@@ -7,7 +7,6 @@ type DiscoLoaderProperties = Readonly<{
   size?: "screen" | "content" | "inline";
 }>;
 
-/** Native image playback works before Suspense hydrates. */
 export function DiscoLoader({ label = "Loading Disco", size = "content" }: DiscoLoaderProperties) {
   return (
     <span aria-label={label} className={`${styles.loader} ${styles[size]}`} role="status">

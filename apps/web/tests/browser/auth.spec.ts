@@ -37,9 +37,11 @@ test("local sign-in rejects wrong credentials then establishes the Seerr user's 
 
   await signIn(page);
   await expect(page.getByText("Fixture User", { exact: true })).toBeVisible();
+
   const session = (await page.context().cookies()).find(
     (cookie) => cookie.name === "disco_session",
   );
+
   expect(session).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/" });
   expect((await page.request.get("/api/titles/movie/102")).status()).toBe(200);
 });
@@ -64,6 +66,7 @@ test("signing out invalidates the Seerr session even if its old cookie is replay
 
 test("a rejected logout keeps the session and shows the error", async ({ page }) => {
   await signIn(page);
+
   const session = (await page.context().cookies()).find(
     (cookie) => cookie.name === "disco_session",
   );
@@ -89,9 +92,11 @@ test("a session expired by Seerr cannot use the global API key to regain access"
   page,
 }) => {
   await signIn(page);
+
   const session = (await page.context().cookies()).find(
     (cookie) => cookie.name === "disco_session",
   );
+
   expect(session).toBeDefined();
 
   if (session === undefined) {
@@ -117,9 +122,11 @@ test("a forged session and user header cannot impersonate a Seerr account", asyn
   await page
     .context()
     .addCookies([{ name: "disco_session", value: "s:forged.signature", url: baseURL }]);
+
   const response = await page.request.get("/api/titles/movie/102", {
     headers: { "X-API-User": "2" },
   });
+
   expect(response.status()).toBe(401);
   await page.goto("/movies");
   await expect(page).toHaveURL(/\/login$/);

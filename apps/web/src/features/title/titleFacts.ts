@@ -15,7 +15,6 @@ import type { SeerrUserId } from "@/integrations/seerr/schemas";
 
 import type { Title } from "./title";
 
-/** Facts that only the per-title Seerr endpoints expose, shown under posters. */
 export type TitleFacts = Readonly<{
   runtimeMinutes: number | undefined;
   seasonCount: number | undefined;
@@ -48,8 +47,6 @@ const factsProgram = (mediaType: MediaType, id: number) =>
         ),
   );
 
-/** TV facts include availability, so they refresh as episodes air and arrive in the library. */
-
 async function cachedTitleFacts(
   mediaType: MediaType,
   id: number,
@@ -75,7 +72,6 @@ export async function loadTitleFacts(mediaType: MediaType, id: number): Promise<
   return cachedTitleFacts(mediaType, id, user.id);
 }
 
-/** Attach facts to each title; a title whose details fail keeps its list data. */
 export function withTitleFacts(titles: readonly Title[]): Promise<Title[]> {
   return Promise.all(
     titles.map(async (title) => {

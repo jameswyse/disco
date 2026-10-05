@@ -13,6 +13,7 @@ const LocalCredentials = Schema.Struct({
   email: Schema.Trimmed.check(Schema.isNonEmpty()),
   password: Schema.NonEmptyString,
 });
+
 const PlexCredentials = Schema.Struct({ authToken: Schema.NonEmptyString });
 
 type LoginError = Readonly<{ message: string }>;

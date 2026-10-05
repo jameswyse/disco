@@ -7,12 +7,10 @@ export type BrowseLocation = Readonly<{
   viewId: string;
   listId: DiscoverListId;
   filters: BrowseFilters;
-  /** Saved preference; the URL only names a language when it differs from this. */
   defaultLanguage: string | undefined;
   page: number;
 }>;
 
-/** URL for a browse screen; only non-default state is carried in the query string. */
 export function browseHref(location: BrowseLocation): `/${string}` {
   const entries: [string, string][] = [];
 

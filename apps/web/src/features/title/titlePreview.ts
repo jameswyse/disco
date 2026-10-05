@@ -7,7 +7,6 @@ import type { TitleDetails } from "./titleDetails";
 const OptionalText = Schema.optional(Schema.String);
 const OptionalNumber = Schema.optional(Schema.Number);
 
-/** The subset of `TitleDetails` the title hover card needs, validated when it crosses the wire. */
 export const TitlePreview = Schema.Struct({
   availability: Schema.Literals(availabilityValues),
   availabilityDetail: OptionalText,
@@ -42,14 +41,14 @@ export type TitlePreview = typeof TitlePreview.Type;
 
 export const decodeTitlePreview = Schema.decodeUnknownResult(TitlePreview);
 
-function defined<Value>(value: Value | undefined): value is Value {
+function isDefined<Value>(value: Value | undefined): value is Value {
   return value !== undefined;
 }
 
-export function titlePreviewFromDetails(
-  details: TitleDetails,
-  canManageBlocklist: boolean,
-): TitlePreview {
+export function titlePreviewFromDetails({
+  details,
+  canManageBlocklist,
+}: Readonly<{ details: TitleDetails; canManageBlocklist: boolean }>): TitlePreview {
   return {
     availability: details.availability,
     availabilityDetail: details.availabilityDetail,
@@ -84,7 +83,6 @@ export function titlePreviewFromDetails(
   };
 }
 
-/** JSON drops `undefined` properties, so serialise only defined ones for a stable payload. */
 export function serialisePreview(preview: TitlePreview): string {
-  return JSON.stringify(preview, (_key, value: unknown) => (defined(value) ? value : undefined));
+  return JSON.stringify(preview, (_key, value: unknown) => (isDefined(value) ? value : undefined));
 }

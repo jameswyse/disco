@@ -80,7 +80,7 @@ for (const width of [390, 1440]) {
     const play = page.getByRole("button", { name: "▶ Play trailer", exact: true });
     await play.click();
     await expect(trailer).toBeVisible();
-    // Playback controls keep focus in the page, so Escape still closes the player.
+
     await trailer.getByRole("button", { name: "Pause trailer", exact: true }).click();
     await page.keyboard.press("Escape");
     await expect(video).toHaveCount(0);
@@ -98,9 +98,11 @@ test("closing while the trailer API loads leaves no player behind and can reopen
   page,
 }) => {
   let finishLoading: (() => void) | undefined;
+
   const loading = new Promise<void>((resolve) => {
     finishLoading = resolve;
   });
+
   await page.route("https://www.youtube.com/iframe_api", async (route) => {
     await loading;
     await route.fulfill({ contentType: "application/javascript", body: youtubePlayerScript });

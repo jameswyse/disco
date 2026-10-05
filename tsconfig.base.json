@@ -9,17 +9,14 @@
     "moduleDetection": "force",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noUncheckedSideEffectImports": true,
-    "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true,
     "target": "ES2022",
     "verbatimModuleSyntax": true
-  }
+  },
+  "extends": "@jameswyse/oxc-config/tsconfig"
 }

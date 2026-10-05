@@ -25,10 +25,12 @@ export type SearchResult =
 const searchProgram = (query: string, page: number) =>
   Effect.gen(function* () {
     const client = yield* SeerrClient;
+
     const [results, movieGenres, tvGenres] = yield* Effect.all(
       [client.search(query, page), client.genres("movie"), client.genres("tv")],
       { concurrency: "unbounded" },
     );
+
     const genreNames: GenreNames = new Map(
       [...movieGenres, ...tvGenres].map((genre) => [genre.id, genre.name]),
     );

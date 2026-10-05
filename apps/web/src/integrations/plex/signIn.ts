@@ -62,7 +62,6 @@ function requestPlex<A, I>({
   });
 }
 
-/** Call from the button's click handler so the popup opens within the browser's user gesture. */
 export function startPlexSignIn(): SignInAttempt {
   const popup = window.open("about:blank", "_blank", "popup,width=600,height=700");
 
@@ -76,18 +75,21 @@ export function startPlexSignIn(): SignInAttempt {
   popup.opener = null;
 
   const controller = new AbortController();
+
   const program = Effect.gen(function* () {
     const clientIdentifier = yield* Effect.sync(() =>
       Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
         byte.toString(16).padStart(2, "0"),
       ).join(""),
     );
+
     const headers = {
       Accept: "application/json",
       "X-Plex-Product": "Disco",
       "X-Plex-Version": "1",
       "X-Plex-Client-Identifier": clientIdentifier,
     };
+
     const pin = yield* requestPlex({
       url: "https://plex.tv/api/v2/pins?strong=true",
       method: "POST",
@@ -106,11 +108,11 @@ export function startPlexSignIn(): SignInAttempt {
       code: pin.code,
       "context[device][product]": "Disco",
     });
+
     yield* Effect.sync(() => {
       popup.location.href = `https://app.plex.tv/auth/#!?${parameters.toString()}`;
     });
 
-    // Plex's cross-origin popup can report closed while open. Cancellation is explicit.
     const poll: Effect.Effect<string, PlexSignInFailed> = Effect.suspend(() =>
       Effect.gen(function* () {
         const status = yield* requestPlex({

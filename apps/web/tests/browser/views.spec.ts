@@ -12,14 +12,12 @@ async function dragView(
 ) {
   await source.hover();
   await page.mouse.down();
-  // Start dragging before scrolling the sidebar to reveal the destination.
   await source.hover({ position: { x: 8, y: 8 } });
   await target.hover({ position });
   await target.hover({ position });
   await page.mouse.up();
 }
 
-// The view store is shared by every test in the run, so these tests run in order and restore it.
 test.describe.configure({ mode: "serial" });
 
 test("the view library lists Seerr sources with the current sidebar", async ({ page }) => {
@@ -113,7 +111,6 @@ test("dragging inserts and reorders views in the actual sidebar and persists the
     page,
     sidebar.getByRole("button", { name: "Reorder HBO", exact: true }),
     dropArea,
-    // Target the empty gutter even when cards fill the sidebar's height.
     { x: 2, y: dropBounds.height - 12 },
   );
   await expect(cards.last()).toHaveAccessibleName("Reorder HBO");

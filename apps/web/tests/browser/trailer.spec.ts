@@ -52,7 +52,7 @@ for (const width of [390, 1440]) {
     await expect(trailer).toBeVisible();
     await expect(video).toHaveAttribute(
       "src",
-      /^https:\/\/www.youtube.com\/embed\/fixture102\?autoplay=1&playsinline=1&controls=0&fs=1&rel=0&enablejsapi=1&origin=/,
+      /^https:\/\/www\.youtube\.com\/embed\/fixture102\?autoplay=1&playsinline=1&controls=0&fs=1&rel=0&enablejsapi=1&origin=/,
     );
     await expect(video).toHaveAttribute("allowfullscreen", "");
     await expect(video).toHaveAttribute("allow", /autoplay.*fullscreen/);

@@ -122,7 +122,8 @@
         "$TURBO_ROOT$/tsconfig.tooling.json",
         "$TURBO_ROOT$/oxfmt.config.ts",
         "$TURBO_ROOT$/oxlint.config.ts",
-        "$TURBO_ROOT$/.github/**"
+        "$TURBO_ROOT$/.github/**",
+        "$TURBO_ROOT$/.changeset/**"
       ],
       "outputLogs": "errors-only",
       "outputs": []

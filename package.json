@@ -1,6 +1,5 @@
 {
   "name": "@disco/monorepo",
-  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,8 +10,8 @@
     "fix": "node scripts/turbo.mjs run lint:fix '//#lint:fix:root'",
     "format": "node scripts/turbo.mjs run format '//#format:root'",
     "format:check": "node scripts/turbo.mjs run format:check '//#format:check:root'",
-    "format:check:root": "oxfmt --list-different '*.md' 'docs/**/*.md' 'tools/**/*.ts' 'scripts/**/*.mjs' 'deploy/**/*.{mjs,yaml,yml}' compose*.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.json tsconfig.base.json tsconfig.tooling.json oxfmt.config.ts oxlint.config.ts '.github/**/*.{json,yaml,yml}'",
-    "format:root": "oxfmt '*.md' 'docs/**/*.md' 'tools/**/*.ts' 'scripts/**/*.mjs' 'deploy/**/*.{mjs,yaml,yml}' compose*.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.json tsconfig.base.json tsconfig.tooling.json oxfmt.config.ts oxlint.config.ts '.github/**/*.{json,yaml,yml}'",
+    "format:check:root": "oxfmt --list-different '*.md' '.changeset/*' 'docs/**/*.md' 'tools/**/*.ts' 'scripts/**/*.mjs' 'deploy/**/*.{mjs,yaml,yml}' compose*.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.json tsconfig.base.json tsconfig.tooling.json oxfmt.config.ts oxlint.config.ts '.github/**/*.{json,yaml,yml}'",
+    "format:root": "oxfmt '*.md' '.changeset/*' 'docs/**/*.md' 'tools/**/*.ts' 'scripts/**/*.mjs' 'deploy/**/*.{mjs,yaml,yml}' compose*.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.json tsconfig.base.json tsconfig.tooling.json oxfmt.config.ts oxlint.config.ts '.github/**/*.{json,yaml,yml}'",
     "format:staged": "lint-staged.sh \"oxfmt --list-different --no-error-on-unmatched-pattern\" \"*.js\" \"*.[cm]js\" \"*.jsx\" \"*.ts\" \"*.[cm]ts\" \"*.tsx\" \"*.css\" \"*.html\" \"*.json\" \"*.jsonc\" \"*.md\" \"*.mdx\" \"*.yaml\" \"*.yml\"",
     "lint": "node scripts/turbo.mjs run lint '//#lint:root'",
     "lint:fix": "node scripts/turbo.mjs run lint:fix '//#lint:fix:root'",
@@ -34,6 +33,7 @@
     "verify:uncached": "pnpm verify --force"
   },
   "devDependencies": {
+    "@changesets/cli": "3.0.3",
     "@jameswyse/oxc-config": "0.2.0",
     "@types/node": "catalog:",
     "husky": "9.1.7",

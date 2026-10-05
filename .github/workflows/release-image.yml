@@ -3,14 +3,14 @@ name: Publish image
 on:
   workflow_call:
     inputs:
-      tag:
-        description: Existing stable release tag, for example v0.1.0.
+      version:
+        description: Stable application version, for example 1.1.1.
         required: true
         type: string
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing stable release tag to publish or resume, for example v0.1.0.
+        description: Existing stable release tag to publish or resume, for example v1.1.1.
         required: true
         type: string
 
@@ -34,19 +34,30 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - name: Resolve stable release to a commit
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Resolve the release commit and version
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
-          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease \
-            --jq '.isDraft == false and .isPrerelease == false' | grep -qx true
-          sha=$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")
+          if [ -n "$RELEASE_TAG" ]; then
+            [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+            gh release view "$RELEASE_TAG" --json isDraft,isPrerelease \
+              --jq '.isDraft == false and .isPrerelease == false' | grep -qx true
+            sha=$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")
+            version=${RELEASE_TAG#v}
+          else
+            sha=$(git rev-parse HEAD)
+            version=$RELEASE_VERSION
+          fi
+          [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          test "$(git show "$sha:apps/web/package.json" | jq -r .version)" = "$version"
           {
             echo "sha=$sha"
-            echo "version=${RELEASE_TAG#v}"
+            echo "version=$version"
             echo "image=ghcr.io/${GITHUB_REPOSITORY,,}"
           } >> "$GITHUB_OUTPUT"
 

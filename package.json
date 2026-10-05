@@ -29,7 +29,7 @@
     "typecheck": "node scripts/turbo.mjs run typecheck '//#typecheck:tooling'",
     "typecheck:source": "node scripts/turbo.mjs run typecheck:source '//#typecheck:tooling'",
     "typecheck:tooling": "tsc --noEmit --project tsconfig.tooling.json",
-    "verify": "node scripts/turbo.mjs run format:check lint typecheck build test:unit '//#format:check:root' '//#lint:root' '//#typecheck:tooling' --continue=always",
+    "verify": "node scripts/turbo.mjs run format:check lint typecheck build test:unit '//#format:check:root' '//#lint:root' '//#typecheck:tooling' --continue=always --concurrency=1",
     "verify:full": "pnpm verify '@disco/web#test:e2e'",
     "verify:uncached": "pnpm verify --force"
   },

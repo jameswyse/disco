@@ -1,12 +1,13 @@
 import { Data } from "effect";
 
+import type { HttpClientError } from "effect/http";
+
 /** Seerr could not be reached (DNS, connection, timeout). */
 export class SeerrUnavailable extends Data.TaggedError("SeerrUnavailable")<{
   readonly path: string;
-  readonly cause: unknown;
+  readonly cause: string;
 }> {}
 
-/** Seerr answered with a non-2xx status. */
 export class SeerrRejected extends Data.TaggedError("SeerrRejected")<{
   readonly path: string;
   readonly status: number;
@@ -19,6 +20,30 @@ export class SeerrMalformed extends Data.TaggedError("SeerrMalformed")<{
 }> {}
 
 export type SeerrError = SeerrUnavailable | SeerrRejected | SeerrMalformed;
+
+export function translateHttpError(
+  path: string,
+  error: HttpClientError.HttpClientError,
+): SeerrError {
+  const reason = error.reason;
+
+  switch (reason._tag) {
+    case "StatusCodeError":
+    case "DecodeError":
+    case "EmptyBodyError":
+      return new SeerrRejected({ path, status: reason.response.status });
+    case "TransportError":
+    case "EncodeError":
+    case "InvalidUrlError":
+      return new SeerrUnavailable({ path, cause: reason._tag });
+
+    default: {
+      const unsupportedReason: never = reason;
+
+      return unsupportedReason;
+    }
+  }
+}
 
 export function describeSeerrError(error: SeerrError): string {
   switch (error._tag) {

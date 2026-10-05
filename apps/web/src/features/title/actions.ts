@@ -15,21 +15,24 @@ import type { CreateRequestBody } from "@/integrations/seerr/client";
 import type { SeerrError } from "@/integrations/seerr/errors";
 import type { SeerrIdentity } from "@/integrations/seerr/identity";
 
-const MediaTypeInput = Schema.Literal("movie", "tv");
-const TmdbId = Schema.NumberFromString.pipe(Schema.int(), Schema.positive());
+const MediaTypeInput = Schema.Literals(["movie", "tv"]);
+const TmdbId = Schema.NumberFromString.pipe(
+  Schema.check(Schema.isInt()),
+  Schema.check(Schema.isGreaterThan(0)),
+);
 
 const RequestInput = Schema.Struct({
   mediaType: MediaTypeInput,
   id: TmdbId,
   /** Season number for a partial series request; omitted means every season. */
   season: Schema.optional(TmdbId),
-  quality: Schema.optional(Schema.String.pipe(Schema.pattern(/^(?:\d+:\d+)?$/))),
+  quality: Schema.optional(Schema.String.pipe(Schema.check(Schema.isPattern(/^(?:\d+:\d+)?$/)))),
 });
 const WatchlistInput = Schema.Struct({
   mediaType: MediaTypeInput,
   id: TmdbId,
   title: Schema.NonEmptyString,
-  action: Schema.Literal("add", "remove"),
+  action: Schema.Literals(["add", "remove"]),
 });
 
 const decodeWatchlist = Schema.decodeUnknownSync(WatchlistInput);
@@ -44,7 +47,7 @@ function run(
     program.pipe(
       Effect.tapError((error) => Effect.logError("Seerr action failed", error)),
       Effect.map((): ActionResult => ({ ok: true })),
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.succeed<ActionResult>({ ok: false, message: describeSeerrError(error) }),
       ),
       Effect.tap((result) =>
@@ -71,13 +74,13 @@ export async function requestTitle(
   _previous: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  const decoded = Schema.decodeUnknownEither(RequestInput)(Object.fromEntries(formData));
+  const decoded = Schema.decodeUnknownResult(RequestInput)(Object.fromEntries(formData));
 
-  if (decoded._tag === "Left") {
+  if (decoded._tag === "Failure") {
     return { ok: false, message: "Choose a valid title and quality profile." };
   }
 
-  const input = decoded.right;
+  const input = decoded.success;
   const body: CreateRequestBody =
     input.mediaType === "tv"
       ? {
@@ -137,9 +140,9 @@ export async function toggleBlocklist(
   _previous: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  const decoded = Schema.decodeUnknownEither(WatchlistInput)(Object.fromEntries(formData));
+  const decoded = Schema.decodeUnknownResult(WatchlistInput)(Object.fromEntries(formData));
 
-  if (decoded._tag === "Left") {
+  if (decoded._tag === "Failure") {
     return { ok: false, message: "Choose a valid title and blocklist action." };
   }
 
@@ -149,7 +152,7 @@ export async function toggleBlocklist(
     return { ok: false, message: "You don't have permission to manage Seerr's blocklist." };
   }
 
-  const input = decoded.right;
+  const input = decoded.success;
 
   return run(
     Effect.flatMap(SeerrClient, (client) =>

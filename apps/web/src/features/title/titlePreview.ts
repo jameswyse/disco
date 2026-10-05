@@ -9,7 +9,7 @@ const OptionalNumber = Schema.optional(Schema.Number);
 
 /** The subset of `TitleDetails` the title hover card needs, validated when it crosses the wire. */
 export const TitlePreview = Schema.Struct({
-  availability: Schema.Literal(...availabilityValues),
+  availability: Schema.Literals(availabilityValues),
   availabilityDetail: OptionalText,
   airing: OptionalText,
   name: Schema.String,
@@ -40,7 +40,7 @@ export const TitlePreview = Schema.Struct({
 });
 export type TitlePreview = typeof TitlePreview.Type;
 
-export const decodeTitlePreview = Schema.decodeUnknownEither(TitlePreview);
+export const decodeTitlePreview = Schema.decodeUnknownResult(TitlePreview);
 
 function defined<Value>(value: Value | undefined): value is Value {
   return value !== undefined;

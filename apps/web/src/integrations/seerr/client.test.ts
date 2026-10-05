@@ -1,5 +1,5 @@
-import { HttpClient, HttpClientResponse } from "@effect/platform";
 import { ConfigProvider, Effect, Layer, Schema } from "effect";
+import { FetchHttpClient, HttpClient, HttpClientResponse } from "effect/http";
 import { describe, expect, it } from "vitest";
 
 import { SeerrClient } from "./client";
@@ -24,21 +24,19 @@ function testClient(respond: (url: URL, headers: Headers) => StubResponse) {
       );
     }),
   );
-  const layer = SeerrClient.DefaultWithoutDependencies.pipe(
+  const layer = Layer.effect(SeerrClient, SeerrClient.make).pipe(
     Layer.provide(Layer.succeed(HttpClient.HttpClient, httpClient)),
     Layer.provide(
-      Layer.setConfigProvider(
-        ConfigProvider.fromMap(
-          new Map([
-            ["SEERR_URL", "https://seerr.example.test"],
-            ["SEERR_API_KEY", "test-key"],
-          ]),
-        ),
+      ConfigProvider.layer(
+        ConfigProvider.fromUnknown({
+          SEERR_URL: "https://seerr.example.test",
+          SEERR_API_KEY: "test-key",
+        }),
       ),
     ),
   );
   const run = <A, E>(
-    program: (client: SeerrClient) => Effect.Effect<A, E, SeerrIdentity>,
+    program: (client: typeof SeerrClient.Service) => Effect.Effect<A, E, SeerrIdentity>,
     userId = 42,
   ) =>
     Effect.runPromise(
@@ -54,6 +52,50 @@ function testClient(respond: (url: URL, headers: Headers) => StubResponse) {
 }
 
 describe("SeerrClient", () => {
+  it("keeps server and CSRF credentials out of transport failures", async () => {
+    const apiKey = "fixture-private-api-key";
+    const csrfCookie = "fixture-private-csrf-cookie";
+    const csrfToken = "fixture-private-csrf-token";
+    let sentHeaders: Headers | undefined;
+
+    const fetch: typeof globalThis.fetch = async (_input, options) => {
+      sentHeaders = new Headers(options?.headers);
+      throw new Error("Connection failed.");
+    };
+
+    const layer = SeerrClient.layer.pipe(
+      Layer.provide(
+        ConfigProvider.layer(
+          ConfigProvider.fromUnknown({
+            SEERR_URL: "https://seerr.example.test",
+            SEERR_API_KEY: apiKey,
+          }),
+        ),
+      ),
+      Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetch)),
+    );
+    const result = await Effect.runPromise(
+      Effect.flatMap(SeerrClient, (client) => client.requestCount()).pipe(
+        Effect.result,
+        Effect.provide(layer),
+        Effect.provideService(SeerrIdentity, {
+          userId: Schema.decodeUnknownSync(SeerrUserId)(42),
+          csrf: { cookie: csrfCookie, token: csrfToken },
+        }),
+      ),
+    );
+
+    expect(result).toMatchObject({
+      _tag: "Failure",
+      failure: { _tag: "SeerrUnavailable", path: "request/count" },
+    });
+    expect(sentHeaders?.get("x-api-key")).toBe(apiKey);
+    expect(sentHeaders?.get("x-xsrf-token")).toBe(csrfToken);
+    expect(JSON.stringify(result)).not.toContain(apiKey);
+    expect(JSON.stringify(result)).not.toContain(csrfCookie);
+    expect(JSON.stringify(result)).not.toContain(csrfToken);
+  });
+
   it("percent-encodes search text without form-style spaces rejected by Seerr", async () => {
     const { requests, run } = testClient(() => ({
       status: 200,

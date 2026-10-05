@@ -12,7 +12,7 @@ export function loadViews(): Promise<readonly View[]> {
   return runAuthenticated(
     Effect.flatMap(ViewStore, (store) => store.read()).pipe(
       Effect.tapError((error) => Effect.logError("Saved views could not be read", error)),
-      Effect.catchAll(() => Effect.succeed(defaultViews)),
+      Effect.catch(() => Effect.succeed(defaultViews)),
     ),
   );
 }

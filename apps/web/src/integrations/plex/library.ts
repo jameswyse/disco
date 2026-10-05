@@ -1,10 +1,5 @@
-import {
-  FetchHttpClient,
-  HttpClient,
-  HttpClientRequest,
-  HttpClientResponse,
-} from "@effect/platform";
-import { Data, Effect, Redacted, Schema } from "effect";
+import { Context, Data, Effect, Layer, Redacted, Schema } from "effect";
+import { FetchHttpClient, HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 
 import { seerrEnvironmentConfig } from "@/platform/configuration/seerrEnvironment";
 
@@ -14,18 +9,23 @@ const episodeRange = /\bs(\d{1,4})e(\d{1,4})-e(\d{1,4})\b/i;
 const PlexSettings = Schema.Struct({
   machineId: Schema.NonEmptyString,
   ip: Schema.NonEmptyString,
-  port: Schema.Number.pipe(Schema.int(), Schema.between(1, 65535)),
+  port: Schema.Number.pipe(
+    Schema.check(Schema.isInt()),
+    Schema.check(Schema.isBetween({ minimum: 1, maximum: 65535 })),
+  ),
   useSsl: Schema.Boolean,
 });
 const PlexDevices = Schema.Array(
   Schema.Struct({
     clientIdentifier: Schema.String,
-    accessToken: Schema.optional(Schema.Redacted(Schema.NonEmptyString)),
+    accessToken: Schema.optional(Schema.RedactedFromValue(Schema.NonEmptyString)),
     connection: Schema.optional(
       Schema.Array(
         Schema.Struct({
-          uri: Schema.URL.pipe(
-            Schema.filter((url) => url.protocol === "https:" || url.protocol === "http:"),
+          uri: Schema.URLFromString.pipe(
+            Schema.check(
+              Schema.makeFilter((url) => url.protocol === "https:" || url.protocol === "http:"),
+            ),
           ),
           local: Schema.Boolean,
         }),
@@ -38,13 +38,27 @@ const PlexIdentity = Schema.Struct({
 });
 const EpisodePage = Schema.Struct({
   MediaContainer: Schema.Struct({
-    size: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
-    totalSize: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.nonNegative())),
+    size: Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isGreaterThanOrEqualTo(0)),
+    ),
+    totalSize: Schema.optional(
+      Schema.Number.pipe(
+        Schema.check(Schema.isInt()),
+        Schema.check(Schema.isGreaterThanOrEqualTo(0)),
+      ),
+    ),
     Metadata: Schema.optional(
       Schema.Array(
         Schema.Struct({
-          parentIndex: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
-          index: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+          parentIndex: Schema.Number.pipe(
+            Schema.check(Schema.isInt()),
+            Schema.check(Schema.isGreaterThanOrEqualTo(0)),
+          ),
+          index: Schema.Number.pipe(
+            Schema.check(Schema.isInt()),
+            Schema.check(Schema.isGreaterThanOrEqualTo(0)),
+          ),
           Media: Schema.optional(
             Schema.Array(
               Schema.Struct({
@@ -67,9 +81,8 @@ export class PlexLibraryUnavailable extends Data.TaggedError("PlexLibraryUnavail
 }> {}
 
 /** Instance-level, read-only Plex access. Seerr user requests remain in SeerrClient. */
-export class PlexLibrary extends Effect.Service<PlexLibrary>()("PlexLibrary", {
-  dependencies: [FetchHttpClient.layer],
-  effect: Effect.gen(function* () {
+export class PlexLibrary extends Context.Service<PlexLibrary>()("PlexLibrary", {
+  make: Effect.gen(function* () {
     const environment = yield* seerrEnvironmentConfig;
     const http = (yield* HttpClient.HttpClient).pipe(HttpClient.filterStatusOk);
     const seerr = http.pipe(
@@ -131,10 +144,12 @@ export class PlexLibrary extends Effect.Service<PlexLibrary>()("PlexLibrary", {
                   }),
               ),
               Effect.as(new URL(candidate)),
-              Effect.timeoutFail({
+              Effect.timeoutOrElse({
                 duration: "5 seconds",
-                onTimeout: () =>
-                  new PlexLibraryUnavailable({ message: "Plex connection timed out." }),
+                orElse: () =>
+                  Effect.fail(
+                    new PlexLibraryUnavailable({ message: "Plex connection timed out." }),
+                  ),
               }),
             ),
         ),
@@ -146,7 +161,7 @@ export class PlexLibrary extends Effect.Service<PlexLibrary>()("PlexLibrary", {
         error._tag === "PlexLibraryUnavailable"
           ? error
           : new PlexLibraryUnavailable({
-              message: `Plex connection could not be discovered through Seerr (${error._tag}).`,
+              message: `Plex connection could not be discovered through Seerr (${error._tag === "HttpClientError" ? error.reason._tag : error._tag}).`,
             }),
       ),
       Effect.provideService(FetchHttpClient.RequestInit, { redirect: "error" }),
@@ -224,11 +239,13 @@ export class PlexLibrary extends Effect.Service<PlexLibrary>()("PlexLibrary", {
             error._tag === "PlexLibraryUnavailable"
               ? error
               : new PlexLibraryUnavailable({
-                  message: `Plex episode availability could not be loaded (${error._tag}).`,
+                  message: `Plex episode availability could not be loaded (${error._tag === "HttpClientError" ? error.reason._tag : error._tag}).`,
                 }),
           ),
           Effect.provideService(FetchHttpClient.RequestInit, { redirect: "error" }),
         ),
     };
   }),
-}) {}
+}) {
+  static readonly layer = Layer.effect(this, this.make).pipe(Layer.provide(FetchHttpClient.layer));
+}

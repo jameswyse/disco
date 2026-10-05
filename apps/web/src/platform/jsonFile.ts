@@ -11,7 +11,7 @@ export class DataFileError extends Data.TaggedError("DataFileError")<{
 }> {}
 
 /** Directory holding Disco's own data (saved views, preferences). Mount it as a volume in Docker. */
-export const dataDirectoryConfig = Config.string("DISCO_DATA_DIR").pipe(Config.withDefault("data"));
+export const dataDirectoryConfig = Config.String("DISCO_DATA_DIR").pipe(Config.withDefault("data"));
 
 function isMissingFile(error: unknown): boolean {
   return error instanceof Error && "code" in error && error.code === "ENOENT";
@@ -21,10 +21,10 @@ function isMissingFile(error: unknown): boolean {
 export function readJsonFile<A, I>(
   directory: string,
   file: string,
-  schema: Schema.Schema<A, I>,
+  schema: Schema.Codec<A, I>,
   fallback: A,
 ): Effect.Effect<A, DataFileError> {
-  const decode = Schema.decodeUnknownSync(Schema.parseJson(schema));
+  const decode = Schema.decodeUnknownSync(Schema.fromJsonString(schema));
 
   return Effect.tryPromise({
     try: async () => {
@@ -46,7 +46,7 @@ export function readJsonFile<A, I>(
 export function writeJsonFile<A, I>(
   directory: string,
   file: string,
-  schema: Schema.Schema<A, I>,
+  schema: Schema.Codec<A, I>,
   value: A,
 ): Effect.Effect<void, DataFileError> {
   const encode = Schema.encodeSync(schema);

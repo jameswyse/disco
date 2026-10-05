@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 export const decodePageNumber = Schema.decodeUnknownSync(
-  Schema.Number.pipe(Schema.int(), Schema.positive()),
+  Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isGreaterThan(0))),
 );
 
 /** Resolve the `page` search parameter; anything other than a positive integer means page 1. */

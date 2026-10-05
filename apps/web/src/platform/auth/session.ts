@@ -12,7 +12,7 @@ import { SeerrIdentity } from "@/integrations/seerr/identity";
 
 import { appRuntime } from "../runtime";
 
-type RuntimeServices = Effect.Effect.Context<Parameters<typeof appRuntime.runPromise>[0]>;
+type RuntimeServices = Effect.Services<Parameters<typeof appRuntime.runPromise>[0]>;
 
 export const sessionCookieName = "disco_session";
 
@@ -26,21 +26,21 @@ export const readSession = cache(async () => {
 
   const session = Redacted.make(value);
   const result = await appRuntime.runPromise(
-    Effect.flatMap(SeerrAuth, (auth) => auth.verify(session)).pipe(Effect.either),
+    Effect.flatMap(SeerrAuth, (auth) => auth.verify(session)).pipe(Effect.result),
   );
 
-  if (result._tag === "Right") {
-    return { ...result.right, session };
+  if (result._tag === "Success") {
+    return { ...result.success, session };
   }
 
   if (
-    result.left._tag === "SeerrRejected" &&
-    (result.left.status === 401 || result.left.status === 403)
+    result.failure._tag === "SeerrRejected" &&
+    (result.failure.status === 401 || result.failure.status === 403)
   ) {
     return undefined;
   }
 
-  throw new Error(describeSeerrError(result.left));
+  throw new Error(describeSeerrError(result.failure));
 });
 
 export async function requireSession() {

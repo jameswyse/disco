@@ -21,7 +21,6 @@
     "typegen": "next typegen"
   },
   "dependencies": {
-    "@effect/platform": "catalog:",
     "effect": "catalog:",
     "next": "catalog:",
     "react": "catalog:",

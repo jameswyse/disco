@@ -92,7 +92,7 @@ const requestsProgram = (filter: RequestFilter, page: number) =>
             )
         ).pipe(
           // A title Seerr can no longer resolve should not hide the rest of the list.
-          Effect.catchAll(() =>
+          Effect.catch(() =>
             Effect.succeed({
               name: `${request.media.mediaType === "movie" ? "Film" : "Series"} #${request.media.tmdbId}`,
               year: undefined,
@@ -137,7 +137,7 @@ export async function loadRequests(filter: RequestFilter, page: number): Promise
   return runAuthenticated(
     requestsProgram(filter, page).pipe(
       Effect.tapError((error) => Effect.logError("Seerr requests list failed", error)),
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.succeed<RequestsResult>({ kind: "error", message: describeSeerrError(error) }),
       ),
     ),

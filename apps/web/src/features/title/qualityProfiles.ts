@@ -84,6 +84,6 @@ export function requestedProfileName(
     Effect.tapError((error) =>
       Effect.logWarning("Requested quality profile name unavailable", error),
     ),
-    Effect.catchAll(() => Effect.succeed(fallback)),
+    Effect.catch(() => Effect.succeed(fallback)),
   );
 }

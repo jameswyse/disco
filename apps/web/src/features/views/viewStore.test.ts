@@ -10,9 +10,9 @@ import { ViewStore } from "./viewStore";
 it("preserves both views when updates overlap", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "disco-views-test-"));
   const runtime = ManagedRuntime.make(
-    ViewStore.Default.pipe(
+    ViewStore.layer.pipe(
       Layer.provide(
-        Layer.setConfigProvider(ConfigProvider.fromMap(new Map([["DISCO_DATA_DIR", directory]]))),
+        ConfigProvider.layer(ConfigProvider.fromUnknown({ DISCO_DATA_DIR: directory })),
       ),
     ),
   );
@@ -36,13 +36,13 @@ it("preserves both views when updates overlap", async () => {
               ...views,
               { id: "films", label: "Films", source: { kind: "media", mediaType: "movie" } },
             ])
-            .pipe(Effect.either),
+            .pipe(Effect.result),
           store
             .update((views) => [
               ...views,
               { id: "series", label: "Series", source: { kind: "media", mediaType: "tv" } },
             ])
-            .pipe(Effect.either),
+            .pipe(Effect.result),
         ],
         { concurrency: "unbounded" },
       );
@@ -53,5 +53,5 @@ it("preserves both views when updates overlap", async () => {
       };
     }),
   );
-  expect(result).toEqual({ updates: ["Right", "Right"], ids: ["films", "series"] });
+  expect(result).toEqual({ updates: ["Success", "Success"], ids: ["films", "series"] });
 });

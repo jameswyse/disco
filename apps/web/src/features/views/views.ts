@@ -3,8 +3,8 @@ import { Schema } from "effect";
 import type { MediaType } from "@/integrations/seerr/client";
 
 /** What a view filters on. Ids are TMDB ids as exposed through Seerr. */
-export const ViewSource = Schema.Union(
-  Schema.Struct({ kind: Schema.Literal("media"), mediaType: Schema.Literal("movie", "tv") }),
+export const ViewSource = Schema.Union([
+  Schema.Struct({ kind: Schema.Literal("media"), mediaType: Schema.Literals(["movie", "tv"]) }),
   Schema.Struct({ kind: Schema.Literal("provider"), providerId: Schema.Number }),
   Schema.Struct({ kind: Schema.Literal("network"), networkId: Schema.Number }),
   Schema.Struct({ kind: Schema.Literal("studio"), companyId: Schema.Number }),
@@ -20,7 +20,7 @@ export const ViewSource = Schema.Union(
   }),
   Schema.Struct({ kind: Schema.Literal("language"), language: Schema.String }),
   Schema.Struct({ kind: Schema.Literal("keyword"), keywordId: Schema.Number }),
-);
+]);
 export type ViewSource = typeof ViewSource.Type;
 
 /** A saved filter shown in the sidebar. */

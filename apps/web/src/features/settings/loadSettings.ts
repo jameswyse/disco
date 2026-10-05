@@ -17,7 +17,7 @@ export async function loadSettings(): Promise<Settings> {
   return runAuthenticated(
     Effect.flatMap(SettingsStore, (store) => store.read()).pipe(
       Effect.tapError((error) => Effect.logError("Saved settings could not be read", error)),
-      Effect.catchAll(() => Effect.succeed(defaultSettings)),
+      Effect.catch(() => Effect.succeed(defaultSettings)),
     ),
   );
 }

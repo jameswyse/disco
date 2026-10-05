@@ -48,7 +48,7 @@ export async function loadSearch(query: string, page: number): Promise<SearchRes
   return runAuthenticated(
     searchProgram(query, page).pipe(
       Effect.tapError((error) => Effect.logError("Seerr search request failed", error)),
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.succeed<SearchResult>({ kind: "error", message: describeSeerrError(error) }),
       ),
     ),

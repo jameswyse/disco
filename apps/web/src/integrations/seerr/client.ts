@@ -1,15 +1,15 @@
+import { Context, Effect, Layer, Redacted } from "effect";
 import {
   FetchHttpClient,
   HttpBody,
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "@effect/platform";
-import { Effect, Redacted } from "effect";
+} from "effect/http";
 
 import { seerrEnvironmentConfig } from "@/platform/configuration/seerrEnvironment";
 
-import { SeerrMalformed, SeerrRejected, SeerrUnavailable } from "./errors";
+import { SeerrMalformed, translateHttpError } from "./errors";
 import { SeerrIdentity, csrfHeaders } from "./identity";
 import {
   CombinedRatings,
@@ -40,8 +40,8 @@ import {
   WatchProviders,
 } from "./schemas";
 
-import type { HttpClientError } from "@effect/platform";
-import type { ParseResult, Schema } from "effect";
+import type { Schema } from "effect";
+import type { HttpClientError } from "effect/http";
 
 import type { SeerrError } from "./errors";
 
@@ -129,21 +129,12 @@ function definedParameters(parameters: QueryParameters): [string, string][] {
   );
 }
 
-function translateHttpError(path: string, error: HttpClientError.HttpClientError): SeerrError {
-  if (error._tag === "ResponseError") {
-    return new SeerrRejected({ path, status: error.response.status });
-  }
-
-  return new SeerrUnavailable({ path, cause: error.reason });
-}
-
-function translateParseError(path: string, error: ParseResult.ParseError): SeerrMalformed {
+function translateParseError(path: string, error: Schema.SchemaError): SeerrMalformed {
   return new SeerrMalformed({ path, description: error.message });
 }
 
-export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
-  dependencies: [FetchHttpClient.layer],
-  effect: Effect.gen(function* () {
+export class SeerrClient extends Context.Service<SeerrClient>()("SeerrClient", {
+  make: Effect.gen(function* () {
     const environment = yield* seerrEnvironmentConfig;
     const apiBase = new URL("api/v1/", environment.origin);
     const httpClient = (yield* HttpClient.HttpClient).pipe(HttpClient.filterStatusOk);
@@ -160,7 +151,7 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
     );
 
     const decode =
-      <A, I>(path: string, schema: Schema.Schema<A, I>) =>
+      <A, I>(path: string, schema: Schema.Codec<A, I>) =>
       (
         response: Effect.Effect<
           HttpClientResponse.HttpClientResponse,
@@ -172,7 +163,7 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
           Effect.flatMap((incoming) =>
             HttpClientResponse.schemaBodyJson(schema)(incoming).pipe(
               Effect.mapError((error) =>
-                error._tag === "ParseError"
+                error._tag === "SchemaError"
                   ? translateParseError(path, error)
                   : translateHttpError(path, error),
               ),
@@ -182,7 +173,7 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
 
     const get = <A, I>(
       path: string,
-      schema: Schema.Schema<A, I>,
+      schema: Schema.Codec<A, I>,
       parameters: QueryParameters = {},
     ): Effect.Effect<A, SeerrError, SeerrIdentity> =>
       Effect.flatMap(userClient, (client) =>
@@ -199,12 +190,12 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
 
     const post = <A, I>(
       path: string,
-      schema: Schema.Schema<A, I>,
+      schema: Schema.Codec<A, I>,
       body: unknown,
     ): Effect.Effect<A, SeerrError, SeerrIdentity> =>
       Effect.flatMap(userClient, (client) =>
         client
-          .post(new URL(path, apiBase), { body: HttpBody.unsafeJson(body) })
+          .post(new URL(path, apiBase), { body: HttpBody.jsonUnsafe(body) })
           .pipe(decode(path, schema)),
       );
 
@@ -253,7 +244,7 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
           // Seerr returns an empty 201 response, with no JSON body to decode.
           yield* client
             .post(new URL("blocklist", apiBase), {
-              body: HttpBody.unsafeJson({ ...item, user: identity.userId }),
+              body: HttpBody.jsonUnsafe({ ...item, user: identity.userId }),
             })
             .pipe(Effect.mapError((error) => translateHttpError("blocklist", error)));
         }),
@@ -296,4 +287,6 @@ export class SeerrClient extends Effect.Service<SeerrClient>()("SeerrClient", {
           : get(`tv/${id}/recommendations`, TvResultPage, { page: 1 }),
     };
   }),
-}) {}
+}) {
+  static readonly layer = Layer.effect(this, this.make).pipe(Layer.provide(FetchHttpClient.layer));
+}

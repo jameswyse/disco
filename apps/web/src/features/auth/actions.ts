@@ -10,21 +10,21 @@ import { sessionCookieName } from "@/platform/auth/session";
 import { appRuntime } from "@/platform/runtime";
 
 const LocalCredentials = Schema.Struct({
-  email: Schema.NonEmptyTrimmedString,
+  email: Schema.Trimmed.check(Schema.isNonEmpty()),
   password: Schema.NonEmptyString,
 });
 const PlexCredentials = Schema.Struct({ authToken: Schema.NonEmptyString });
 
 type LoginError = Readonly<{ message: string }>;
-type Credentials = Parameters<SeerrAuth["login"]>[0];
+type Credentials = Parameters<(typeof SeerrAuth.Service)["login"]>[0];
 
 async function signIn(credentials: Credentials): Promise<LoginError> {
   const result = await appRuntime.runPromise(
-    Effect.flatMap(SeerrAuth, (auth) => auth.login(credentials)).pipe(Effect.either),
+    Effect.flatMap(SeerrAuth, (auth) => auth.login(credentials)).pipe(Effect.result),
   );
 
-  if (result._tag === "Left") {
-    const error = result.left;
+  if (result._tag === "Failure") {
+    const error = result.failure;
 
     if (error._tag === "SeerrRejected") {
       return {
@@ -44,12 +44,12 @@ async function signIn(credentials: Credentials): Promise<LoginError> {
   }
 
   const requestHeaders = await headers();
-  (await cookies()).set(sessionCookieName, Redacted.value(result.right.session), {
+  (await cookies()).set(sessionCookieName, Redacted.value(result.success.session), {
     httpOnly: true,
     secure: requestHeaders.get("x-forwarded-proto") === "https",
     sameSite: "lax",
     path: "/",
-    expires: result.right.expires,
+    expires: result.success.expires,
   });
 
   return redirect("/");
@@ -59,16 +59,16 @@ export async function localLogin(
   _previous: LoginError | undefined,
   formData: FormData,
 ): Promise<LoginError> {
-  const input = Schema.decodeUnknownEither(LocalCredentials)(Object.fromEntries(formData));
+  const input = Schema.decodeUnknownResult(LocalCredentials)(Object.fromEntries(formData));
 
-  if (input._tag === "Left") {
+  if (input._tag === "Failure") {
     return { message: "Enter your Seerr email address and password." };
   }
 
   return signIn({
     kind: "local",
-    email: input.right.email,
-    password: Redacted.make(input.right.password),
+    email: input.success.email,
+    password: Redacted.make(input.success.password),
   });
 }
 
@@ -76,13 +76,13 @@ export async function plexLogin(
   _previous: LoginError | undefined,
   formData: FormData,
 ): Promise<LoginError> {
-  const input = Schema.decodeUnknownEither(PlexCredentials)(Object.fromEntries(formData));
+  const input = Schema.decodeUnknownResult(PlexCredentials)(Object.fromEntries(formData));
 
-  if (input._tag === "Left") {
+  if (input._tag === "Failure") {
     return { message: "Complete Plex sign-in and try again." };
   }
 
-  return signIn({ kind: "plex", token: Redacted.make(input.right.authToken) });
+  return signIn({ kind: "plex", token: Redacted.make(input.success.authToken) });
 }
 
 export async function logout(): Promise<LoginError> {
@@ -91,10 +91,10 @@ export async function logout(): Promise<LoginError> {
 
   if (value) {
     const result = await appRuntime.runPromise(
-      Effect.flatMap(SeerrAuth, (auth) => auth.logout(Redacted.make(value))).pipe(Effect.either),
+      Effect.flatMap(SeerrAuth, (auth) => auth.logout(Redacted.make(value))).pipe(Effect.result),
     );
 
-    if (result._tag === "Left") {
+    if (result._tag === "Failure") {
       return { message: "Seerr could not sign you out. Try again." };
     }
   }

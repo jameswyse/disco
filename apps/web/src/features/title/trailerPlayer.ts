@@ -32,7 +32,7 @@ let apiLoading: Promise<YouTubeApi> | undefined;
 
 function loadApi(): Promise<YouTubeApi> {
   apiLoading ??= Effect.runPromise(
-    Effect.async<YouTubeApi, Error>((resume) => {
+    Effect.callback<YouTubeApi, Error>((resume) => {
       const script = document.createElement("script");
       script.src = "https://www.youtube.com/iframe_api";
       window.onYouTubeIframeAPIReady = () => resume(Effect.succeed(window.YT));

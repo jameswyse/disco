@@ -1,10 +1,10 @@
 import { Schema } from "effect";
 
 /** User preferences that apply across the app. */
-export const PreviewMode = Schema.Literal("hover", "button");
+export const PreviewMode = Schema.Literals(["hover", "button"]);
 export type PreviewMode = typeof PreviewMode.Type;
 
-export const SidebarStyle = Schema.Literal("large", "medium", "small");
+export const SidebarStyle = Schema.Literals(["large", "medium", "small"]);
 export type SidebarStyle = typeof SidebarStyle.Type;
 export const defaultSidebarStyle: SidebarStyle = "large";
 

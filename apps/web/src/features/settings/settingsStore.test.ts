@@ -10,9 +10,9 @@ import { SettingsStore } from "./settingsStore";
 async function testStore() {
   const directory = await mkdtemp(path.join(tmpdir(), "disco-settings-test-"));
   const runtime = ManagedRuntime.make(
-    SettingsStore.Default.pipe(
+    SettingsStore.layer.pipe(
       Layer.provide(
-        Layer.setConfigProvider(ConfigProvider.fromMap(new Map([["DISCO_DATA_DIR", directory]]))),
+        ConfigProvider.layer(ConfigProvider.fromUnknown({ DISCO_DATA_DIR: directory })),
       ),
     ),
   );
@@ -36,8 +36,8 @@ it("preserves both preferences when updates overlap", async () => {
       const store = yield* SettingsStore;
       const updates = yield* Effect.all(
         [
-          store.update((settings) => ({ ...settings, defaultLanguage: "fr" })).pipe(Effect.either),
-          store.update((settings) => ({ ...settings, previewMode: "button" })).pipe(Effect.either),
+          store.update((settings) => ({ ...settings, defaultLanguage: "fr" })).pipe(Effect.result),
+          store.update((settings) => ({ ...settings, previewMode: "button" })).pipe(Effect.result),
         ],
         { concurrency: "unbounded" },
       );
@@ -46,7 +46,7 @@ it("preserves both preferences when updates overlap", async () => {
     }),
   );
   expect(result).toEqual({
-    updates: ["Right", "Right"],
+    updates: ["Success", "Success"],
     settings: { defaultLanguage: "fr", previewMode: "button" },
   });
 });

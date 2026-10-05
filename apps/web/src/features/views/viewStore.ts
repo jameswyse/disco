@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { Effect, Schema } from "effect";
+import { Context, Effect, Layer, Schema, Semaphore } from "effect";
 
 import { dataDirectoryConfig, readJsonFile, writeJsonFile } from "@/platform/jsonFile";
 
@@ -11,10 +11,10 @@ type ViewsFile = typeof ViewsFile.Type;
 const fileName = "views.json";
 const emptyFile: ViewsFile = { version: 1, views: defaultViews };
 
-export class ViewStore extends Effect.Service<ViewStore>()("ViewStore", {
-  effect: Effect.gen(function* () {
+export class ViewStore extends Context.Service<ViewStore>()("ViewStore", {
+  make: Effect.gen(function* () {
     const dataDirectory = path.resolve(yield* dataDirectoryConfig);
-    const mutex = yield* Effect.makeSemaphore(1);
+    const mutex = yield* Semaphore.make(1);
     const read = () =>
       readJsonFile(dataDirectory, fileName, ViewsFile, emptyFile).pipe(
         Effect.map((file) => file.views),
@@ -34,4 +34,6 @@ export class ViewStore extends Effect.Service<ViewStore>()("ViewStore", {
         ),
     };
   }),
-}) {}
+}) {
+  static readonly layer = Layer.effect(this, this.make);
+}

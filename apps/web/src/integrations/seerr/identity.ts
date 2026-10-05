@@ -6,10 +6,10 @@ import type { SeerrUserId } from "./schemas";
 export type SeerrCsrf = Readonly<{ cookie: string; token: string }>;
 
 /** Supplied per operation after verifying the visitor's Seerr session. Never process-wide. */
-export class SeerrIdentity extends Context.Tag("SeerrIdentity")<
+export class SeerrIdentity extends Context.Service<
   SeerrIdentity,
   Readonly<{ userId: SeerrUserId; csrf?: SeerrCsrf | undefined }>
->() {}
+>()("SeerrIdentity") {}
 
 export function csrfHeaders(csrf: SeerrCsrf | undefined): Readonly<Record<string, string>> {
   return csrf === undefined

@@ -34,7 +34,7 @@ export async function loadPerson(id: number) {
       };
     }).pipe(
       Effect.tapError((error) => Effect.logError("Seerr person request failed", error)),
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.succeed(
           error._tag === "SeerrRejected" && error.status === 404 && error.path === `person/${id}`
             ? { kind: "not-found" as const }

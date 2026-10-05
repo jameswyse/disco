@@ -4,7 +4,7 @@ import { Schema } from "effect";
 import { loadSearch } from "./loadSearch";
 
 const decodeQuery = Schema.decodeUnknownSync(
-  Schema.String.pipe(Schema.minLength(1), Schema.maxLength(300)),
+  Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(300))),
 );
 
 export async function autocomplete(query: string) {

@@ -8,8 +8,8 @@ import { runAuthenticated } from "@/platform/auth/session";
 import type { SeasonDetails } from "@/integrations/seerr/schemas";
 
 const SeasonInput = Schema.Struct({
-  id: Schema.Number.pipe(Schema.int(), Schema.positive()),
-  season: Schema.Number.pipe(Schema.int(), Schema.positive()),
+  id: Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isGreaterThan(0))),
+  season: Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isGreaterThan(0))),
 });
 
 export type SeasonEpisodesResult =
@@ -29,7 +29,7 @@ export async function loadSeasonEpisodes(
         episodes: details.episodes.slice().sort((a, b) => b.episodeNumber - a.episodeNumber),
       })),
       Effect.tapError((error) => Effect.logError("Seerr season request failed", error)),
-      Effect.catchAll(() =>
+      Effect.catch(() =>
         Effect.succeed<SeasonEpisodesResult>({
           kind: "error",
           message: "Episode information could not be loaded.",

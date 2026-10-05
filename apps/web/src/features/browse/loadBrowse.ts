@@ -51,7 +51,7 @@ function isMedia(result: MediaResult): result is MovieResult | TvResult {
 }
 
 function fetchSourcePage(
-  client: SeerrClient,
+  client: typeof SeerrClient.Service,
   source: BrowseSource,
   page: number,
 ): Effect.Effect<SourcePage, SeerrError, SeerrIdentity> {
@@ -74,7 +74,7 @@ function fetchSourcePage(
 }
 
 function fetchSource(
-  client: SeerrClient,
+  client: typeof SeerrClient.Service,
   source: BrowseSource,
   browsePage: number,
 ): Effect.Effect<SourcePage, SeerrError, SeerrIdentity> {
@@ -225,7 +225,7 @@ export async function loadBrowse(
   return runAuthenticated(
     browseProgram(view, list, filters, page).pipe(
       Effect.tapError((error) => Effect.logError("Seerr browse request failed", error)),
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.succeed<BrowseResult>({ kind: "error", message: describeSeerrError(error) }),
       ),
     ),

@@ -197,7 +197,7 @@ export function tvAvailabilityProgram(tv: TvDetails, today: string) {
     const libraryEpisodes = ratingKey
       ? yield* Effect.flatMap(PlexLibrary, (plex) => plex.episodes(ratingKey)).pipe(
           Effect.tapError((error) => Effect.logWarning(error.message)),
-          Effect.catchAll(() => Effect.succeed(undefined)),
+          Effect.catch(() => Effect.succeed(undefined)),
         )
       : undefined;
     const partial = new Set(
@@ -220,7 +220,7 @@ export function tvAvailabilityProgram(tv: TvDetails, today: string) {
           Effect.tapError((error) =>
             Effect.logWarning("Seerr episode availability could not be checked", error),
           ),
-          Effect.catchAll(() => Effect.succeed(undefined)),
+          Effect.catch(() => Effect.succeed(undefined)),
         ),
       { concurrency: 4 },
     );

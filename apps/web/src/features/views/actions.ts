@@ -13,8 +13,8 @@ import { ViewStore } from "./viewStore";
 import type { View } from "./views";
 
 const AddViewInput = Schema.Struct({
-  label: Schema.NonEmptyTrimmedString,
-  source: Schema.parseJson(ViewSource),
+  label: Schema.Trimmed.check(Schema.isNonEmpty()),
+  source: Schema.fromJsonString(ViewSource),
   logoPath: Schema.optional(Schema.NonEmptyString),
   backdropPath: Schema.optional(Schema.NonEmptyString),
   beforeId: Schema.optional(Schema.NonEmptyString),

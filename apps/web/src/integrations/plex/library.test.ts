@@ -1,5 +1,5 @@
-import { HttpClient, HttpClientResponse } from "@effect/platform";
 import { ConfigProvider, Effect, Layer } from "effect";
+import { HttpClient, HttpClientResponse } from "effect/http";
 import { describe, expect, it } from "vitest";
 
 import { PlexLibrary } from "./library";
@@ -19,16 +19,14 @@ function library(respond: (url: URL, headers: Headers) => { status: number; body
     }),
   );
 
-  return PlexLibrary.DefaultWithoutDependencies.pipe(
+  return Layer.effect(PlexLibrary, PlexLibrary.make).pipe(
     Layer.provide(Layer.succeed(HttpClient.HttpClient, http)),
     Layer.provide(
-      Layer.setConfigProvider(
-        ConfigProvider.fromMap(
-          new Map([
-            ["SEERR_URL", "https://seerr.example.test"],
-            ["SEERR_API_KEY", "fixture-seerr-key"],
-          ]),
-        ),
+      ConfigProvider.layer(
+        ConfigProvider.fromUnknown({
+          SEERR_URL: "https://seerr.example.test",
+          SEERR_API_KEY: "fixture-seerr-key",
+        }),
       ),
     ),
   );
@@ -169,11 +167,17 @@ describe("Plex library discovery", () => {
     const layer = library(() => ({ status: 403, body: { token: "private-upstream-value" } }));
     const result = await Effect.runPromise(
       Effect.flatMap(PlexLibrary, (plex) => plex.episodes("123")).pipe(
-        Effect.either,
+        Effect.result,
         Effect.provide(layer),
       ),
     );
-    expect(result).toMatchObject({ _tag: "Left", left: { _tag: "PlexLibraryUnavailable" } });
+    expect(result).toMatchObject({
+      _tag: "Failure",
+      failure: {
+        _tag: "PlexLibraryUnavailable",
+      },
+    });
+    expect(result._tag === "Failure" && result.failure.message).toContain("StatusCodeError");
     expect(JSON.stringify(result)).not.toMatch(/fixture-seerr-key|private-upstream-value/);
   });
 
@@ -190,10 +194,10 @@ describe("Plex library discovery", () => {
     });
     const result = await Effect.runPromise(
       Effect.flatMap(PlexLibrary, (plex) => plex.episodes("123")).pipe(
-        Effect.either,
+        Effect.result,
         Effect.provide(layer),
       ),
     );
-    expect(result).toMatchObject({ _tag: "Left" });
+    expect(result).toMatchObject({ _tag: "Failure" });
   });
 });

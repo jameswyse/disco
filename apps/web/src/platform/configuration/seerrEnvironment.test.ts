@@ -1,11 +1,11 @@
-import { Either, Redacted } from "effect";
+import { Result, Redacted } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { readSeerrEnvironment } from "./seerrEnvironment";
 
 describe("readSeerrEnvironment", () => {
   it("reads the Seerr origin and API key", () => {
-    const environment = Either.getOrThrow(
+    const environment = Result.getOrThrow(
       readSeerrEnvironment({
         SEERR_API_KEY: "secret-key",
         SEERR_URL: "https://request.example.test/",
@@ -17,7 +17,7 @@ describe("readSeerrEnvironment", () => {
   });
 
   it("ignores unrelated variables and undefined values", () => {
-    const environment = Either.getOrThrow(
+    const environment = Result.getOrThrow(
       readSeerrEnvironment({
         OTHER: undefined,
         SEERR_API_KEY: "secret-key",
@@ -30,18 +30,20 @@ describe("readSeerrEnvironment", () => {
   });
 
   it("fails when the Seerr URL is missing", () => {
-    expect(Either.isLeft(readSeerrEnvironment({ SEERR_API_KEY: "secret-key" }))).toBe(true);
+    expect(Result.isFailure(readSeerrEnvironment({ SEERR_API_KEY: "secret-key" }))).toBe(true);
   });
 
   it("fails when the API key is missing", () => {
-    expect(Either.isLeft(readSeerrEnvironment({ SEERR_URL: "https://request.example.test" }))).toBe(
-      true,
-    );
+    expect(
+      Result.isFailure(readSeerrEnvironment({ SEERR_URL: "https://request.example.test" })),
+    ).toBe(true);
   });
 
   it("fails when the Seerr URL is not a URL", () => {
     expect(
-      Either.isLeft(readSeerrEnvironment({ SEERR_API_KEY: "secret-key", SEERR_URL: "not a url" })),
+      Result.isFailure(
+        readSeerrEnvironment({ SEERR_API_KEY: "secret-key", SEERR_URL: "not a url" }),
+      ),
     ).toBe(true);
   });
 });

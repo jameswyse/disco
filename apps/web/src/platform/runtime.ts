@@ -12,10 +12,10 @@ import { SeerrClient } from "@/integrations/seerr/client";
  */
 export const appRuntime = ManagedRuntime.make(
   Layer.mergeAll(
-    SeerrAuth.Default,
-    SeerrClient.Default,
-    PlexLibrary.Default,
-    ViewStore.Default,
-    SettingsStore.Default,
+    SeerrAuth.layer,
+    SeerrClient.layer,
+    PlexLibrary.layer,
+    ViewStore.layer,
+    SettingsStore.layer,
   ),
 );

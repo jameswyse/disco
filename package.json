@@ -43,8 +43,8 @@
     "lint-staged.sh": "0.6.9",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "oxlint-tsgolint": "7.0.2002",
-    "turbo": "2.11.2",
+    "oxlint-tsgolint": "7.0.2003",
+    "turbo": "2.11.7",
     "typescript": "catalog:"
   },
   "devEngines": {

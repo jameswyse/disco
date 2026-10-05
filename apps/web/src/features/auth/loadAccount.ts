@@ -35,7 +35,7 @@ export const loadAccount = cache(async (): Promise<SeerrAccount> => {
   return runAuthenticated(
     accountProgram.pipe(
       Effect.tapError((error) => Effect.logError("Seerr account request failed", error)),
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.succeed<SeerrAccount>({ kind: "error", message: describeSeerrError(error) }),
       ),
     ),

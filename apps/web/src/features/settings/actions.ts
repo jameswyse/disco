@@ -16,7 +16,10 @@ const languagePattern = /^[a-z]{2}$/;
 /** An empty value clears the default. */
 const UpdateSettingsInput = Schema.Struct({
   defaultLanguage: Schema.optional(
-    Schema.Union(Schema.Literal(""), Schema.String.pipe(Schema.pattern(languagePattern))),
+    Schema.Union([
+      Schema.Literal(""),
+      Schema.String.pipe(Schema.check(Schema.isPattern(languagePattern))),
+    ]),
   ),
   previewMode: Schema.optional(PreviewMode),
   sidebarStyle: Schema.optional(SidebarStyle),

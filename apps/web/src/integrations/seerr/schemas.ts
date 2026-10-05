@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Schema, Tuple } from "effect";
 
 /** Optional string fields that Seerr may omit, null, or send as an empty string. */
 const OptionalText = Schema.optional(Schema.NullOr(Schema.String));
@@ -10,12 +10,14 @@ const calendarDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 const OptionalAirDate = Schema.optional(
   Schema.NullOr(
     Schema.String.pipe(
-      Schema.filter(
-        (date) =>
-          date === "" ||
-          (calendarDatePattern.test(date) &&
-            !Number.isNaN(Date.parse(date)) &&
-            new Date(date).toISOString().slice(0, 10) === date),
+      Schema.check(
+        Schema.makeFilter(
+          (date) =>
+            date === "" ||
+            (calendarDatePattern.test(date) &&
+              !Number.isNaN(Date.parse(date)) &&
+              new Date(date).toISOString().slice(0, 10) === date),
+        ),
       ),
     ),
   ),
@@ -43,7 +45,7 @@ export const RequestUser = Schema.Struct({
 export const MediaRequest = Schema.Struct({
   id: Schema.Number,
   status: Schema.Number,
-  type: Schema.Literal("movie", "tv"),
+  type: Schema.Literals(["movie", "tv"]),
   is4k: OptionalBoolean,
   profileName: OptionalText,
   profileId: OptionalNumber,
@@ -111,13 +113,13 @@ export const PersonResult = Schema.Struct({
   mediaType: Schema.Literal("person"),
   name: Schema.String,
   profilePath: OptionalText,
-  knownFor: Schema.optional(Schema.Array(Schema.Union(MovieResult, TvResult))),
+  knownFor: Schema.optional(Schema.Array(Schema.Union([MovieResult, TvResult]))),
 });
 
-export const MediaResult = Schema.Union(MovieResult, TvResult, PersonResult);
+export const MediaResult = Schema.Union([MovieResult, TvResult, PersonResult]);
 export type MediaResult = typeof MediaResult.Type;
 
-export function ResultPage<Item extends Schema.Schema.Any>(item: Item) {
+export function ResultPage<Item extends Schema.Constraint>(item: Item) {
   return Schema.Struct({
     page: Schema.Number,
     totalPages: Schema.Number,
@@ -143,7 +145,7 @@ export type WatchProvider = typeof WatchProvider.Type;
 export const WatchProviders = Schema.Array(WatchProvider);
 
 export const WatchProviderRegion = Schema.Struct({
-  iso_3166_1: Schema.String.pipe(Schema.pattern(/^[A-Z]{2}$/)),
+  iso_3166_1: Schema.String.pipe(Schema.check(Schema.isPattern(/^[A-Z]{2}$/))),
   english_name: Schema.NonEmptyString,
 });
 export type WatchProviderRegion = typeof WatchProviderRegion.Type;
@@ -190,8 +192,8 @@ export const RequestCount = Schema.Struct({
 export type RequestCount = typeof RequestCount.Type;
 
 export const SeerrUserId = Schema.Number.pipe(
-  Schema.int(),
-  Schema.positive(),
+  Schema.check(Schema.isInt()),
+  Schema.check(Schema.isGreaterThan(0)),
   Schema.brand("SeerrUserId"),
 );
 export type SeerrUserId = typeof SeerrUserId.Type;
@@ -204,44 +206,50 @@ export const CurrentUser = Schema.Struct({
 });
 export type CurrentUser = typeof CurrentUser.Type;
 
-export const LoginSettings = Schema.Union(
+export const LoginSettings = Schema.Union([
   Schema.Struct({
     localLogin: Schema.Literal(true),
     mediaServerLogin: Schema.Boolean,
-    mediaServerType: Schema.Literal(1, 2, 3, 4),
+    mediaServerType: Schema.Literals([1, 2, 3, 4]),
   }),
   Schema.Struct({
     localLogin: Schema.Literal(false),
     mediaServerLogin: Schema.Literal(true),
-    mediaServerType: Schema.Literal(1, 2, 3, 4),
+    mediaServerType: Schema.Literals([1, 2, 3, 4]),
   }),
-);
+]);
 export type LoginSettings = typeof LoginSettings.Type;
 
 const ApplicationUrl = Schema.String.pipe(
-  Schema.filter((value) => {
-    if (value === "") {
-      return true;
-    }
+  Schema.check(
+    Schema.makeFilter((value) => {
+      if (value === "") {
+        return true;
+      }
 
-    try {
-      const url = new URL(value);
+      try {
+        const url = new URL(value);
 
-      return url.protocol === "https:" || url.protocol === "http:";
-    } catch {
-      return false;
-    }
-  }),
+        return url.protocol === "https:" || url.protocol === "http:";
+      } catch {
+        return false;
+      }
+    }),
+  ),
 );
 
-export const PublicSettings = Schema.Struct({
-  applicationTitle: Schema.String,
-  applicationUrl: Schema.optional(Schema.NullOr(ApplicationUrl)),
-  discoverRegion: OptionalText,
-  streamingRegion: OptionalText,
-  hideAvailable: Schema.optional(Schema.Boolean),
-  partialRequestsEnabled: Schema.optional(Schema.Boolean),
-}).pipe(Schema.extend(LoginSettings));
+export const PublicSettings = LoginSettings.mapMembers(
+  Tuple.map(
+    Schema.fieldsAssign({
+      applicationTitle: Schema.String,
+      applicationUrl: Schema.optional(Schema.NullOr(ApplicationUrl)),
+      discoverRegion: OptionalText,
+      streamingRegion: OptionalText,
+      hideAvailable: Schema.optional(Schema.Boolean),
+      partialRequestsEnabled: Schema.optional(Schema.Boolean),
+    }),
+  ),
+);
 export type PublicSettings = typeof PublicSettings.Type;
 
 export const Status = Schema.Struct({ version: Schema.String });
@@ -417,7 +425,7 @@ export const RequestListPage = Schema.Struct({
       ...MediaRequest.fields,
       media: Schema.Struct({
         tmdbId: Schema.Number,
-        mediaType: Schema.Literal("movie", "tv"),
+        mediaType: Schema.Literals(["movie", "tv"]),
         status: Schema.Number,
       }),
     }),
@@ -446,8 +454,8 @@ export const PersonDetails = Schema.Struct({
 export type PersonDetails = typeof PersonDetails.Type;
 export const PersonCredits = Schema.Struct({
   id: Schema.Number,
-  cast: Schema.Array(Schema.Union(MovieResult, TvResult)),
-  crew: Schema.Array(Schema.Union(MovieResult, TvResult)),
+  cast: Schema.Array(Schema.Union([MovieResult, TvResult])),
+  crew: Schema.Array(Schema.Union([MovieResult, TvResult])),
 });
 
 export const RequestServer = Schema.Struct({

@@ -20,7 +20,7 @@ export async function loadLoginPage(): Promise<LoginPageResult> {
   return appRuntime.runPromise(
     Effect.flatMap(SeerrClient, (client) => client.publicSettings()).pipe(
       Effect.map((settings): LoginPageResult => ({ kind: "ok", settings })),
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.succeed<LoginPageResult>({
           kind: "error",
           message:

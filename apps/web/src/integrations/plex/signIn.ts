@@ -1,7 +1,7 @@
 import { Data, Effect, Schema } from "effect";
 
 const Pin = Schema.Struct({
-  id: Schema.Number.pipe(Schema.int(), Schema.positive()),
+  id: Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isGreaterThan(0))),
   code: Schema.NonEmptyString,
   expiresAt: Schema.DateFromString,
 });
@@ -39,7 +39,7 @@ function requestPlex<A, I>({
   url: string;
   method: "GET" | "POST";
   headers: Record<string, string>;
-  schema: Schema.Schema<A, I>;
+  schema: Schema.Codec<A, I>;
 }) {
   return Effect.gen(function* () {
     const response = yield* Effect.tryPromise({
@@ -58,7 +58,7 @@ function requestPlex<A, I>({
       catch: connectionFailure,
     });
 
-    return yield* Schema.decodeUnknown(schema)(body).pipe(Effect.mapError(connectionFailure));
+    return yield* Schema.decodeUnknownEffect(schema)(body).pipe(Effect.mapError(connectionFailure));
   });
 }
 
@@ -131,10 +131,12 @@ export function startPlexSignIn(): SignInAttempt {
     );
 
     return yield* poll.pipe(
-      Effect.timeoutFail({
+      Effect.timeoutOrElse({
         duration: Math.max(0, pin.expiresAt.getTime() - Date.now()),
-        onTimeout: () =>
-          new PlexSignInFailed({ message: "Plex sign-in expired. Try signing in again." }),
+        orElse: () =>
+          Effect.fail(
+            new PlexSignInFailed({ message: "Plex sign-in expired. Try signing in again." }),
+          ),
       }),
     );
   }).pipe(

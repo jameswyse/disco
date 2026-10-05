@@ -97,7 +97,9 @@ async function fetchPreview(title: Title): Promise<PreviewState> {
     const body: unknown = await response.json();
     const decoded = decodeTitlePreview(body);
 
-    return decoded._tag === "Right" ? { kind: "ready", preview: decoded.right } : { kind: "error" };
+    return decoded._tag === "Success"
+      ? { kind: "ready", preview: decoded.success }
+      : { kind: "error" };
   } catch {
     return { kind: "error" };
   }

@@ -43,7 +43,7 @@ function detailsProgram(
     const region = settings.streamingRegion || settings.discoverRegion || "US";
     const today = new Date().toISOString().slice(0, 10);
     const ratingsOrNothing = <A>(ratings: Effect.Effect<A, SeerrError, SeerrIdentity>) =>
-      ratings.pipe(Effect.catchAll(() => Effect.succeed(undefined)));
+      ratings.pipe(Effect.catch(() => Effect.succeed(undefined)));
 
     const [details, recommendations, movieGenres, tvGenres] = yield* Effect.all(
       [
@@ -112,7 +112,7 @@ export async function loadTitleDetails(
           : Effect.fail(error),
       ),
       Effect.tapError((error) => Effect.logError("Seerr title request failed", error)),
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.succeed<TitleDetailsResult>({ kind: "error", message: describeSeerrError(error) }),
       ),
     ),

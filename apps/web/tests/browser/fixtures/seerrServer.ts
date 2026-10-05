@@ -201,12 +201,12 @@ const MutationBody = Schema.Struct({
   profileId: Schema.optional(Schema.Number),
   serverId: Schema.optional(Schema.Number),
   is4k: Schema.optional(Schema.Boolean),
-  seasons: Schema.optional(Schema.Union(Schema.Array(Schema.Number), Schema.Literal("all"))),
+  seasons: Schema.optional(Schema.Union([Schema.Array(Schema.Number), Schema.Literal("all")])),
   tmdbId: Schema.optional(Schema.Number),
   title: Schema.optional(Schema.String),
 });
 type MutationBody = typeof MutationBody.Type;
-const decodeMutationBody = Schema.decodeUnknownSync(Schema.parseJson(MutationBody));
+const decodeMutationBody = Schema.decodeUnknownSync(Schema.fromJsonString(MutationBody));
 
 /** Mutations recorded for assertions, exposed at `/__fixture/requests`. */
 const recordedRequests: (MutationBody & { userId: number })[] = [];
@@ -216,7 +216,7 @@ const blocklistedTitles = new Set<string>();
 const recordedBlocklist: JsonValue[] = [];
 const BlocklistBody = Schema.Struct({
   tmdbId: Schema.Number,
-  mediaType: Schema.Literal("movie", "tv"),
+  mediaType: Schema.Literals(["movie", "tv"]),
   title: Schema.String,
   user: Schema.Number,
 });
@@ -591,7 +591,7 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
       return;
     }
 
-    const credentials = Schema.decodeUnknownSync(Schema.parseJson(LoginBody))(
+    const credentials = Schema.decodeUnknownSync(Schema.fromJsonString(LoginBody))(
       await readRawBody(request),
     );
     const plexUser = credentials.authToken === "fixture-plex-token" ? users[0] : undefined;
@@ -785,7 +785,7 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
   }
 
   if (url.pathname === "/api/v1/blocklist" && request.method === "POST") {
-    const body = Schema.decodeUnknownSync(Schema.parseJson(BlocklistBody))(
+    const body = Schema.decodeUnknownSync(Schema.fromJsonString(BlocklistBody))(
       await readRawBody(request),
     );
 

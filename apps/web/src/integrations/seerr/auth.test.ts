@@ -1,11 +1,11 @@
-import { HttpClient, HttpClientResponse } from "@effect/platform";
 import { ConfigProvider, Effect, Layer, Redacted, Schema } from "effect";
+import { FetchHttpClient, HttpClient, HttpClientResponse } from "effect/http";
 import { describe, expect, it } from "vitest";
 
 import { SeerrAuth } from "./auth";
 import { LoginSettings } from "./schemas";
 
-import type { HttpClientRequest } from "@effect/platform";
+import type { HttpClientRequest } from "effect/http";
 
 type Incoming = Readonly<{
   path: string;
@@ -34,21 +34,19 @@ function testAuth(respond: (request: Incoming) => Stub) {
       );
     }),
   );
-  const layer = SeerrAuth.DefaultWithoutDependencies.pipe(
+  const layer = Layer.effect(SeerrAuth, SeerrAuth.make).pipe(
     Layer.provide(Layer.succeed(HttpClient.HttpClient, http)),
     Layer.provide(
-      Layer.setConfigProvider(
-        ConfigProvider.fromMap(
-          new Map([
-            ["SEERR_URL", "https://seerr.example.test"],
-            ["SEERR_API_KEY", "must-not-be-sent"],
-          ]),
-        ),
+      ConfigProvider.layer(
+        ConfigProvider.fromUnknown({
+          SEERR_URL: "https://seerr.example.test",
+          SEERR_API_KEY: "must-not-be-sent",
+        }),
       ),
     ),
   );
 
-  return <A, E>(program: (auth: SeerrAuth) => Effect.Effect<A, E>) =>
+  return <A, E>(program: (auth: typeof SeerrAuth.Service) => Effect.Effect<A, E>) =>
     Effect.runPromise(Effect.flatMap(SeerrAuth, program).pipe(Effect.provide(layer)));
 }
 
@@ -57,6 +55,57 @@ const user = { id: 2, displayName: "Fixture User", avatar: null };
 const csrfCookies = ["_csrf=secret; Path=/; HttpOnly", "XSRF-TOKEN=token; Path=/"];
 
 describe("SeerrAuth", () => {
+  it("keeps login credentials out of transport failures", async () => {
+    const password = "fixture-private-password";
+    const csrfCookie = "fixture-private-csrf-cookie";
+    const csrfToken = "fixture-private-csrf-token";
+    let sentHeaders: Headers | undefined;
+
+    const fetch: typeof globalThis.fetch = async (_input, options) => {
+      if (options?.method === "POST") {
+        sentHeaders = new Headers(options.headers);
+        throw new Error("Connection failed.");
+      }
+
+      const headers = new Headers();
+      headers.append("set-cookie", `_csrf=${csrfCookie}; Path=/; HttpOnly`);
+      headers.append("set-cookie", `XSRF-TOKEN=${csrfToken}; Path=/`);
+
+      return Response.json(localOnly, { headers });
+    };
+
+    const layer = SeerrAuth.layer.pipe(
+      Layer.provide(
+        ConfigProvider.layer(
+          ConfigProvider.fromUnknown({
+            SEERR_URL: "https://seerr.example.test",
+            SEERR_API_KEY: "must-not-be-sent",
+          }),
+        ),
+      ),
+      Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetch)),
+    );
+    const result = await Effect.runPromise(
+      Effect.flatMap(SeerrAuth, (auth) =>
+        auth.login({
+          kind: "local",
+          email: "fixture@example.test",
+          password: Redacted.make(password),
+        }),
+      ).pipe(Effect.result, Effect.provide(layer)),
+    );
+
+    expect(result).toMatchObject({
+      _tag: "Failure",
+      failure: { _tag: "SeerrUnavailable", path: "auth/local" },
+    });
+    expect(sentHeaders?.get("x-xsrf-token")).toBe(csrfToken);
+    expect(sentHeaders?.has("x-api-key")).toBe(false);
+    expect(JSON.stringify(result)).not.toContain(password);
+    expect(JSON.stringify(result)).not.toContain(csrfCookie);
+    expect(JSON.stringify(result)).not.toContain(csrfToken);
+  });
+
   it.each(["local", "plex"] as const)(
     "delegates %s sign-in with CSRF and keeps the issued Seerr session",
     async (kind) => {

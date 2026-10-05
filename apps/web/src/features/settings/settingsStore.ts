@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { Effect, Schema } from "effect";
+import { Context, Effect, Layer, Schema, Semaphore } from "effect";
 
 import { dataDirectoryConfig, readJsonFile, writeJsonFile } from "@/platform/jsonFile";
 
@@ -11,10 +11,10 @@ type SettingsFile = typeof SettingsFile.Type;
 const fileName = "settings.json";
 const emptyFile: SettingsFile = { version: 1, settings: defaultSettings };
 
-export class SettingsStore extends Effect.Service<SettingsStore>()("SettingsStore", {
-  effect: Effect.gen(function* () {
+export class SettingsStore extends Context.Service<SettingsStore>()("SettingsStore", {
+  make: Effect.gen(function* () {
     const dataDirectory = path.resolve(yield* dataDirectoryConfig);
-    const mutex = yield* Effect.makeSemaphore(1);
+    const mutex = yield* Semaphore.make(1);
     const read = () =>
       readJsonFile(dataDirectory, fileName, SettingsFile, emptyFile).pipe(
         Effect.map((file) => file.settings),
@@ -33,4 +33,6 @@ export class SettingsStore extends Effect.Service<SettingsStore>()("SettingsStor
         ),
     };
   }),
-}) {}
+}) {
+  static readonly layer = Layer.effect(this, this.make);
+}

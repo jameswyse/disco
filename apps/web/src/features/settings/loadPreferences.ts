@@ -19,7 +19,7 @@ export async function loadPreferences() {
       Effect.tapError((error) =>
         Effect.logError("Preference languages could not be loaded", error),
       ),
-      Effect.catchAll(() => Effect.succeed({ kind: "error" as const })),
+      Effect.catch(() => Effect.succeed({ kind: "error" as const })),
     ),
   );
 

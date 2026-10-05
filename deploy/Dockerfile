@@ -1,48 +1,29 @@
 # syntax=docker/dockerfile:1
 
-ARG PNPM_BOOTSTRAP_VERSION=12
-
-FROM ghcr.io/pnpm/pnpm:${PNPM_BOOTSTRAP_VERSION} AS base
+FROM ghcr.io/pnpm/pnpm:12 AS base
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TURBO_TELEMETRY_DISABLED=1
 
 WORKDIR /workspace
 
-COPY package.json ./
-
-# `/pnpm/bin/node` is a pnpm shim that resolves the pinned runtime per project, so keep a copy of
-# the real binary for the dependency-free runner stage.
-RUN pnpm runtime set node "$(pnpm --silent pkg get devEngines.runtime.version)" -g \
-    && cp "$(node --print process.execPath)" /usr/local/bin/node-runtime
-
-FROM base AS pruner
-
-RUN pnpm add --global turbo@"$(pnpm --silent pkg get devDependencies.turbo)"
-
-COPY . .
-
-RUN turbo prune @disco/web --docker
-
 FROM base AS dependencies
 
-COPY --from=pruner /workspace/out/pnpm-lock.yaml /workspace/out/pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 RUN pnpm fetch
 
-COPY --from=pruner /workspace/out/json/ ./
-COPY --from=pruner /workspace/scripts/installHooks.mjs scripts/installHooks.mjs
+COPY apps/web/package.json apps/web/package.json
+COPY scripts/installHooks.mjs scripts/installHooks.mjs
 
-RUN pnpm install --offline --frozen-lockfile --loglevel=warn
+RUN pnpm install --offline --frozen-lockfile --loglevel=warn \
+    && cp "$(readlink -f node_modules/.bin/node)" /usr/local/bin/node-runtime
 
 FROM dependencies AS builder
 
 ENV CI=true
 
-COPY --from=pruner /workspace/out/full/ ./
-# The Vitest config is part of the type-checked project, so its shared reporter module must exist.
-COPY --from=pruner /workspace/tools/vitest tools/vitest
-COPY --from=pruner /workspace/tsconfig.base.json tsconfig.base.json
+COPY . .
 
 RUN --mount=type=cache,id=disco-next-cache,target=/workspace/apps/web/.next/cache,sharing=locked \
     pnpm exec turbo run build --filter=@disco/web --output-logs=full --log-order=grouped
@@ -73,7 +54,7 @@ RUN apt-get update \
     && mkdir /data \
     && chown node:node /data
 
-COPY --from=base /usr/local/bin/node-runtime /usr/local/bin/node
+COPY --from=dependencies /usr/local/bin/node-runtime /usr/local/bin/node
 COPY --from=builder --chown=node:node /workspace/apps/web/.next/standalone /app
 COPY --from=builder --chown=node:node /workspace/apps/web/.next/static /app/apps/web/.next/static
 COPY --from=builder --chown=node:node /workspace/apps/web/public /app/apps/web/public

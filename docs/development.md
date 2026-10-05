@@ -1,28 +1,29 @@
 # Development notes
 
-The commands and pinned toolchain live in the root `package.json`.
-[AGENTS.md](../AGENTS.md) contains the contribution rules.
+Commands and toolchain versions live in [package.json](../package.json).
+Follow [AGENTS.md](../AGENTS.md) and the [web architecture rules](architecture/web.md).
+
+Use `pnpm exec` for tools outside package scripts so they use the project runtime.
+After changing `devEngines`, run `pnpm install` and commit the updated lockfile.
+
+New worktrees copy ignored environment files from the main worktree and install dependencies.
+`git worktree add --no-checkout` skips this setup; later branch switches do not repeat it.
 
 ## Verification
 
-Run `pnpm verify` before finishing a code change. Use `pnpm verify:full` for changes to browser
-behaviour or production builds. Install the browser once before running browser tests:
+Install Chromium once before running browser tests:
 
 ```sh
 pnpm --filter @disco/web exec playwright install chromium
 ```
 
-Browser tests build and run the production app against a local Seerr fixture. They do not use your
-live Seerr instance. Each run uses a temporary data directory. Preferences are instance-wide, so
-the settings test project runs after the other browser tests.
+Browser tests use a local Seerr fixture, never the live instance. Preferences and views are
+instance-wide, so tests that mutate them must avoid concurrent readers.
 
-The `test:unit:changed` command selects changes since `HEAD`. Turborepo caches package tasks;
-use `pnpm verify:uncached` when investigating a suspected cache problem.
-Set `DISCO_HUMAN_OUTPUT=1` for verbose test and task output.
+Verification runs serially because Next.js builds can delete `.next/types` while lint and type
+checks read them. Set `DISCO_HUMAN_OUTPUT=1` for verbose task output.
 
-The pre-commit hook formats and lints staged files, then checks source types.
+## Lint decisions
 
-## Design decisions
-
-Read the [web architecture notes](architecture/web.md) for ownership boundaries and the reasons
-behind browsing and authentication behaviour.
+The shared server-action guard rule requires an awaited guard as the first statement. Disco's
+`runAuthenticated`, shared action helpers, and unauthenticated sign-in actions do not fit that rule.

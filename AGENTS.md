@@ -1,8 +1,6 @@
 # Disco agent rules
 
-Disco is a media-discovery web app layered over an existing Seerr instance. Seerr owns content
-metadata, the request pipeline (Radarr/Sonarr → Plex) and users; Disco owns a simpler,
-user-controlled browsing UI.
+Disco owns browsing. Seerr owns metadata, users, and requests through Radarr/Sonarr to Plex.
 
 ## Every code change
 
@@ -37,4 +35,4 @@ user-controlled browsing UI.
 
 Use conventional commit messages. Use semantic versions and Git tags for releases.
 
-Next.js may create or update local `AGENTS.md` files under `apps/web`. Keep and commit those changes.
+Keep and commit Next.js-generated `AGENTS.md` changes under `apps/web`.

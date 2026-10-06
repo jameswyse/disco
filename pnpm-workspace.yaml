@@ -7,10 +7,10 @@ catalog:
   "@types/node": 24.19.1
   "@types/react": 19.3.0
   "@types/react-dom": 19.3.0
-  effect: 4.0.0
-  next: 16.3.8
-  oxfmt: 0.71.0
-  oxlint: 1.86.0
+  effect: 4.0.1
+  next: 16.4.0
+  oxfmt: 0.72.0
+  oxlint: 1.87.0
   react: 19.3.0
   react-dom: 19.3.0
   typescript: 7.0.2
@@ -18,7 +18,19 @@ catalog:
 
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
-  - "@jameswyse/oxc-config@0.2.0"
+  - "@next/env@16.4.0"
+  - "@next/swc-darwin-arm64@16.4.0"
+  - "@next/swc-darwin-x64@16.4.0"
+  - "@next/swc-linux-arm64-gnu@16.4.0"
+  - "@next/swc-linux-arm64-musl@16.4.0"
+  - "@next/swc-linux-x64-gnu@16.4.0"
+  - "@next/swc-linux-x64-musl@16.4.0"
+  - "@next/swc-win32-arm64-msvc@16.4.0"
+  - "@next/swc-win32-x64-msvc@16.4.0"
+  - "launch-editor@2.14.2"
+  - "next@16.4.0"
+  - "tinybench@6.2.1"
+  - "vite@8.3.3"
 minimumReleaseAgeExcludePrune: true
 strictDepBuilds: true
 blockExoticSubdeps: true

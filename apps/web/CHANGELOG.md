@@ -1,5 +1,11 @@
 # @disco/web
 
+## 1.1.3
+
+### Patch Changes
+
+- bf5fad6: Update Effect and the pnpm toolchain, and refresh compatible transitive dependencies.
+
 ## 1.1.2
 
 ### Patch Changes

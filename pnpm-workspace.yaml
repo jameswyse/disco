@@ -18,12 +18,15 @@ catalog:
 
 minimumReleaseAge: 1440
 minimumReleaseAgeExcludePrune: true
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 43200
 strictDepBuilds: true
 blockExoticSubdeps: true
 savePrefix: ""
-cleanupUnusedCatalogs: true
+catalogPrune: true
 
 update:
+  githubActions: true
   ignoreDeps:
     # Node types follow the pinned Node major rather than DefinitelyTyped's latest major.
     - "@types/node"

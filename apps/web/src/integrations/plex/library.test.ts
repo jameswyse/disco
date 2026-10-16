@@ -11,10 +11,7 @@ function library(respond: (url: URL, headers: Headers) => { status: number; body
 
       return HttpClientResponse.fromWeb(
         request,
-        new Response(JSON.stringify(response.body), {
-          status: response.status,
-          headers: { "Content-Type": "application/json" },
-        }),
+        Response.json(response.body, { status: response.status }),
       );
     }),
   );
@@ -82,7 +79,7 @@ describe("Plex library discovery", () => {
     );
 
     expect(result.size).toBe(0);
-    expect(origins).toEqual([
+    expect(origins).toStrictEqual([
       "https://seerr.example.test",
       "https://seerr.example.test",
       "http://private.plex.example.test:32400",
@@ -148,7 +145,7 @@ describe("Plex library discovery", () => {
       Effect.flatMap(PlexLibrary, (plex) => plex.episodes("123")).pipe(Effect.provide(layer)),
     );
 
-    expect([...episodes]).toEqual(["1:1", "1:2", "1:3", "1:4"]);
+    expect([...episodes]).toStrictEqual(["1:1", "1:2", "1:3", "1:4"]);
     const discovery = seen.filter(({ url }) => url.hostname === "seerr.example.test");
     const plexRequests = seen.filter(({ url }) => url.hostname === "plex.example.test");
     expect(discovery).toHaveLength(2);

@@ -49,7 +49,7 @@ describe("availabilityFromStatus", () => {
 
 describe("titleFromResult", () => {
   it("maps a movie, rounding the rating and dropping unknown genres", () => {
-    expect(titleFromResult(movie, genreNames)).toEqual({
+    expect(titleFromResult(movie, genreNames)).toStrictEqual({
       id: 1108427,
       mediaType: "movie",
       name: "Moana",
@@ -62,6 +62,8 @@ describe("titleFromResult", () => {
       backdropPath: undefined,
       genres: ["Drama"],
       availability: "available",
+      runtimeMinutes: undefined,
+      seasonCount: undefined,
     });
   });
 
@@ -72,7 +74,7 @@ describe("titleFromResult", () => {
     expect(title.name).toBe("Adolescence");
     expect(title.year).toBe(2025);
     expect(title.rating).toBeUndefined();
-    expect(title.genres).toEqual(["Crime", "Drama"]);
+    expect(title.genres).toStrictEqual(["Crime", "Drama"]);
     expect(title.availability).toBe("not-in-library");
   });
 

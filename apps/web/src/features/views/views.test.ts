@@ -14,7 +14,7 @@ describe("genre source decoding", () => {
     { input: { kind: "genre", movieGenreId: 18, tvGenreId: 18 }, mediaTypes: ["movie", "tv"] },
   ])("preserves the media types in $input", ({ input, mediaTypes }) => {
     const source = Schema.decodeUnknownSync(ViewSource)(input);
-    expect(viewMediaTypes({ id: "genre", label: "Genre", source })).toEqual(mediaTypes);
+    expect(viewMediaTypes({ id: "genre", label: "Genre", source })).toStrictEqual(mediaTypes);
   });
 });
 
@@ -22,23 +22,23 @@ describe("viewMediaTypes", () => {
   it("limits networks to series and studios to films", () => {
     expect(
       viewMediaTypes({ id: "hbo", label: "HBO", source: { kind: "network", networkId: 49 } }),
-    ).toEqual(["tv"]);
+    ).toStrictEqual(["tv"]);
     expect(
       viewMediaTypes({ id: "a24", label: "A24", source: { kind: "studio", companyId: 41077 } }),
-    ).toEqual(["movie"]);
+    ).toStrictEqual(["movie"]);
   });
 
   it("uses only the media types a genre exists for", () => {
     expect(
       viewMediaTypes({ id: "g", label: "Action", source: { kind: "genre", movieGenreId: 28 } }),
-    ).toEqual(["movie"]);
+    ).toStrictEqual(["movie"]);
     expect(
       viewMediaTypes({
         id: "g",
         label: "Drama",
         source: { kind: "genre", movieGenreId: 18, tvGenreId: 18 },
       }),
-    ).toEqual(["movie", "tv"]);
+    ).toStrictEqual(["movie", "tv"]);
   });
 });
 

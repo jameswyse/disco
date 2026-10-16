@@ -10,13 +10,16 @@ describe("parseBrowseFilters", () => {
         { type: "tv", genre: "18", lang: "ko", rating: "7", hide: "1" },
         undefined,
       ),
-    ).toEqual({
+    ).toStrictEqual({
       mediaType: "tv",
       genreId: 18,
       language: "ko",
       ratingAtLeast: 7,
       hideAvailable: true,
       hideRequested: true,
+      year: undefined,
+      sort: undefined,
+      votesAtLeast: undefined,
     });
   });
 
@@ -26,7 +29,7 @@ describe("parseBrowseFilters", () => {
         { type: "person", genre: "-1", lang: "english", rating: "10", hide: "yes" },
         undefined,
       ),
-    ).toEqual(defaultFilters);
+    ).toStrictEqual(defaultFilters);
   });
 
   it("defaults both hiding filters on and allows each to be disabled", () => {
@@ -99,6 +102,6 @@ describe("browseHref", () => {
 
     expect(
       parseBrowseFilters(Object.fromEntries(filterEntries(filters, undefined)), undefined),
-    ).toEqual(filters);
+    ).toStrictEqual(filters);
   });
 });

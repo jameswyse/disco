@@ -16,13 +16,7 @@ function testClient(respond: (url: URL, headers: Headers) => StubResponse) {
       requests.push(url);
       const stub = respond(url, new Headers(request.headers));
 
-      return HttpClientResponse.fromWeb(
-        request,
-        new Response(JSON.stringify(stub.body), {
-          headers: { "content-type": "application/json" },
-          status: stub.status,
-        }),
-      );
+      return HttpClientResponse.fromWeb(request, Response.json(stub.body, { status: stub.status }));
     }),
   );
 
@@ -136,7 +130,7 @@ describe("SeerrClient", () => {
     expect(receivedUser).toBe("42");
     expect(requests[0]?.origin).toBe("https://seerr.example.test");
     expect(requests[0]?.pathname).toBe("/api/v1/discover/tv");
-    expect(Object.fromEntries(requests[0]?.searchParams ?? [])).toEqual({
+    expect(Object.fromEntries(requests[0]?.searchParams ?? [])).toStrictEqual({
       page: "2",
       sortBy: "first_air_date.desc",
       firstAirDateGte: "2026-06-15",
@@ -179,7 +173,7 @@ describe("SeerrClient", () => {
 
     const page = await run((client) => client.trending({ page: 1, mediaType: "all" }));
 
-    expect(page.results.map((result) => result.mediaType)).toEqual(["movie", "tv", "person"]);
+    expect(page.results.map((result) => result.mediaType)).toStrictEqual(["movie", "tv", "person"]);
   });
   it("keeps concurrent API-key actions attributed to their supplied user", async () => {
     const userIds: string[] = [];
@@ -196,7 +190,7 @@ describe("SeerrClient", () => {
       run((client) => client.createRequest({ mediaType: "movie", mediaId: 101 }), 3),
     ]);
 
-    expect(userIds.toSorted()).toEqual(["2", "3"]);
+    expect(userIds.toSorted()).toStrictEqual(["2", "3"]);
   });
 
   it("reads public configuration without API-key authentication", async () => {

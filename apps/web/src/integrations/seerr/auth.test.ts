@@ -23,7 +23,7 @@ function testAuth(respond: (request: Incoming) => Stub) {
         body: request.body,
       });
 
-      const headers = new Headers({ "content-type": "application/json" });
+      const headers = new Headers();
 
       for (const cookie of stub.cookies ?? []) {
         headers.append("set-cookie", cookie);
@@ -31,7 +31,7 @@ function testAuth(respond: (request: Incoming) => Stub) {
 
       return HttpClientResponse.fromWeb(
         request,
-        new Response(JSON.stringify(stub.body), { status: stub.status ?? 200, headers }),
+        Response.json(stub.body, { status: stub.status ?? 200, headers }),
       );
     }),
   );
@@ -129,7 +129,7 @@ describe("SeerrAuth", () => {
           throw new Error("Expected a JSON request body");
         }
 
-        expect(JSON.parse(new TextDecoder().decode(body.body))).toEqual(
+        expect(JSON.parse(new TextDecoder().decode(body.body))).toStrictEqual(
           kind === "local"
             ? { email: "fixture@example.test", password: "fixture-password" }
             : { authToken: "plex-token" },
@@ -170,7 +170,7 @@ describe("SeerrAuth", () => {
     );
 
     expect(error).toMatchObject({ _tag: "SeerrRejected", status: 403 });
-    expect(paths).toEqual(["/api/v1/settings/public"]);
+    expect(paths).toStrictEqual(["/api/v1/settings/public"]);
   });
 
   it("preserves Seerr's rejection of incorrect credentials", async () => {
@@ -218,7 +218,7 @@ describe("SeerrAuth", () => {
       return { body: user, cookies: csrfCookies };
     });
 
-    expect(await run((auth) => auth.verify(Redacted.make("s:opaque.signature")))).toEqual({
+    expect(await run((auth) => auth.verify(Redacted.make("s:opaque.signature")))).toStrictEqual({
       user,
       csrf: { cookie: "secret", token: "token" },
     });
@@ -247,7 +247,7 @@ describe("SeerrAuth", () => {
       });
 
       await expect(run((auth) => auth.logout(Redacted.make("expired")))).resolves.toBeUndefined();
-      expect(paths).toEqual(["/api/v1/auth/me"]);
+      expect(paths).toStrictEqual(["/api/v1/auth/me"]);
     },
   );
 
@@ -265,7 +265,7 @@ describe("SeerrAuth", () => {
     const error = await run((auth) => Effect.flip(auth.logout(Redacted.make("session"))));
 
     expect(error).toMatchObject({ _tag: "SeerrRejected", path: "auth/logout", status: 403 });
-    expect(paths).toEqual(["/api/v1/auth/me", "/api/v1/auth/logout"]);
+    expect(paths).toStrictEqual(["/api/v1/auth/me", "/api/v1/auth/logout"]);
   });
 
   it("logs out the verified Seerr session with its CSRF credentials", async () => {
@@ -286,7 +286,7 @@ describe("SeerrAuth", () => {
     });
 
     await run((auth) => auth.logout(Redacted.make("session")));
-    expect(paths).toEqual(["/api/v1/auth/me", "/api/v1/auth/logout"]);
+    expect(paths).toStrictEqual(["/api/v1/auth/me", "/api/v1/auth/logout"]);
   });
 });
 
@@ -297,7 +297,7 @@ describe("Seerr login settings", () => {
     { localLogin: false, mediaServerLogin: true, mediaServerType: 1 },
     { localLogin: false, mediaServerLogin: true, mediaServerType: 2 },
   ])("accepts enabled authentication: %j", (settings) => {
-    expect(Schema.decodeUnknownSync(LoginSettings)(settings)).toEqual(settings);
+    expect(Schema.decodeUnknownSync(LoginSettings)(settings)).toStrictEqual(settings);
   });
 
   it("rejects both login methods disabled as an invalid external configuration", () => {

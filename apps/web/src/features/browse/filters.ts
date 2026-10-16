@@ -9,9 +9,9 @@ export type BrowseFilters = Readonly<{
   ratingAtLeast: number | undefined;
   hideAvailable: boolean;
   hideRequested: boolean;
-  year?: number | undefined;
-  sort?: "popular" | "rating" | "newest" | "oldest" | undefined;
-  votesAtLeast?: number | undefined;
+  year: number | undefined;
+  sort: "popular" | "rating" | "newest" | "oldest" | undefined;
+  votesAtLeast: number | undefined;
 }>;
 
 export type SearchParameter = string | string[] | undefined;
@@ -26,6 +26,9 @@ export const defaultFilters: BrowseFilters = {
   ratingAtLeast: undefined,
   hideAvailable: true,
   hideRequested: true,
+  year: undefined,
+  sort: undefined,
+  votesAtLeast: undefined,
 };
 
 function first(value: SearchParameter): string | undefined {

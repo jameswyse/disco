@@ -60,6 +60,6 @@ it.each(selections)(
     expect(artwork.background).toContain(`https://image.tmdb.org/t/p/w780${path}`);
     expect(artwork.background).not.toContain("duotone");
     expect(artwork.background).not.toContain("previous-backdrop");
-    expect(artwork.logo).toEqual({ kind: "none" });
+    expect(artwork.logo).toStrictEqual({ kind: "none" });
   },
 );

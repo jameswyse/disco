@@ -54,11 +54,11 @@ const states = (details: TitleDetails) =>
 
 describe("requestTimeline", () => {
   it("is empty for titles nobody has requested", () => {
-    expect(requestTimeline(base)).toEqual([]);
+    expect(requestTimeline(base)).toStrictEqual([]);
   });
 
   it("marks searching as active once a released request is processing without downloads", () => {
-    expect(states({ ...base, availability: "processing", requests: [approved] })).toEqual([
+    expect(states({ ...base, availability: "processing", requests: [approved] })).toStrictEqual([
       "requested:done",
       "waiting:done",
       "searching:active",
@@ -75,7 +75,7 @@ describe("requestTimeline", () => {
       release: { premiere: "2026-12-17", home: undefined, released: false },
     });
 
-    expect(steps.map((step) => `${step.id}:${step.state}`)).toEqual([
+    expect(steps.map((step) => `${step.id}:${step.state}`)).toStrictEqual([
       "requested:done",
       "waiting:active",
       "searching:pending",
@@ -106,19 +106,25 @@ describe("requestTimeline", () => {
       downloads: [{ title: "Film.2026.1080p", progress: 0.4, timeLeft: "00:10:00" }],
     });
 
-    expect(steps.map((step) => step.state)).toEqual(["done", "done", "done", "active", "pending"]);
+    expect(steps.map((step) => step.state)).toStrictEqual([
+      "done",
+      "done",
+      "done",
+      "active",
+      "pending",
+    ]);
     expect(steps[3]?.detail).toBe("Film.2026.1080p · 40%");
   });
 
   it("completes every step for available titles, even without a Seerr request", () => {
     const steps = requestTimeline({ ...base, availability: "available" });
 
-    expect(steps.map((step) => step.state)).toEqual(["done", "done", "done", "done", "done"]);
+    expect(steps.map((step) => step.state)).toStrictEqual(["done", "done", "done", "done", "done"]);
     expect(steps[0]?.detail).toBe("Available without a Seerr request");
   });
 
   it("stops at declined for declined requests", () => {
-    expect(states({ ...base, requests: [{ ...approved, status: "declined" }] })).toEqual([
+    expect(states({ ...base, requests: [{ ...approved, status: "declined" }] })).toStrictEqual([
       "requested:done",
       "declined:active",
     ]);
@@ -127,7 +133,7 @@ describe("requestTimeline", () => {
   it("holds at the request step while approval is pending", () => {
     expect(
       states({ ...base, availability: "pending", requests: [{ ...approved, status: "pending" }] }),
-    ).toEqual([
+    ).toStrictEqual([
       "requested:active",
       "waiting:done",
       "searching:pending",

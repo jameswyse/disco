@@ -34,14 +34,14 @@
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
-    "@jameswyse/oxc-config": "0.2.0",
+    "@jameswyse/oxc-config": "0.3.0",
     "@types/node": "catalog:",
     "husky": "9.1.7",
     "lint-staged.sh": "0.6.9",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "oxlint-tsgolint": "7.0.2003",
-    "turbo": "2.11.7",
+    "oxlint-tsgolint": "7.0.2004",
+    "turbo": "2.11.8",
     "typescript": "catalog:"
   },
   "devEngines": {

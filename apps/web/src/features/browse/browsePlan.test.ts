@@ -29,22 +29,22 @@ const context = { today: "2026-09-13", region: "AU" };
 
 describe("planBrowseSources", () => {
   it("uses Seerr's trending and upcoming endpoints for unfiltered media views", () => {
-    expect(planBrowseSources(moviesView, "trending", defaultFilters, context)).toEqual([
+    expect(planBrowseSources(moviesView, "trending", defaultFilters, context)).toStrictEqual([
       { kind: "trending", mediaType: "movie" },
     ]);
-    expect(planBrowseSources(moviesView, "upcoming", defaultFilters, context)).toEqual([
+    expect(planBrowseSources(moviesView, "upcoming", defaultFilters, context)).toStrictEqual([
       { kind: "upcoming", mediaType: "movie" },
     ]);
   });
 
   it("sorts popular lists by popularity", () => {
-    expect(planBrowseSources(moviesView, "popular", defaultFilters, context)).toEqual([
+    expect(planBrowseSources(moviesView, "popular", defaultFilters, context)).toStrictEqual([
       { kind: "discover", mediaType: "movie", query: { sortBy: "popularity.desc" } },
     ]);
   });
 
   it("bounds recent releases to the last 180 days with a vote floor", () => {
-    expect(planBrowseSources(moviesView, "recent", defaultFilters, context)).toEqual([
+    expect(planBrowseSources(moviesView, "recent", defaultFilters, context)).toStrictEqual([
       {
         kind: "discover",
         mediaType: "movie",
@@ -61,8 +61,8 @@ describe("planBrowseSources", () => {
   it("combines movies and series for provider views and carries the provider filter", () => {
     const sources = planBrowseSources(netflixView, "popular", defaultFilters, context);
 
-    expect(sources.map((source) => source.mediaType)).toEqual(["movie", "tv"]);
-    expect(sources[0]).toEqual({
+    expect(sources.map((source) => source.mediaType)).toStrictEqual(["movie", "tv"]);
+    expect(sources[0]).toStrictEqual({
       kind: "discover",
       mediaType: "movie",
       query: { sortBy: "popularity.desc", watchProviders: [8], watchRegion: "AU" },
@@ -73,7 +73,7 @@ describe("planBrowseSources", () => {
     const [trendingMovies] = planBrowseSources(netflixView, "trending", defaultFilters, context);
     const [, upcomingTv] = planBrowseSources(netflixView, "upcoming", defaultFilters, context);
 
-    expect(trendingMovies).toEqual({
+    expect(trendingMovies).toStrictEqual({
       kind: "discover",
       mediaType: "movie",
       query: {
@@ -82,7 +82,7 @@ describe("planBrowseSources", () => {
         watchRegion: "AU",
       },
     });
-    expect(upcomingTv).toEqual({
+    expect(upcomingTv).toStrictEqual({
       kind: "discover",
       mediaType: "tv",
       query: {
@@ -94,7 +94,7 @@ describe("planBrowseSources", () => {
   });
 
   it("uses verified original studios and limits Disney+ to series", () => {
-    expect(planBrowseSources(netflixView, "upcoming", defaultFilters, context)[0]).toEqual({
+    expect(planBrowseSources(netflixView, "upcoming", defaultFilters, context)[0]).toStrictEqual({
       kind: "discover",
       mediaType: "movie",
       query: { studio: 178464, sortBy: "primary_release_date.asc", releasedAfter: "2026-09-14" },
@@ -106,7 +106,7 @@ describe("planBrowseSources", () => {
         defaultFilters,
         context,
       ),
-    ).toEqual([
+    ).toStrictEqual([
       {
         kind: "discover",
         mediaType: "tv",
@@ -120,17 +120,17 @@ describe("planBrowseSources", () => {
         defaultFilters,
         context,
       ),
-    ).toEqual([]);
+    ).toStrictEqual([]);
   });
 
   it("keeps older network shows eligible for trending", () => {
-    expect(planBrowseSources(hboView, "trending", defaultFilters, context)).toEqual([
+    expect(planBrowseSources(hboView, "trending", defaultFilters, context)).toStrictEqual([
       { kind: "discover", mediaType: "tv", query: { network: 49, sortBy: "popularity.desc" } },
     ]);
   });
 
   it("limits network views to series and studio-style constraints to their media type", () => {
-    expect(planBrowseSources(hboView, "popular", defaultFilters, context)).toEqual([
+    expect(planBrowseSources(hboView, "popular", defaultFilters, context)).toStrictEqual([
       { kind: "discover", mediaType: "tv", query: { sortBy: "popularity.desc", network: 49 } },
     ]);
   });
@@ -143,7 +143,7 @@ describe("planBrowseSources", () => {
       context,
     );
 
-    expect(sources.map((source) => source.mediaType)).toEqual(["tv"]);
+    expect(sources.map((source) => source.mediaType)).toStrictEqual(["tv"]);
   });
 
   it("switches trending to a discover query once grid filters apply and preserves the view genre", () => {
@@ -154,7 +154,7 @@ describe("planBrowseSources", () => {
       context,
     );
 
-    expect(source).toEqual({
+    expect(source).toStrictEqual({
       kind: "discover",
       mediaType: "movie",
       query: {
@@ -174,7 +174,7 @@ describe("planBrowseSources", () => {
         { ...defaultFilters, mediaType: "movie", year: 2020, sort: "rating", votesAtLeast: 500 },
         context,
       ),
-    ).toEqual([
+    ).toStrictEqual([
       {
         kind: "discover",
         mediaType: "movie",
@@ -191,6 +191,6 @@ describe("planBrowseSources", () => {
   it("does not send impossible date ranges when an upcoming view is filtered to a past year", () => {
     expect(
       planBrowseSources(dramaView, "upcoming", { ...defaultFilters, year: 2020 }, context),
-    ).toEqual([]);
+    ).toStrictEqual([]);
   });
 });

@@ -58,5 +58,5 @@ it("preserves both views when updates overlap", async () => {
     }),
   );
 
-  expect(result).toEqual({ updates: ["Success", "Success"], ids: ["films", "series"] });
+  expect(result).toStrictEqual({ updates: ["Success", "Success"], ids: ["films", "series"] });
 });

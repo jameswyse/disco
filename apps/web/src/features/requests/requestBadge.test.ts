@@ -27,11 +27,11 @@ describe("requestBadge", () => {
   it.each(["not-in-library", "processing", "available"] as const)(
     "keeps declined and failed outcomes when media is %s",
     (availability) => {
-      expect(requestBadge({ status: "declined", availability })).toEqual({
+      expect(requestBadge({ status: "declined", availability })).toStrictEqual({
         label: "Declined",
         tone: "negative",
       });
-      expect(requestBadge({ status: "failed", availability })).toEqual({
+      expect(requestBadge({ status: "failed", availability })).toStrictEqual({
         label: "Failed",
         tone: "negative",
       });

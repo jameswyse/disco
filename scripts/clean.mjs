@@ -1,8 +1,8 @@
 import { lstat, readdir, realpath, rm } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 
-const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const repositoryRoot = path.resolve(import.meta.dirname, "..");
 
 const cleanableRelativePaths = [
   ".next",

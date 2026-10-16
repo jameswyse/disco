@@ -58,6 +58,6 @@ export default {
   ignorePatterns: [...base.ignorePatterns, "**/.next-dev/**", "**/tests/results/**"],
   settings: {
     ...base.settings,
-    react: { version: "19.3.0" },
+    react: { version: "19.3.1" },
   },
 };

@@ -50,7 +50,7 @@ it("preserves both preferences when updates overlap", async () => {
     }),
   );
 
-  expect(result).toEqual({
+  expect(result).toStrictEqual({
     updates: ["Success", "Success"],
     settings: { defaultLanguage: "fr", previewMode: "button" },
   });
@@ -75,5 +75,5 @@ it("allows another save after an update fails", async () => {
     }),
   );
 
-  expect(result).toEqual({ failed: true, settings: { defaultLanguage: "fr" } });
+  expect(result).toStrictEqual({ failed: true, settings: { defaultLanguage: "fr" } });
 });

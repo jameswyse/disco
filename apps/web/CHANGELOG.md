@@ -1,5 +1,12 @@
 # @disco/web
 
+## 1.1.4
+
+### Patch Changes
+
+- c2eed82: Run on Next.js 16.4.1, React 19.3.1 and Effect 4.0.5.
+- 8afe8c5: Run the image on Node.js 24.22.0 and build it with pnpm 12.13.0.
+
 ## 1.1.3
 
 ### Patch Changes

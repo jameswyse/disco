@@ -1,6 +1,10 @@
-import { expect, it } from "vitest";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
-import { viewArtwork } from "./viewArtwork";
+import { assert, expect, it } from "vitest";
+
+import { featuredNetworkIds, featuredStudioIds } from "./featuredCompanies";
+import { viewArtwork, viewIcon } from "./viewArtwork";
 
 import type { ViewSource } from "./views";
 
@@ -63,3 +67,23 @@ it.each(selections)(
     expect(artwork.logo).toStrictEqual({ kind: "none" });
   },
 );
+
+const publicDirectory = fileURLToPath(new URL("../../../public", import.meta.url));
+
+const featured: readonly Readonly<{ name: string; source: ViewSource }>[] = [
+  ...featuredNetworkIds.map((networkId) => ({
+    name: `network ${networkId}`,
+    source: { kind: "network", networkId } as const,
+  })),
+  ...featuredStudioIds.map((companyId) => ({
+    name: `studio ${companyId}`,
+    source: { kind: "studio", companyId } as const,
+  })),
+];
+
+it.each(featured)("ships a sidebar icon file for featured $name", ({ source }) => {
+  const icon = viewIcon({ id: "view", label: "View", source });
+
+  assert(icon.kind === "image", `expected an image icon, got ${icon.kind}`);
+  expect(existsSync(`${publicDirectory}${icon.src}`), `missing public${icon.src}`).toBe(true);
+});

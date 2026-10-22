@@ -92,7 +92,7 @@ test("quick info can be switched from hover to an explicit button", async ({ pag
 test("sidebar styles persist and render at 96, 64 and 32 pixels", async ({ page }) => {
   for (const choice of [
     { value: "medium", height: 64, note: "Shorter artwork cards, with more views on screen." },
-    { value: "small", height: 32, note: "Compact, single-line rows with view names." },
+    { value: "small", height: 32, note: "Compact, single-line rows with icons and view names." },
     { value: "large", height: 96, note: "Large artwork cards in the sidebar." },
   ]) {
     await page.goto("/settings");
@@ -124,7 +124,8 @@ test("sidebar styles persist and render at 96, 64 and 32 pixels", async ({ page 
 
     if (choice.value === "small") {
       await expect(netflix).toHaveText("Netflix");
-      await expect(netflix.locator("img")).toHaveCount(0);
+      await expect(netflix.locator("img")).toBeVisible();
+      await expect(movies.locator("svg")).toBeVisible();
     }
 
     await expect(page.getByRole("list", { name: "Trending titles" })).toBeVisible();

@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { viewArtwork, viewIcon } from "./viewArtwork";
 import { useViewEditor } from "./ViewEditor";
 
-import type { SidebarStyle } from "@/features/settings/settings";
+import type { LogoStyle, SidebarStyle } from "@/features/settings/settings";
 import type { MediaType } from "@/integrations/seerr/client";
 
 import type { ViewIcon } from "./viewArtwork";
@@ -15,7 +15,11 @@ import type { View } from "./views";
 
 import styles from "./Sidebar.module.css";
 
-type ViewCardProperties = Readonly<{ view: View; sidebarStyle: SidebarStyle }>;
+type ViewCardProperties = Readonly<{
+  view: View;
+  sidebarStyle: SidebarStyle;
+  logoStyle: LogoStyle;
+}>;
 
 const mediaGlyphs = {
   movie:
@@ -71,11 +75,11 @@ function ViewCardIcon({ icon }: Readonly<{ icon: ViewIcon }>) {
   }
 }
 
-export function ViewCard({ view, sidebarStyle }: ViewCardProperties) {
+export function ViewCard({ view, sidebarStyle, logoStyle }: ViewCardProperties) {
   const pathname = usePathname();
   const editor = useViewEditor();
   const isActive = pathname === `/${view.id}`;
-  const artwork = viewArtwork(view);
+  const artwork = viewArtwork(view, logoStyle);
   const classNames = [styles.viewCard];
 
   if (view.source.kind === "media") {

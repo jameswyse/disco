@@ -15,34 +15,3 @@
   color: var(--color-text-muted);
   margin: 0;
 }
-
-.preferences {
-  max-width: 640px;
-}
-
-.preference {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  font-weight: 600;
-  gap: 12px;
-  justify-content: space-between;
-}
-
-.select {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius);
-  color: var(--color-text);
-  font: inherit;
-  max-width: 100%;
-  min-height: 44px;
-  padding: 8px 12px;
-}
-
-.note {
-  color: var(--color-text-muted);
-  display: block;
-  font-size: 13px;
-  margin: 10px 0 32px;
-}

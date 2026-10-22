@@ -11,6 +11,8 @@ import { LibraryTile } from "./LibraryTile";
 import { useViewEditor } from "./ViewEditor";
 import { sameSource } from "./views";
 
+import type { LogoStyle } from "@/features/settings/settings";
+
 import type { LibraryCategory } from "./libraryFilters";
 import type { LibraryPageData } from "./loadLibraryPage";
 
@@ -40,10 +42,12 @@ export function ViewLibrary({
   category,
   query,
   data,
+  logoStyle,
 }: Readonly<{
   category: LibraryCategory;
   query: string;
   data: LibraryPageData;
+  logoStyle: LogoStyle;
 }>) {
   const editor = useViewEditor();
   const router = useRouter();
@@ -163,7 +167,11 @@ export function ViewLibrary({
                 className={group.section === "streaming" ? styles.streamingGrid : styles.tileGrid}
               >
                 {group.entries.map((entry) => (
-                  <LibraryTile entry={entry} key={JSON.stringify(entry.source)} />
+                  <LibraryTile
+                    entry={entry}
+                    key={JSON.stringify(entry.source)}
+                    logoStyle={logoStyle}
+                  />
                 ))}
               </ul>
             </section>

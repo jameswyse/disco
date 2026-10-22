@@ -3,7 +3,7 @@ const absoluteImageUrl = /^https?:\/\//i;
 
 export type PosterSize = "w185" | "w342" | "w500";
 export type BackdropSize = "w780" | "w1280";
-export type LogoSize = "w92" | "w154";
+export type LogoSize = "w92" | "w154" | "w300";
 
 export function tmdbImageUrl(size: PosterSize | BackdropSize | LogoSize, path: string): string {
   return absoluteImageUrl.test(path) ? path : `${tmdbImageOrigin}${size}${path}`;

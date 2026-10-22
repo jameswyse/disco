@@ -2,6 +2,7 @@ import { tmdbDuotoneBackdropUrl, tmdbImageUrl, tmdbWordmarkUrl } from "@/integra
 
 import { featuredNetworkIds, featuredStudioIds } from "./featuredCompanies";
 
+import type { LogoStyle } from "@/features/settings/settings";
 import type { MediaType } from "@/integrations/seerr/client";
 
 import type { View, ViewSource } from "./views";
@@ -33,13 +34,21 @@ const wordmarkTones = new Map<string, readonly [string, string]>([
   [warnerBrosPicturesLogo, ["000000", "ffffff"]],
 ]);
 
-function wordmarkUrl(path: string): string {
+const companyBackground = "linear-gradient(0deg, #111827, #1f2937 45%)";
+const colorWordmarkBackground = "linear-gradient(0deg, #e5e7eb, #f9fafb 45%)";
+
+function wordmarkArtwork(path: string, logoStyle: LogoStyle, background: string): ViewArtwork {
+  if (logoStyle === "color") {
+    return {
+      background: colorWordmarkBackground,
+      logo: { kind: "wordmark", src: tmdbImageUrl("w300", path) },
+    };
+  }
+
   const [dark, light] = wordmarkTones.get(path) ?? defaultWordmarkTone;
 
-  return tmdbWordmarkUrl(path, dark, light);
+  return { background, logo: { kind: "wordmark", src: tmdbWordmarkUrl(path, dark, light) } };
 }
-
-const companyBackground = "linear-gradient(0deg, #111827, #1f2937 45%)";
 
 const tones = {
   provider: companyBackground,
@@ -105,7 +114,7 @@ function toneGradient([dark, light]: readonly [string, string]): string {
   return `linear-gradient(135deg, #${dark}, #${light})`;
 }
 
-export function viewArtwork(view: View): ViewArtwork {
+export function viewArtwork(view: View, logoStyle: LogoStyle): ViewArtwork {
   const { source } = view;
 
   if (source.kind === "media") {
@@ -143,20 +152,18 @@ export function viewArtwork(view: View): ViewArtwork {
     source.kind === "provider" ? providerWordmarks.get(source.providerId) : undefined;
 
   if (providerWordmark) {
-    return { background: tone, logo: { kind: "wordmark", src: wordmarkUrl(providerWordmark) } };
+    return wordmarkArtwork(providerWordmark, logoStyle, tone);
   }
 
   if (!view.logoPath) {
     return { background: tone, logo: { kind: "none" } };
   }
 
-  return {
-    background: tone,
-    logo:
-      source.kind === "provider"
-        ? { kind: "icon", src: tmdbImageUrl("w154", view.logoPath) }
-        : { kind: "wordmark", src: wordmarkUrl(view.logoPath) },
-  };
+  if (source.kind === "provider") {
+    return { background: tone, logo: { kind: "icon", src: tmdbImageUrl("w154", view.logoPath) } };
+  }
+
+  return wordmarkArtwork(view.logoPath, logoStyle, tone);
 }
 
 export type ViewIcon =

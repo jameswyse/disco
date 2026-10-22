@@ -7,6 +7,8 @@ import { tmdbImageUrl } from "@/integrations/seerr/images";
 import { viewArtwork } from "./viewArtwork";
 import { useViewEditor } from "./ViewEditor";
 
+import type { LogoStyle } from "@/features/settings/settings";
+
 import type { LibraryEntry } from "./library";
 import type { MutableView, View } from "./views";
 
@@ -26,8 +28,10 @@ function viewFromEntry(entry: LibraryEntry): View {
   return view;
 }
 
-export function LibraryTile({ entry }: Readonly<{ entry: LibraryEntry }>) {
-  const artwork = viewArtwork(viewFromEntry(entry));
+type LibraryTileProperties = Readonly<{ entry: LibraryEntry; logoStyle: LogoStyle }>;
+
+export function LibraryTile({ entry, logoStyle }: LibraryTileProperties) {
+  const artwork = viewArtwork(viewFromEntry(entry), logoStyle);
   const editor = useViewEditor();
   const streaming = entry.source.kind === "provider";
   const genre = entry.source.kind === "genre";

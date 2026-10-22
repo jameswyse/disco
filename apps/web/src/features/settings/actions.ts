@@ -6,7 +6,7 @@ import { Effect, Schema } from "effect";
 
 import { runAuthenticated } from "@/platform/auth/session";
 
-import { PreviewMode, SidebarStyle } from "./settings";
+import { LogoStyle, PreviewMode, SidebarStyle } from "./settings";
 import { SettingsStore } from "./settingsStore";
 
 import type { MutableSettings } from "./settings";
@@ -22,6 +22,7 @@ const UpdateSettingsInput = Schema.Struct({
   ),
   previewMode: Schema.optional(PreviewMode),
   sidebarStyle: Schema.optional(SidebarStyle),
+  logoStyle: Schema.optional(LogoStyle),
 });
 
 const decodeUpdate = Schema.decodeUnknownSync(UpdateSettingsInput);
@@ -48,6 +49,10 @@ export async function updateSettings(formData: FormData): Promise<void> {
 
         if (input.sidebarStyle !== undefined) {
           next.sidebarStyle = input.sidebarStyle;
+        }
+
+        if (input.logoStyle !== undefined) {
+          next.logoStyle = input.logoStyle;
         }
 
         return next;

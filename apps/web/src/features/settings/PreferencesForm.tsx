@@ -94,7 +94,7 @@ export function PreferencesForm({
           {
             large: "Large artwork cards in the sidebar.",
             medium: "Shorter artwork cards, with more views on screen.",
-            small: "Compact, single-line rows with view names.",
+            small: "Compact, single-line rows with icons and view names.",
           }[settings.sidebarStyle ?? defaultSidebarStyle]
         }
       </small>

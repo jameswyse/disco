@@ -1,5 +1,9 @@
 import { tmdbDuotoneBackdropUrl, tmdbImageUrl, tmdbWordmarkUrl } from "@/integrations/seerr/images";
 
+import { featuredNetworkIds, featuredStudioIds } from "./featuredCompanies";
+
+import type { MediaType } from "@/integrations/seerr/client";
+
 import type { View, ViewSource } from "./views";
 
 export type ViewArtwork = Readonly<{
@@ -16,6 +20,24 @@ const providerWordmarks = new Map<number, string>([
   [350, "/4KAy34EHvRM25Ih8wb82AuGU7zJ.png"],
   [531, "/fi83B1oztoS47xxcemFdPMhIzK.png"],
 ]);
+
+const defaultWordmarkTone = ["ffffff", "bababa"] as const;
+
+const abcLogo = "/2uy2ZWcplrSObIyt4x0Y9rkG6qO.png";
+const marvelStudiosLogo = "/hUzeosd33nzE5MCNsZxCGEKTXaQ.png";
+const warnerBrosPicturesLogo = "/zhD3hhtKB5qyv7ZeL4uLpNxgMVU.png";
+
+const wordmarkTones = new Map<string, readonly [string, string]>([
+  [abcLogo, ["ffffff", "000000"]],
+  [marvelStudiosLogo, ["ffffff", "000000"]],
+  [warnerBrosPicturesLogo, ["000000", "ffffff"]],
+]);
+
+function wordmarkUrl(path: string): string {
+  const [dark, light] = wordmarkTones.get(path) ?? defaultWordmarkTone;
+
+  return tmdbWordmarkUrl(path, dark, light);
+}
 
 const companyBackground = "linear-gradient(0deg, #111827, #1f2937 45%)";
 
@@ -75,6 +97,14 @@ const genreTones = new Map<number, readonly [string, string]>([
   [10768, ["1F2937", "F87171"]],
 ]);
 
+function genreTone(source: Extract<ViewSource, { kind: "genre" }>): readonly [string, string] {
+  return genreTones.get(source.movieGenreId ?? source.tvGenreId ?? 0) ?? ["1F2937", "D1D5DB"];
+}
+
+function toneGradient([dark, light]: readonly [string, string]): string {
+  return `linear-gradient(135deg, #${dark}, #${light})`;
+}
+
 export function viewArtwork(view: View): ViewArtwork {
   const { source } = view;
 
@@ -89,15 +119,13 @@ export function viewArtwork(view: View): ViewArtwork {
       return selectedArtwork(selected);
     }
 
-    const [dark, light] = genreTones.get(source.movieGenreId ?? source.tvGenreId ?? 0) ?? [
-      "1F2937",
-      "D1D5DB",
-    ];
+    const tone = genreTone(source);
+    const [dark, light] = tone;
 
     return {
       background: view.backdropPath
         ? `linear-gradient(rgb(15 23 42 / 20%), rgb(15 23 42 / 20%)), url("${tmdbDuotoneBackdropUrl(view.backdropPath, dark, light)}") center / cover`
-        : `linear-gradient(135deg, #${dark}, #${light})`,
+        : toneGradient(tone),
       logo: { kind: "none" },
     };
   }
@@ -115,7 +143,7 @@ export function viewArtwork(view: View): ViewArtwork {
     source.kind === "provider" ? providerWordmarks.get(source.providerId) : undefined;
 
   if (providerWordmark) {
-    return { background: tone, logo: { kind: "wordmark", src: tmdbWordmarkUrl(providerWordmark) } };
+    return { background: tone, logo: { kind: "wordmark", src: wordmarkUrl(providerWordmark) } };
   }
 
   if (!view.logoPath) {
@@ -127,6 +155,52 @@ export function viewArtwork(view: View): ViewArtwork {
     logo:
       source.kind === "provider"
         ? { kind: "icon", src: tmdbImageUrl("w154", view.logoPath) }
-        : { kind: "wordmark", src: tmdbWordmarkUrl(view.logoPath) },
+        : { kind: "wordmark", src: wordmarkUrl(view.logoPath) },
   };
+}
+
+export type ViewIcon =
+  | Readonly<{ kind: "image"; src: string }>
+  | Readonly<{ kind: "glyph"; mediaType: MediaType }>
+  | Readonly<{ kind: "swatch"; background: string }>;
+
+const companyIcons = {
+  network: { ids: featuredNetworkIds, directory: "networks" },
+  studio: { ids: featuredStudioIds, directory: "studios" },
+} as const;
+
+function companyIcon(kind: keyof typeof companyIcons, id: number): ViewIcon {
+  const { ids, directory } = companyIcons[kind];
+
+  return ids.includes(id)
+    ? { kind: "image", src: `/logos/${directory}/${id}.webp` }
+    : { kind: "swatch", background: tones[kind] };
+}
+
+export function viewIcon(view: View): ViewIcon {
+  const { source } = view;
+
+  switch (source.kind) {
+    case "media":
+      return { kind: "glyph", mediaType: source.mediaType };
+    case "provider":
+      return view.logoPath
+        ? { kind: "image", src: tmdbImageUrl("w92", view.logoPath) }
+        : { kind: "swatch", background: tones.provider };
+    case "network":
+      return companyIcon("network", source.networkId);
+    case "studio":
+      return companyIcon("studio", source.companyId);
+    case "genre":
+      return { kind: "swatch", background: toneGradient(genreTone(source)) };
+    case "language":
+    case "keyword":
+      return { kind: "swatch", background: tones[source.kind] };
+
+    default: {
+      const unsupportedSource: never = source;
+
+      return unsupportedSource;
+    }
+  }
 }

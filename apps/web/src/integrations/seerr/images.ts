@@ -13,6 +13,6 @@ export function tmdbDuotoneBackdropUrl(path: string, dark: string, light: string
   return `${tmdbImageOrigin}w780_filter(duotone,${dark},${light})${path}`;
 }
 
-export function tmdbWordmarkUrl(path: string): string {
-  return `${tmdbImageOrigin}w300_filter(duotone,ffffff,bababa)${path}`;
+export function tmdbWordmarkUrl(path: string, dark: string, light: string): string {
+  return `${tmdbImageOrigin}w300_filter(duotone,${dark},${light})${path}`;
 }

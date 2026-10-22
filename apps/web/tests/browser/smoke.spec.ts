@@ -4,23 +4,14 @@ test("the root redirects to the first view and renders titles from Seerr", async
   await page.goto("/");
 
   await expect(page).toHaveURL(/\/movies$/);
-  await expect(page.getByRole("complementary", { name: "Views" })).toBeVisible();
+  const sidebar = page.getByRole("complementary", { name: "Views" });
+  await expect(sidebar).toBeVisible();
   await expect(page.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("navigation", { name: "Discover lists" })).toBeVisible();
-
-  await expect(page.getByRole("link", { name: "Movies", exact: true })).toHaveCSS(
-    "background-image",
-    /4SyDTF02R5BepqSdQmOaNCHObzF/,
-  );
-  await expect(page.getByRole("link", { name: "TV Shows", exact: true })).toHaveCSS(
-    "background-image",
-    /ncQ8D4j8GSuL9CzncLEXnhHDxHy/,
-  );
   const grid = page.getByRole("list", { name: "Trending titles" });
   await expect(grid.getByRole("link", { name: /Fixture Film Two/ })).toBeVisible();
   await expect(grid.getByText("Fixture Film One")).toHaveCount(0);
   await expect(page.getByText("Fixture User")).toBeVisible();
-  const sidebar = page.getByRole("complementary", { name: "Views" });
   await expect(sidebar.getByRole("link", { name: /Add a view/ })).toHaveCount(0);
   await expect(sidebar.getByRole("link", { name: "Preferences" })).toBeHidden();
   await page.getByText("Fixture User", { exact: true }).click();

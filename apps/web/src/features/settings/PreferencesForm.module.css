@@ -1,0 +1,236 @@
+.preferences {
+  max-width: 640px;
+}
+
+.preference {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  font-weight: 600;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.select {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font: inherit;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+.note {
+  color: var(--color-text-muted);
+  display: block;
+  font-size: 13px;
+  margin: 10px 0 32px;
+}
+
+.choiceGroup {
+  border: 0;
+  margin: 0 0 32px;
+  min-width: 0;
+  padding: 0;
+}
+
+.legend {
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding: 0;
+}
+
+.groupDescription {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  margin: -4px 0 12px;
+}
+
+.choices {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.compactChoices {
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+}
+
+.choice {
+  background: var(--color-background-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-large);
+  column-gap: 8px;
+  cursor: pointer;
+  display: grid;
+  grid-template-areas:
+    "preview preview"
+    "input label"
+    ". note";
+  grid-template-columns: auto 1fr;
+  padding: 10px 12px 12px;
+}
+
+.choice:hover {
+  border-color: var(--color-text-dim);
+}
+
+.choice:has(:checked) {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.choice:has(:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .choice {
+    transition:
+      border-color 150ms ease-out,
+      box-shadow 150ms ease-out;
+  }
+}
+
+.choiceInput {
+  accent-color: var(--color-accent);
+  align-self: center;
+  grid-area: input;
+  margin: 0;
+}
+
+.choiceInput:focus-visible {
+  outline: none;
+}
+
+.choiceLabel {
+  font-weight: 600;
+  grid-area: label;
+}
+
+.choiceNote {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  grid-area: note;
+}
+
+.sidebarPreview,
+.logoPreview {
+  background: var(--color-background-sidebar);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  grid-area: preview;
+  height: 92px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  padding: 6px;
+}
+
+.sidebarPreview {
+  gap: var(--sample-gap);
+}
+
+.sampleView {
+  align-items: center;
+  background: var(--sample-tone);
+  border-radius: var(--radius-small);
+  display: flex;
+  flex: none;
+  height: var(--sample-height);
+  justify-content: center;
+}
+
+.sampleView:nth-child(4n + 1) {
+  --sample-tone: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-media-movie) 45%, var(--color-background)),
+    var(--color-background)
+  );
+}
+
+.sampleView:nth-child(4n + 2) {
+  --sample-tone: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-danger) 45%, var(--color-background)),
+    var(--color-background)
+  );
+}
+
+.sampleView:nth-child(4n + 3) {
+  --sample-tone: linear-gradient(0deg, var(--color-background-raised), var(--color-border-strong));
+}
+
+.sampleView:nth-child(4n + 4) {
+  --sample-tone: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-success) 35%, var(--color-background)),
+    var(--color-background)
+  );
+}
+
+.sampleText {
+  background: var(--color-text-secondary);
+  border-radius: var(--radius-small);
+  height: 4px;
+  width: 40%;
+}
+
+.large {
+  --sample-gap: 4px;
+  --sample-height: 24px;
+}
+
+.medium {
+  --sample-gap: 3px;
+  --sample-height: 16px;
+}
+
+.small {
+  --sample-gap: 4px;
+  --sample-height: 6px;
+}
+
+.small .sampleView {
+  background: none;
+  gap: 5px;
+  justify-content: flex-start;
+}
+
+.small .sampleView::before {
+  background: var(--sample-tone);
+  border-radius: var(--radius-small);
+  content: "";
+  height: 6px;
+  width: 6px;
+}
+
+.small .sampleText {
+  background: var(--color-text-dim);
+  height: 3px;
+}
+
+.logoPreview {
+  gap: 6px;
+  justify-content: center;
+}
+
+.sampleCard {
+  align-items: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 0;
+}
+
+.sampleLogo {
+  height: 60%;
+  object-fit: contain;
+  width: 60%;
+}

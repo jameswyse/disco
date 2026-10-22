@@ -9,11 +9,13 @@ import { useViewEditor } from "./ViewEditor";
 
 import type { DragEvent } from "react";
 
-import type { SidebarStyle } from "@/features/settings/settings";
+import type { LogoStyle, SidebarStyle } from "@/features/settings/settings";
 
 import styles from "./Sidebar.module.css";
 
-export function SidebarViews({ sidebarStyle }: Readonly<{ sidebarStyle: SidebarStyle }>) {
+type SidebarViewsProperties = Readonly<{ sidebarStyle: SidebarStyle; logoStyle: LogoStyle }>;
+
+export function SidebarViews({ sidebarStyle, logoStyle }: SidebarViewsProperties) {
   const editing = usePathname() === "/views";
   const editor = useViewEditor();
   const { views } = editor;
@@ -70,7 +72,7 @@ export function SidebarViews({ sidebarStyle }: Readonly<{ sidebarStyle: SidebarS
                 onDragOver={(event) => dragOver(event, view.id)}
                 onDrop={editing ? (event) => drop(event, view.id) : undefined}
               >
-                <ViewCard sidebarStyle={sidebarStyle} view={view} />
+                <ViewCard logoStyle={logoStyle} sidebarStyle={sidebarStyle} view={view} />
                 {editing ? (
                   <button
                     aria-label={`Remove ${view.label}`}

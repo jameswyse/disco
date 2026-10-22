@@ -15,14 +15,7 @@ export async function PreferencesPage() {
         <p>Choose how you browse and open title details. Changes save automatically.</p>
       </header>
       {languages.kind === "ok" ? (
-        <PreferencesForm
-          className={styles.preferences}
-          labelClassName={styles.preference}
-          languages={languages.options}
-          noteClassName={styles.note}
-          selectClassName={styles.select}
-          settings={settings}
-        />
+        <PreferencesForm languages={languages.options} settings={settings} />
       ) : (
         <ContentState
           title="Preferences couldn’t be loaded"

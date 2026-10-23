@@ -1,5 +1,16 @@
 # @disco/web
 
+## 1.2.0
+
+### Minor Changes
+
+- 9e92156: Choose the sidebar style from picture previews in Preferences, add an option to show streaming service, network and studio logos in colour on medium and large sidebar cards and in Manage views, and make the small sidebar the default.
+- e03aa99: Show brand icons for streaming services, networks and studios in the small sidebar, and keep the Marvel Studios, Warner Bros. Pictures and ABC logos legible on view cards.
+
+### Patch Changes
+
+- 9dae628: Check the Seerr session before validating input in every signed-in server action.
+
 ## 1.1.4
 
 ### Patch Changes

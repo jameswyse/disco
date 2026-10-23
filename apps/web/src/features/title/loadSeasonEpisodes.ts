@@ -3,7 +3,7 @@
 import { Effect, Schema } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
-import { runAuthenticated } from "@/platform/auth/session";
+import { requireSession, runWithSession } from "@/platform/auth/session";
 
 import type { SeasonDetails } from "@/integrations/seerr/schemas";
 
@@ -20,9 +20,11 @@ export async function loadSeasonEpisodes(
   _previous: SeasonEpisodesResult | undefined,
   input: typeof SeasonInput.Type,
 ): Promise<SeasonEpisodesResult> {
+  const session = await requireSession();
   const { id, season } = Schema.decodeUnknownSync(SeasonInput)(input);
 
-  return runAuthenticated(
+  return runWithSession(
+    session,
     Effect.flatMap(SeerrClient, (client) => client.tvSeason(id, season)).pipe(
       Effect.map((details): SeasonEpisodesResult => ({
         kind: "ok",

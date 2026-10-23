@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { Effect, Schema } from "effect";
 
-import { runAuthenticated } from "@/platform/auth/session";
+import { requireSession, runWithSession } from "@/platform/auth/session";
 
 import { LogoStyle, PreviewMode, SidebarStyle } from "./settings";
 import { SettingsStore } from "./settingsStore";
@@ -28,9 +28,11 @@ const UpdateSettingsInput = Schema.Struct({
 const decodeUpdate = Schema.decodeUnknownSync(UpdateSettingsInput);
 
 export async function updateSettings(formData: FormData): Promise<void> {
+  const session = await requireSession();
   const input = decodeUpdate(Object.fromEntries(formData));
 
-  await runAuthenticated(
+  await runWithSession(
+    session,
     Effect.flatMap(SettingsStore, (store) =>
       store.update((settings) => {
         const next: MutableSettings = { ...settings };

@@ -17,6 +17,13 @@ Verify Seerr sessions before cached reads, include the verified user ID in cache
 session and CSRF secrets out of the cache. An expired session must never fall back to admin access.
 Sign-out must invalidate the upstream session before clearing Disco's cookie.
 
+Server actions start with `await requireSession()`, which `wyse/server-action-guard` enforces, and
+pass its session to `runWithSession`. React's `cache` doesn't deduplicate session checks inside
+server actions, so calling `runAuthenticated` after the guard would verify the session twice.
+Sign-in and sign-out have scoped suppressions because they must work without a valid session.
+Inline page actions in feature components can't import the guard, so they have scoped suppressions
+and rely on their loader's `runAuthenticated`.
+
 ## Upstream constraints
 
 - TMDB popularity scores are not comparable across films and series, so mixed results interleave

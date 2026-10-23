@@ -2,14 +2,16 @@
 import { Effect, Schema } from "effect";
 
 import { describeSeerrError } from "@/integrations/seerr/errors";
-import { runAuthenticated } from "@/platform/auth/session";
+import { requireSession, runWithSession } from "@/platform/auth/session";
 
 import { requestProfiles } from "./qualityProfiles";
 
 export async function loadQualityProfiles(mediaType: string) {
+  const session = await requireSession();
   const type = Schema.decodeUnknownSync(Schema.Literals(["movie", "tv"]))(mediaType);
 
-  return runAuthenticated(
+  return runWithSession(
+    session,
     requestProfiles(type).pipe(
       Effect.tapError((error) => Effect.logError("Seerr quality profiles failed", error)),
       Effect.map((result) => ({ kind: "ok" as const, ...result })),

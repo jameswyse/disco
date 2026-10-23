@@ -22,7 +22,7 @@ export type SearchResult =
     }>
   | Readonly<{ kind: "error"; message: string }>;
 
-const searchProgram = (query: string, page: number) =>
+export const searchProgram = (query: string, page: number) =>
   Effect.gen(function* () {
     const client = yield* SeerrClient;
 
@@ -42,17 +42,15 @@ const searchProgram = (query: string, page: number) =>
       totalPages: results.totalPages,
       totalResults: results.totalResults,
     } satisfies SearchResult;
-  });
+  }).pipe(
+    Effect.tapError((error) => Effect.logError("Seerr search request failed", error)),
+    Effect.catch((error) =>
+      Effect.succeed<SearchResult>({ kind: "error", message: describeSeerrError(error) }),
+    ),
+  );
 
 export async function loadSearch(query: string, page: number): Promise<SearchResult> {
   await connection();
 
-  return runAuthenticated(
-    searchProgram(query, page).pipe(
-      Effect.tapError((error) => Effect.logError("Seerr search request failed", error)),
-      Effect.catch((error) =>
-        Effect.succeed<SearchResult>({ kind: "error", message: describeSeerrError(error) }),
-      ),
-    ),
-  );
+  return runAuthenticated(searchProgram(query, page));
 }

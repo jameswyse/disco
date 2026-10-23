@@ -67,6 +67,7 @@ export async function BrowsePage({
 }: BrowsePageProperties) {
   const result = await loadBrowse(view, listId, filters, page);
 
+  // oxlint-disable-next-line wyse/server-action-guard -- loadBrowse verifies the session through runAuthenticated, and feature components can't import the guard.
   async function loadPage(nextPage: number): Promise<PageBatch> {
     "use server";
 

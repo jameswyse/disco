@@ -6,7 +6,7 @@ import { Effect, Schema } from "effect";
 
 import { SeerrClient } from "@/integrations/seerr/client";
 import { SeerrRejected, describeSeerrError } from "@/integrations/seerr/errors";
-import { requireSession, runAuthenticated } from "@/platform/auth/session";
+import { requireSession, runWithSession } from "@/platform/auth/session";
 
 import { canManageBlocklist } from "./blocklist";
 import { requestProfiles } from "./qualityProfiles";
@@ -14,6 +14,7 @@ import { requestProfiles } from "./qualityProfiles";
 import type { CreateRequestBody } from "@/integrations/seerr/client";
 import type { SeerrError } from "@/integrations/seerr/errors";
 import type { SeerrIdentity } from "@/integrations/seerr/identity";
+import type { VerifiedSession } from "@/platform/auth/session";
 
 const MediaTypeInput = Schema.Literals(["movie", "tv"]);
 
@@ -41,10 +42,12 @@ const decodeWatchlist = Schema.decodeUnknownSync(WatchlistInput);
 export type ActionResult = Readonly<{ ok: true }> | Readonly<{ ok: false; message: string }>;
 
 function run(
+  session: VerifiedSession,
   program: Effect.Effect<unknown, SeerrError, SeerrClient | SeerrIdentity>,
   paths: readonly string[],
 ): Promise<ActionResult> {
-  return runAuthenticated(
+  return runWithSession(
+    session,
     program.pipe(
       Effect.tapError((error) => Effect.logError("Seerr action failed", error)),
       Effect.map((): ActionResult => ({ ok: true })),
@@ -74,6 +77,7 @@ export async function requestTitle(
   _previous: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const session = await requireSession();
   const decoded = Schema.decodeUnknownResult(RequestInput)(Object.fromEntries(formData));
 
   if (decoded._tag === "Failure") {
@@ -92,6 +96,7 @@ export async function requestTitle(
       : { mediaType: "movie", mediaId: input.id };
 
   return run(
+    session,
     Effect.gen(function* () {
       const client = yield* SeerrClient;
 
@@ -121,9 +126,11 @@ export async function toggleWatchlist(
   _previous: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const session = await requireSession();
   const input = decodeWatchlist(Object.fromEntries(formData));
 
   return run(
+    session,
     Effect.flatMap(SeerrClient, (client) =>
       input.action === "add"
         ? client.addToWatchlist({
@@ -141,21 +148,21 @@ export async function toggleBlocklist(
   _previous: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  const session = await requireSession();
   const decoded = Schema.decodeUnknownResult(WatchlistInput)(Object.fromEntries(formData));
 
   if (decoded._tag === "Failure") {
     return { ok: false, message: "Choose a valid title and blocklist action." };
   }
 
-  const { user } = await requireSession();
-
-  if (!canManageBlocklist(user.permissions)) {
+  if (!canManageBlocklist(session.user.permissions)) {
     return { ok: false, message: "You don't have permission to manage Seerr's blocklist." };
   }
 
   const input = decoded.success;
 
   return run(
+    session,
     Effect.flatMap(SeerrClient, (client) =>
       input.action === "add"
         ? client.addToBlocklist({

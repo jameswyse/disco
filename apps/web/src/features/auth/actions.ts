@@ -56,6 +56,7 @@ async function signIn(credentials: Credentials): Promise<LoginError> {
   return redirect("/");
 }
 
+// oxlint-disable-next-line wyse/server-action-guard -- Sign-in runs before a session exists.
 export async function localLogin(
   _previous: LoginError | undefined,
   formData: FormData,
@@ -73,6 +74,7 @@ export async function localLogin(
   });
 }
 
+// oxlint-disable-next-line wyse/server-action-guard -- Sign-in runs before a session exists.
 export async function plexLogin(
   _previous: LoginError | undefined,
   formData: FormData,
@@ -86,6 +88,7 @@ export async function plexLogin(
   return signIn({ kind: "plex", token: Redacted.make(input.success.authToken) });
 }
 
+// oxlint-disable-next-line wyse/server-action-guard -- Sign-out must clear the cookie even when the session has expired.
 export async function logout(): Promise<LoginError> {
   const jar = await cookies();
   const value = jar.get(sessionCookieName)?.value;

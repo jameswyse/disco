@@ -8,6 +8,7 @@ const base = createLintConfig({
   tests: ["apps/web/tests/**/*.ts"],
   effect: ["apps/web/**/*.ts", "tools/vitest/**/*.ts"],
   env: ["apps/web/src/platform/configuration/seerrEnvironment.ts", "deploy/healthcheck.mjs"],
+  serverActionGuards: ["requireSession"],
   boundaries: [
     {
       files: ["apps/web/src/features/**/*.tsx"],

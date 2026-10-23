@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 
 import { Effect, Schema } from "effect";
 
-import { runAuthenticated } from "@/platform/auth/session";
+import { requireSession, runWithSession } from "@/platform/auth/session";
 
 import { applyViewEdit } from "./viewEdits";
 import { ViewSource } from "./views";
 import { ViewStore } from "./viewStore";
+
+import type { VerifiedSession } from "@/platform/auth/session";
 
 import type { View } from "./views";
 
@@ -31,14 +33,21 @@ const decodeAdd = Schema.decodeUnknownSync(AddViewInput);
 const decodePlace = Schema.decodeUnknownSync(PlaceViewInput);
 const decodeRemove = Schema.decodeUnknownSync(RemoveViewInput);
 
-async function updateViews(update: (views: readonly View[]) => readonly View[]): Promise<void> {
-  await runAuthenticated(Effect.flatMap(ViewStore, (store) => store.update(update)));
+async function updateViews(
+  session: VerifiedSession,
+  update: (views: readonly View[]) => readonly View[],
+): Promise<void> {
+  await runWithSession(
+    session,
+    Effect.flatMap(ViewStore, (store) => store.update(update)),
+  );
   revalidatePath("/", "layout");
 }
 
 export async function addView(formData: FormData): Promise<void> {
+  const session = await requireSession();
   const input = decodeAdd(Object.fromEntries(formData));
-  await updateViews((views) =>
+  await updateViews(session, (views) =>
     applyViewEdit(views, {
       kind: "add",
       entry: {
@@ -53,11 +62,13 @@ export async function addView(formData: FormData): Promise<void> {
 }
 
 export async function removeView(formData: FormData): Promise<void> {
+  const session = await requireSession();
   const { id } = decodeRemove(Object.fromEntries(formData));
-  await updateViews((views) => applyViewEdit(views, { kind: "remove", id }));
+  await updateViews(session, (views) => applyViewEdit(views, { kind: "remove", id }));
 }
 
 export async function placeView(formData: FormData): Promise<void> {
+  const session = await requireSession();
   const { id, beforeId } = decodePlace(Object.fromEntries(formData));
-  await updateViews((views) => applyViewEdit(views, { kind: "place", id, beforeId }));
+  await updateViews(session, (views) => applyViewEdit(views, { kind: "place", id, beforeId }));
 }

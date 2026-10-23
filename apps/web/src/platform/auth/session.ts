@@ -53,11 +53,12 @@ export async function requireSession() {
   return session;
 }
 
-export async function runAuthenticated<A, E>(
+export type VerifiedSession = Awaited<ReturnType<typeof requireSession>>;
+
+export function runWithSession<A, E>(
+  verified: VerifiedSession,
   program: Effect.Effect<A, E, SeerrIdentity | RuntimeServices>,
 ): Promise<A> {
-  const verified = await requireSession();
-
   return appRuntime.runPromise(
     program.pipe(
       Effect.provideService(SeerrIdentity, {
@@ -66,4 +67,10 @@ export async function runAuthenticated<A, E>(
       }),
     ),
   );
+}
+
+export async function runAuthenticated<A, E>(
+  program: Effect.Effect<A, E, SeerrIdentity | RuntimeServices>,
+): Promise<A> {
+  return runWithSession(await requireSession(), program);
 }

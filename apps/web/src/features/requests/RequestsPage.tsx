@@ -102,6 +102,7 @@ function requestsBatch(result: Awaited<ReturnType<typeof loadRequests>>): PageBa
 }
 
 export async function RequestsPage({ filter, page }: RequestsPageProperties) {
+  // oxlint-disable-next-line wyse/server-action-guard -- loadRequests verifies the session through runAuthenticated, and feature components can't import the guard.
   async function loadPage(nextPage: number): Promise<PageBatch> {
     "use server";
 

@@ -15,6 +15,7 @@ export async function SearchPage({ query, page }: Readonly<{ query: string; page
   const settings = await loadSettings();
   const previewMode = settings.previewMode ?? defaultPreviewMode;
 
+  // oxlint-disable-next-line wyse/server-action-guard -- loadSearch verifies the session through runAuthenticated, and feature components can't import the guard.
   async function loadPage(nextPage: number): Promise<PageBatch> {
     "use server";
     const result = await loadSearch(query, decodePageNumber(nextPage));

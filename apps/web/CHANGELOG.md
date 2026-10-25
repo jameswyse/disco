@@ -1,5 +1,11 @@
 # @disco/web
 
+## 1.2.1
+
+### Patch Changes
+
+- b2d9fa7: Run the image on Node.js 24.22.1 and Next.js 16.4.2, and build it with pnpm 12.15.0.
+
 ## 1.2.0
 
 ### Minor Changes

@@ -88,6 +88,8 @@ const airingEpisodes = {
   })),
 };
 
+const approvalFilm = { ...filmTwo, id: 107, title: "Approval Film" } satisfies JsonValue;
+
 const person = { id: 301, mediaType: "person", name: "Fixture Person" } satisfies JsonValue;
 
 function page(results: readonly JsonValue[]): JsonValue {
@@ -772,7 +774,10 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
     }
 
     recordedRequests.push({ ...body, userId: user.id });
-    send(response, 201, { id: 1000 + recordedRequests.length, status: 2 });
+    send(response, 201, {
+      id: 1000 + recordedRequests.length,
+      status: body.mediaId === approvalFilm.id ? 1 : 2,
+    });
 
     return;
   }
@@ -933,6 +938,12 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
 
     if (query === "search failure") {
       send(response, 503, { message: "Search unavailable" });
+
+      return;
+    }
+
+    if (query === "approval request") {
+      send(response, 200, page([approvalFilm]));
 
       return;
     }

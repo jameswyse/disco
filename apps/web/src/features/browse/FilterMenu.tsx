@@ -102,7 +102,7 @@ export function FilterMenu({
   }, []);
 
   const navigate = (next: Partial<BrowseFilters>) => {
-    router.push(browseHref({ ...location, filters: { ...filters, ...next }, page: 1 }), {
+    router.push(browseHref({ ...location, filters: { ...filters, ...next } }), {
       scroll: false,
     });
   };
@@ -122,11 +122,7 @@ export function FilterMenu({
               <Link
                 aria-current={filter.id === filters.mediaType ? "true" : undefined}
                 className={styles.segment}
-                href={browseHref({
-                  ...location,
-                  filters: { ...filters, mediaType: filter.id },
-                  page: 1,
-                })}
+                href={browseHref({ ...location, filters: { ...filters, mediaType: filter.id } })}
                 scroll={false}
                 key={filter.id}
               >

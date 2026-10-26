@@ -203,7 +203,7 @@ for (const width of [390, 1440]) {
     await expect(page.getByText(/^Filters 4$/)).toBeFocused();
 
     const footer = page.getByRole("main").locator("footer");
-    const summary = footer.getByText(/Popular on Movies · 101 titles · page \d of 3/);
+    const summary = footer.getByText(/Popular on Movies · 101 titles/);
     await expect(summary).toBeVisible();
     const gridBounds = await page.getByRole("list", { name: "Popular titles" }).boundingBox();
     const summaryBounds = await summary.boundingBox();

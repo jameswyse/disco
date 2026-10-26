@@ -4,8 +4,9 @@ import { useState } from "react";
 import { ContentState } from "@/features/feedback/ContentState";
 import { InfiniteList } from "@/features/feedback/InfiniteList";
 import { TitleCard } from "@/features/title/TitleCard";
+import { nextPage } from "@/platform/pageNumber";
 
-import type { PageBatch } from "@/features/feedback/InfiniteList";
+import type { LoadedBatch } from "@/features/feedback/InfiniteList";
 import type { PreviewMode } from "@/features/settings/settings";
 import type { Title } from "@/features/title/title";
 
@@ -19,15 +20,14 @@ export function Filmography({
   const [type, setType] = useState("all");
   const visible = titles.filter((title) => type === "all" || title.mediaType === type);
 
-  function batch(page: number): Extract<PageBatch, { kind: "ok" }> {
+  function batch(page: number): LoadedBatch<number> {
     return {
       kind: "ok",
       items: visible.slice((page - 1) * 24, page * 24).map((title) => ({
         id: `${title.mediaType}-${title.id}`,
         content: <TitleCard title={title} previewMode={previewMode} />,
       })),
-      page,
-      totalPages: Math.ceil(visible.length / 24),
+      next: nextPage(page, Math.ceil(visible.length / 24)),
       summary: `${visible.length} credits · newest first`,
     };
   }
@@ -51,7 +51,7 @@ export function Filmography({
         key={type}
         label="Filmography"
         className={gridStyles.grid}
-        loadPage={(page) => Promise.resolve(batch(page))}
+        loadMore={(page) => Promise.resolve(batch(page))}
         empty={
           <ContentState
             title="No credits found"

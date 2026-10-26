@@ -5,8 +5,8 @@ import { InfiniteList } from "@/features/feedback/InfiniteList";
 import { TitleCard } from "@/features/title/TitleCard";
 import { withTitleFacts } from "@/features/title/titleFacts";
 import { viewMediaTypes } from "@/features/views/views";
-import { decodePageNumber } from "@/platform/pageNumber";
 
+import { decodeBrowseCursor, firstBrowseCursor } from "./browseBatch";
 import { BrowseEmptyState } from "./BrowseEmptyState";
 import { browseHref } from "./browseHref";
 import { browseListLabel } from "./browseListLabel";
@@ -18,6 +18,7 @@ import type { PageBatch } from "@/features/feedback/InfiniteList";
 import type { PreviewMode } from "@/features/settings/settings";
 import type { View } from "@/features/views/views";
 
+import type { BrowseCursor } from "./browseBatch";
 import type { BrowseLocation } from "./browseHref";
 import type { DiscoverListId } from "./discoverLists";
 import type { BrowseFilters } from "./filters";
@@ -30,7 +31,6 @@ type BrowsePageProperties = Readonly<{
   filters: BrowseFilters;
   defaultLanguage: string | undefined;
   previewMode: PreviewMode;
-  page: number;
 }>;
 
 async function makeBatch(
@@ -38,7 +38,7 @@ async function makeBatch(
   listId: DiscoverListId,
   previewMode: PreviewMode,
   result: Awaited<ReturnType<typeof loadBrowse>>,
-): Promise<PageBatch> {
+): Promise<PageBatch<BrowseCursor>> {
   if (result.kind === "error") {
     return result;
   }
@@ -47,13 +47,12 @@ async function makeBatch(
 
   return {
     kind: "ok",
-    page: result.page,
-    totalPages: result.totalPages,
+    next: result.next,
     items: titles.map((title) => ({
       id: `${title.mediaType}-${title.id}`,
       content: <TitleCard title={title} previewMode={previewMode} />,
     })),
-    summary: `${browseListLabel(view, listId)} on ${view.label} · ${result.totalResults.toLocaleString("en-AU")} titles · page ${result.page} of ${Math.max(1, result.totalPages)}${result.hiddenAvailable ? ` · ${result.hiddenAvailable} hidden because they're already available` : ""}${result.hiddenRequested ? ` · ${result.hiddenRequested} hidden because they're already requested` : ""}`,
+    summary: `${browseListLabel(view, listId)} on ${view.label} · ${result.totalResults.toLocaleString("en-AU")} titles${result.hiddenAvailable ? ` · ${result.hiddenAvailable} hidden because they're already available` : ""}${result.hiddenRequested ? ` · ${result.hiddenRequested} hidden because they're already requested` : ""}`,
   };
 }
 
@@ -63,24 +62,23 @@ export async function BrowsePage({
   filters,
   defaultLanguage,
   previewMode,
-  page,
 }: BrowsePageProperties) {
-  const result = await loadBrowse(view, listId, filters, page);
+  const result = await loadBrowse(view, listId, filters, firstBrowseCursor);
 
   // oxlint-disable-next-line wyse/server-action-guard -- loadBrowse verifies the session through runAuthenticated, and feature components can't import the guard.
-  async function loadPage(nextPage: number): Promise<PageBatch> {
+  async function loadMore(cursor: BrowseCursor): Promise<PageBatch<BrowseCursor>> {
     "use server";
 
     return makeBatch(
       view,
       listId,
       previewMode,
-      await loadBrowse(view, listId, filters, decodePageNumber(nextPage)),
+      await loadBrowse(view, listId, filters, decodeBrowseCursor(cursor)),
     );
   }
 
   const initial = await makeBatch(view, listId, previewMode, result);
-  const location: BrowseLocation = { viewId: view.id, listId, filters, defaultLanguage, page };
+  const location: BrowseLocation = { viewId: view.id, listId, filters, defaultLanguage };
 
   return (
     <>
@@ -90,7 +88,7 @@ export async function BrowsePage({
             <Link
               aria-current={id === listId ? "page" : undefined}
               className={id === listId ? styles.activeTab : styles.tab}
-              href={browseHref({ ...location, listId: id, page: 1 })}
+              href={browseHref({ ...location, listId: id })}
               key={id}
             >
               {browseListLabel(view, id)}
@@ -111,7 +109,7 @@ export async function BrowsePage({
       ) : (
         <InfiniteList
           initial={initial}
-          loadPage={loadPage}
+          loadMore={loadMore}
           key={browseHref(location)}
           label={`${browseListLabel(view, listId)} titles`}
           className={styles.grid}

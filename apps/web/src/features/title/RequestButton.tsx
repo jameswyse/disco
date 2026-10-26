@@ -1,15 +1,15 @@
 "use client";
 
-import { useActionState, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 import { DiscoLoader } from "@/features/feedback/DiscoLoader";
 
-import { requestTitle } from "./actions";
 import { loadQualityProfiles } from "./loadQualityProfiles";
+import { useTitleRequest } from "./useTitleRequest";
 
 import type { MediaType } from "@/integrations/seerr/client";
 
-import type { ActionResult } from "./actions";
+import type { RequestedAvailability } from "./title";
 
 import styles from "./RequestButton.module.css";
 
@@ -20,6 +20,7 @@ type RequestButtonProperties = Readonly<{
   label: string;
   className: string | undefined;
   pendingClassName?: string | undefined;
+  onRequested?: (availability: RequestedAvailability) => void;
 }>;
 
 export function RequestButton({
@@ -29,11 +30,9 @@ export function RequestButton({
   label,
   className,
   pendingClassName,
+  onRequested,
 }: RequestButtonProperties) {
-  const [result, submit, pending] = useActionState<ActionResult | undefined, FormData>(
-    requestTitle,
-    undefined,
-  );
+  const [result, submit, pending] = useTitleRequest(onRequested);
 
   const [options, setOptions] = useState<Awaited<ReturnType<typeof loadQualityProfiles>>>();
   const dialog = useRef<HTMLDialogElement>(null);

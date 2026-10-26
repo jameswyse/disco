@@ -16,6 +16,8 @@ import type { SeerrError } from "@/integrations/seerr/errors";
 import type { SeerrIdentity } from "@/integrations/seerr/identity";
 import type { VerifiedSession } from "@/platform/auth/session";
 
+import type { RequestedAvailability } from "./title";
+
 const MediaTypeInput = Schema.Literals(["movie", "tv"]);
 
 const TmdbId = Schema.NumberFromString.pipe(
@@ -39,20 +41,26 @@ const WatchlistInput = Schema.Struct({
 
 const decodeWatchlist = Schema.decodeUnknownSync(WatchlistInput);
 
-export type ActionResult = Readonly<{ ok: true }> | Readonly<{ ok: false; message: string }>;
+type ActionFailure = Readonly<{ ok: false; message: string }>;
+export type ActionResult = Readonly<{ ok: true }> | ActionFailure;
+export type RequestResult =
+  | Readonly<{ ok: true; availability: RequestedAvailability }>
+  | ActionFailure;
 
-function run(
+const succeeded = { ok: true } as const;
+const approvedRequestStatus = 2;
+
+function run<Success extends Readonly<{ ok: true }>>(
   session: VerifiedSession,
-  program: Effect.Effect<unknown, SeerrError, SeerrClient | SeerrIdentity>,
+  program: Effect.Effect<Success, SeerrError, SeerrClient | SeerrIdentity>,
   paths: readonly string[],
-): Promise<ActionResult> {
+): Promise<Success | ActionFailure> {
   return runWithSession(
     session,
     program.pipe(
       Effect.tapError((error) => Effect.logError("Seerr action failed", error)),
-      Effect.map((): ActionResult => ({ ok: true })),
       Effect.catch((error) =>
-        Effect.succeed<ActionResult>({ ok: false, message: describeSeerrError(error) }),
+        Effect.succeed<ActionFailure>({ ok: false, message: describeSeerrError(error) }),
       ),
       Effect.tap((result) =>
         Effect.sync(() => {
@@ -74,9 +82,9 @@ function run(
 }
 
 export async function requestTitle(
-  _previous: ActionResult | undefined,
+  _previous: RequestResult | undefined,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<RequestResult> {
   const session = await requireSession();
   const decoded = Schema.decodeUnknownResult(RequestInput)(Object.fromEntries(formData));
 
@@ -117,7 +125,13 @@ export async function requestTitle(
         profileId: profile.profileId,
         is4k: profile.is4k,
       });
-    }),
+    }).pipe(
+      Effect.map((created) => ({
+        ok: true as const,
+        availability:
+          created.status === approvedRequestStatus ? ("processing" as const) : ("pending" as const),
+      })),
+    ),
     [`/title/${input.mediaType}/${input.id}`, "/", "/requests"],
   );
 }
@@ -139,7 +153,7 @@ export async function toggleWatchlist(
             title: input.title,
           })
         : client.removeFromWatchlist(input.id, input.mediaType),
-    ),
+    ).pipe(Effect.as(succeeded)),
     [`/title/${input.mediaType}/${input.id}`],
   );
 }
@@ -171,7 +185,7 @@ export async function toggleBlocklist(
             title: input.title,
           })
         : client.removeFromBlocklist(input.id, input.mediaType),
-    ),
+    ).pipe(Effect.as(succeeded)),
     ["/"],
   );
 }

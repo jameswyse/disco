@@ -46,7 +46,7 @@ for (const width of [390, 1440]) {
     await page.goto("/movies?list=popular");
     await page.getByRole("button", { name: "Quick info for Fixture Film Two" }).click();
     const quickInfo = page.getByRole("dialog", { name: "Fixture Film Two quick info" });
-    await quickInfo.getByRole("button", { name: "▶ Trailer", exact: true }).click();
+    await quickInfo.getByRole("button", { name: "Watch trailer", exact: true }).click();
     const trailer = page.getByRole("dialog", { name: "Fixture Film Two trailer", exact: true });
     const video = page.getByTitle("Fixture Film Two trailer video", { exact: true });
     await expect(trailer).toBeVisible();
@@ -74,7 +74,9 @@ for (const width of [390, 1440]) {
     await expect(video).toHaveCount(0);
     await expect.poll(() => page.evaluate(() => document.fullscreenElement === null)).toBe(true);
     await expect(quickInfo).toBeVisible();
-    await expect(quickInfo.getByRole("button", { name: "▶ Trailer", exact: true })).toBeFocused();
+    await expect(
+      quickInfo.getByRole("button", { name: "Watch trailer", exact: true }),
+    ).toBeFocused();
 
     await quickInfo.getByRole("link", { name: "Details", exact: true }).click();
     const play = page.getByRole("button", { name: "▶ Play trailer", exact: true });

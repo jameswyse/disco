@@ -66,7 +66,6 @@ describe("browseHref", () => {
         listId: "trending",
         filters: defaultFilters,
         defaultLanguage: undefined,
-        page: 1,
       }),
     ).toBe("/netflix");
     expect(
@@ -75,9 +74,8 @@ describe("browseHref", () => {
         listId: "popular",
         filters: { ...defaultFilters, genreId: 18, hideAvailable: false, hideRequested: false },
         defaultLanguage: undefined,
-        page: 3,
       }),
-    ).toBe("/netflix?list=popular&genre=18&hide=0&hideRequested=0&page=3");
+    ).toBe("/netflix?list=popular&genre=18&hide=0&hideRequested=0");
   });
 
   it("only names the language when it differs from the saved default", () => {
@@ -85,7 +83,6 @@ describe("browseHref", () => {
       viewId: "movies",
       listId: "trending" as const,
       defaultLanguage: "en",
-      page: 1,
     };
 
     expect(browseHref({ ...location, filters: { ...defaultFilters, language: "en" } })).toBe(

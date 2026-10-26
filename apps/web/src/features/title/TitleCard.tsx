@@ -277,6 +277,13 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
             }}
             onClose={hide}
             onRequested={changeAvailability}
+            onWatchlistChange={(onWatchlist) =>
+              setPreview((current) =>
+                current.kind === "ready"
+                  ? { ...current, preview: { ...current.preview, onWatchlist } }
+                  : current,
+              )
+            }
             preview={preview}
             requested={requested}
             side={side}

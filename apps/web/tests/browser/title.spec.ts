@@ -444,3 +444,17 @@ test("quick info actions stay put while details load", async ({ page }) => {
 
   expect([await request.boundingBox(), await details.boundingBox()]).toEqual(loadingBounds);
 });
+
+test("quick info keeps a watchlist change after it closes", async ({ page }) => {
+  await page.goto("/movies?list=popular");
+  const info = page.getByRole("button", { name: "Quick info for Fixture Film Two" });
+  const quickInfo = page.getByRole("dialog", { name: "Fixture Film Two quick info" });
+
+  await info.click();
+  await quickInfo.getByRole("button", { name: "Add to watchlist" }).click();
+  await expect(quickInfo.getByRole("button", { name: "Remove from watchlist" })).toBeVisible();
+  await quickInfo.getByRole("button", { name: "Close quick info" }).click();
+  await info.click();
+
+  await expect(quickInfo.getByRole("button", { name: "Remove from watchlist" })).toBeVisible();
+});

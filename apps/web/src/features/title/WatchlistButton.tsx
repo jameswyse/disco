@@ -1,12 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { toggleWatchlist } from "./actions";
 
 import type { MediaType } from "@/integrations/seerr/client";
-
-import type { ActionResult } from "./actions";
 
 type WatchlistButtonProperties = Readonly<{
   mediaType: MediaType;
@@ -15,6 +13,7 @@ type WatchlistButtonProperties = Readonly<{
   onWatchlist: boolean;
   className: string | undefined;
   compact?: boolean;
+  onChanged?: (listed: boolean) => void;
 }>;
 
 export function WatchlistButton({
@@ -24,13 +23,32 @@ export function WatchlistButton({
   onWatchlist,
   className,
   compact = false,
+  onChanged,
 }: WatchlistButtonProperties) {
-  const [result, submit, pending] = useActionState<ActionResult | undefined, FormData>(
-    toggleWatchlist,
+  const [change, setChange] = useState<Readonly<{ from: boolean; listed: boolean }>>();
+
+  if (change !== undefined && change.from !== onWatchlist) {
+    setChange(undefined);
+  }
+
+  const listed = change?.from === onWatchlist ? change.listed : onWatchlist;
+
+  const [error, submit, pending] = useActionState<string | undefined, FormData>(
+    async (_previous, formData) => {
+      const result = await toggleWatchlist(undefined, formData);
+
+      if (!result.ok) {
+        return result.message;
+      }
+
+      setChange({ from: onWatchlist, listed: !listed });
+      onChanged?.(!listed);
+
+      return undefined;
+    },
     undefined,
   );
 
-  const listed = result?.ok ? !onWatchlist : onWatchlist;
   const fullLabel = listed ? "✓ Watchlisted" : "＋ Watchlist";
   const compactLabel = listed ? "✓" : "＋";
 
@@ -49,9 +67,9 @@ export function WatchlistButton({
       >
         {compact ? compactLabel : fullLabel}
       </button>
-      {result && !result.ok ? (
+      {error ? (
         <span role="alert" style={{ color: "var(--color-warning)", fontSize: 12 }}>
-          {result.message}
+          {error}
         </span>
       ) : null}
     </form>

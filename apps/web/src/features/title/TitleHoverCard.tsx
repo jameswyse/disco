@@ -32,6 +32,7 @@ type TitleHoverCardProperties = Readonly<{
   side: "right" | "left";
   onClose: () => void;
   onRequested: (availability: RequestedAvailability) => void;
+  onWatchlistChange: (listed: boolean) => void;
   onBlocklistChange: (blocklisted: boolean) => void;
 }>;
 
@@ -83,6 +84,7 @@ export function TitleHoverCard({
   side,
   onClose,
   onRequested,
+  onWatchlistChange,
   onBlocklistChange,
 }: TitleHoverCardProperties) {
   const details = preview.kind === "ready" ? preview.preview : undefined;
@@ -169,6 +171,7 @@ export function TitleHoverCard({
                 className={`${styles.action} ${styles.iconAction}`}
                 id={title.id}
                 mediaType={title.mediaType}
+                onChanged={onWatchlistChange}
                 onWatchlist={details.onWatchlist}
                 title={title.name}
                 compact

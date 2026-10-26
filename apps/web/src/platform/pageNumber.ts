@@ -10,3 +10,7 @@ export function parsePageNumber(value: string | string[] | undefined): number {
 
   return Number.isSafeInteger(page) && page >= 1 ? page : 1;
 }
+
+export function nextPage(page: number, totalPages: number): number | undefined {
+  return page < totalPages ? page + 1 : undefined;
+}

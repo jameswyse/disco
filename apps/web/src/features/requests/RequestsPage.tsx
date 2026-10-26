@@ -5,7 +5,7 @@ import { ContentState } from "@/features/feedback/ContentState";
 import { InfiniteList } from "@/features/feedback/InfiniteList";
 import { titleHref } from "@/features/title/titleRoute";
 import { tmdbImageUrl } from "@/integrations/seerr/images";
-import { decodePageNumber } from "@/platform/pageNumber";
+import { decodePageNumber, nextPage } from "@/platform/pageNumber";
 
 import { loadRequests, requestFilters } from "./loadRequests";
 import { requestBadge } from "./requestBadge";
@@ -51,15 +51,14 @@ function formatWhen(iso: string): string {
     : date.toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
 }
 
-function requestsBatch(result: Awaited<ReturnType<typeof loadRequests>>): PageBatch {
+function requestsBatch(result: Awaited<ReturnType<typeof loadRequests>>): PageBatch<number> {
   if (result.kind === "error") {
     return result;
   }
 
   return {
     kind: "ok",
-    page: result.page,
-    totalPages: result.totalPages,
+    next: nextPage(result.page, result.totalPages),
     summary: `Requests · page ${result.page} of ${Math.max(1, result.totalPages)}`,
     items: result.rows.map((row) => {
       const badge = requestBadge(row);
@@ -103,10 +102,10 @@ function requestsBatch(result: Awaited<ReturnType<typeof loadRequests>>): PageBa
 
 export async function RequestsPage({ filter, page }: RequestsPageProperties) {
   // oxlint-disable-next-line wyse/server-action-guard -- loadRequests verifies the session through runAuthenticated, and feature components can't import the guard.
-  async function loadPage(nextPage: number): Promise<PageBatch> {
+  async function loadPage(requestedPage: number): Promise<PageBatch<number>> {
     "use server";
 
-    return requestsBatch(await loadRequests(filter, decodePageNumber(nextPage)));
+    return requestsBatch(await loadRequests(filter, decodePageNumber(requestedPage)));
   }
 
   const result = await loadPage(page);
@@ -133,7 +132,7 @@ export async function RequestsPage({ filter, page }: RequestsPageProperties) {
       ) : (
         <InfiniteList
           initial={result}
-          loadPage={loadPage}
+          loadMore={loadPage}
           key={`${filter}:${page}`}
           className={styles.list}
           label="Requests"

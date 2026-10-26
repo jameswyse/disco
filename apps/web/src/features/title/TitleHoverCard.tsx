@@ -7,12 +7,12 @@ import { tmdbImageUrl } from "@/integrations/seerr/images";
 
 import { BlocklistButton } from "./BlocklistButton";
 import { RequestButton } from "./RequestButton";
-import { availabilityLabels } from "./title";
+import { availabilityLabels, isRequestable } from "./title";
 import { titleHref } from "./titleRoute";
 import { TrailerButton } from "./TrailerButton";
 import { WatchlistButton } from "./WatchlistButton";
 
-import type { Title } from "./title";
+import type { Availability, RequestedAvailability, Title } from "./title";
 import type { TitlePreview } from "./titlePreview";
 
 import styles from "./TitleHoverCard.module.css";
@@ -20,15 +20,19 @@ import styles from "./TitleHoverCard.module.css";
 export type PreviewState =
   | Readonly<{ kind: "idle" }>
   | Readonly<{ kind: "loading" }>
-  | Readonly<{ kind: "ready"; preview: TitlePreview }>
+  | Readonly<{ kind: "ready"; preview: TitlePreview; revision: number }>
   | Readonly<{ kind: "error" }>;
 
 type TitleHoverCardProperties = Readonly<{
   title: Title;
+  availability: Availability;
+  latestAvailability: Availability;
+  requested: boolean;
   preview: PreviewState;
   side: "right" | "left";
   onClose: () => void;
-  onBlocklistChange: () => void;
+  onRequested: (availability: RequestedAvailability) => void;
+  onBlocklistChange: (blocklisted: boolean) => void;
 }>;
 
 function runtimeLabel(details: TitlePreview, mediaType: Title["mediaType"]): string | undefined {
@@ -72,9 +76,13 @@ function Scores({ details }: Readonly<{ details: TitlePreview }>) {
 
 export function TitleHoverCard({
   title,
+  availability,
+  latestAvailability,
+  requested,
   preview,
   side,
   onClose,
+  onRequested,
   onBlocklistChange,
 }: TitleHoverCardProperties) {
   const details = preview.kind === "ready" ? preview.preview : undefined;
@@ -91,10 +99,8 @@ export function TitleHoverCard({
         .join(" · ")
     : [title.year].filter((part) => part !== undefined).join(" · ");
 
-  const availability = details?.availability ?? title.availability;
   const availabilityDetail = details?.availabilityDetail ?? title.availabilityDetail;
   const airing = details?.airing ?? title.airing;
-  const canRequest = availability === "not-in-library" || availability === "not-yet-aired";
 
   return (
     <div
@@ -125,11 +131,62 @@ export function TitleHoverCard({
           {title.mediaType === "tv" ? "TV" : "Film"}
           {details?.seriesType === "Miniseries" ? " · Limited" : ""}
         </span>
-        <span className={styles.availability}>{availabilityLabels[availability]}</span>
+        <span className={styles.availability}>{availabilityLabels[latestAvailability]}</span>
       </div>
       <div className={styles.body}>
         <div className={styles.name}>{title.name}</div>
-        <div className={styles.meta}>{meta}</div>
+        <div className={`${styles.meta} ${styles.headline}`}>{meta}</div>
+        <div className={styles.actions}>
+          <div className={styles.primaryActions}>
+            {isRequestable(availability) ? (
+              <RequestButton
+                className={`${styles.action} ${styles.request}`}
+                id={title.id}
+                label="↓ Request"
+                mediaType={title.mediaType}
+                onRequested={onRequested}
+                pendingClassName={`${styles.action} ${styles.request}`}
+              />
+            ) : null}
+            {requested ? (
+              <span className={`${styles.action} ${styles.request}`}>✓ Requested</span>
+            ) : null}
+            <Link className={styles.action} href={titleHref(title.mediaType, title.id)}>
+              Details
+            </Link>
+          </div>
+          <div className={styles.iconActions}>
+            {details?.trailerEmbedUrl ? (
+              <TrailerButton
+                className={`${styles.action} ${styles.iconAction}`}
+                compact
+                embedUrl={details.trailerEmbedUrl}
+                title={title.name}
+              />
+            ) : null}
+            {details ? (
+              <WatchlistButton
+                className={`${styles.action} ${styles.iconAction}`}
+                id={title.id}
+                mediaType={title.mediaType}
+                onWatchlist={details.onWatchlist}
+                title={title.name}
+                compact
+              />
+            ) : null}
+            {details?.canManageBlocklist ? (
+              <BlocklistButton
+                blocklisted={latestAvailability === "blocklisted"}
+                className={`${styles.action} ${styles.iconAction}`}
+                id={title.id}
+                mediaType={title.mediaType}
+                onChanged={() => onBlocklistChange(latestAvailability !== "blocklisted")}
+                title={title.name}
+                compact
+              />
+            ) : null}
+          </div>
+        </div>
         {availabilityDetail ? <p className={styles.meta}>{availabilityDetail}</p> : null}
         {airing ? <p className={styles.meta}>{airing}</p> : null}
         {details ? <Scores details={details} /> : null}
@@ -190,49 +247,6 @@ export function TitleHoverCard({
             ) : null}
           </div>
         ) : null}
-        <div className={styles.actions}>
-          {canRequest ? (
-            <RequestButton
-              className={`${styles.action} ${styles.request}`}
-              id={title.id}
-              label="↓ Request"
-              mediaType={title.mediaType}
-              pendingClassName={`${styles.action} ${styles.request}`}
-            />
-          ) : null}
-          <Link className={styles.action} href={titleHref(title.mediaType, title.id)}>
-            Details
-          </Link>
-          {details?.trailerEmbedUrl ? (
-            <TrailerButton
-              className={styles.action}
-              embedUrl={details.trailerEmbedUrl}
-              label="▶ Trailer"
-              title={title.name}
-            />
-          ) : null}
-          {details ? (
-            <WatchlistButton
-              className={`${styles.action} ${styles.iconAction}`}
-              id={title.id}
-              mediaType={title.mediaType}
-              onWatchlist={details.onWatchlist}
-              title={title.name}
-              compact
-            />
-          ) : null}
-          {details?.canManageBlocklist ? (
-            <BlocklistButton
-              blocklisted={availability === "blocklisted"}
-              className={`${styles.action} ${styles.iconAction}`}
-              id={title.id}
-              mediaType={title.mediaType}
-              onChanged={onBlocklistChange}
-              title={title.name}
-              compact
-            />
-          ) : null}
-        </div>
       </div>
     </div>
   );

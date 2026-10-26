@@ -324,7 +324,7 @@ test("a request dialog opened from a hover card stays open", async ({ page }) =>
     .filter({ has: page.getByRole("link", { name: /Fixture Film Two/ }) });
 
   await card.getByRole("button", { name: /info/i }).click();
-  await card.getByRole("button", { name: /Request/ }).click();
+  await card.getByRole("button", { name: "↓ Request", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Request title", exact: true });
   await expect(dialog).toBeVisible();
   await page.mouse.move(5, 5);
@@ -361,3 +361,86 @@ for (const width of [320, 1440]) {
     await expect(page.getByText("Up to date", { exact: true })).toHaveCount(0);
   });
 }
+
+test("quick request asks Seerr for the server default without a confirmation", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/search?q=approval%20request");
+
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("link", { name: /Approval Film/ }) });
+
+  await card.hover();
+  await card.getByRole("button", { name: "Request Approval Film", exact: true }).click();
+
+  await expect(card.getByRole("img", { name: "Pending approval" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Request title" })).toHaveCount(0);
+  await expect(card.getByRole("button", { name: "Approval Film requested" })).toBeVisible();
+  await expectRecorded(request, {
+    requests: expect.arrayContaining([{ mediaType: "movie", mediaId: 107, userId: 2 }]),
+  });
+});
+
+test("an approved quick request marks the poster as requested", async ({ page }) => {
+  await page.goto("/movies?list=popular");
+
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("link", { name: /Fixture Film Two/ }) });
+
+  await card.hover();
+  await card.getByRole("button", { name: "Request Fixture Film Two", exact: true }).click();
+
+  await expect(card.getByRole("img", { name: "Requested" })).toBeVisible();
+  await card.getByRole("button", { name: "Quick info for Fixture Film Two" }).click();
+  const quickInfo = page.getByRole("dialog", { name: "Fixture Film Two quick info" });
+  await expect(quickInfo.getByText("✓ Requested")).toBeVisible();
+  await expect(quickInfo.getByRole("button", { name: "↓ Request", exact: true })).toHaveCount(0);
+});
+
+test("a rejected quick request explains the failure on the poster", async ({ page }) => {
+  await page.goto("/search?q=rejected%20request");
+
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("link", { name: /Rejected Film/ }) });
+
+  await card.hover();
+  await card.getByRole("button", { name: "Request Rejected Film", exact: true }).click();
+
+  const retry = card.getByRole("button", { name: /^Request Rejected Film again/ });
+  await expect(retry).toBeVisible();
+  await page.mouse.move(5, 5);
+  await expect(retry).toBeVisible();
+  await expect(card.getByRole("img", { name: "Requested" })).toHaveCount(0);
+});
+
+test("quick info actions stay put while details load", async ({ page }) => {
+  let release = () => {};
+
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  await page.route("**/api/titles/movie/102", async (route) => {
+    await held;
+    await route.continue();
+  });
+
+  await page.goto("/movies?list=popular");
+  await page.getByRole("button", { name: "Quick info for Fixture Film Two" }).click();
+  const quickInfo = page.getByRole("dialog", { name: "Fixture Film Two quick info" });
+  await expect(quickInfo.getByRole("status", { name: "Loading preview" })).toBeVisible();
+
+  const request = quickInfo.getByRole("button", { name: "↓ Request", exact: true });
+  const details = quickInfo.getByRole("link", { name: "Details", exact: true });
+  const loadingBounds = [await request.boundingBox(), await details.boundingBox()];
+
+  release();
+  await expect(quickInfo.getByRole("button", { name: "Watch trailer", exact: true })).toBeVisible();
+  await expect(quickInfo.getByText("Fixture Actor")).toBeVisible();
+
+  expect([await request.boundingBox(), await details.boundingBox()]).toEqual(loadingBounds);
+});

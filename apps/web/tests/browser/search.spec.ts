@@ -75,14 +75,16 @@ test("a later page failure preserves results and offers a retry", async ({ page 
   await expect(results.getByRole("listitem")).toHaveCount(2);
 });
 
-test("request revalidation replaces stale result cards", async ({ page }) => {
+test("a request from quick info updates the result card", async ({ page }) => {
   await page.goto("/search?q=refresh%20request");
   const results = page.getByRole("list", { name: "Search results" });
   await results.getByRole("button", { name: "Quick info for Refresh Film" }).click();
-  await page.getByRole("button", { name: /Request/, exact: false }).click();
+  await page
+    .getByRole("dialog", { name: "Refresh Film quick info" })
+    .getByRole("button", { name: "↓ Request", exact: true })
+    .click();
   await page.getByRole("button", { name: "Confirm request" }).click();
   await expect(results.getByRole("img", { name: "Requested", exact: true })).toBeVisible();
-  await results.getByRole("button", { name: "Quick info for Refresh Film" }).click();
   await expect(page.getByRole("dialog").getByText("Requested", { exact: true })).toBeVisible();
   await expect(page.getByRole("dialog").getByRole("button", { name: /Request/ })).toHaveCount(0);
 });
@@ -90,7 +92,10 @@ test("request revalidation replaces stale result cards", async ({ page }) => {
 test("a rejected quick-info request keeps its dialog and error visible", async ({ page }) => {
   await page.goto("/search?q=rejected%20request");
   await page.getByRole("button", { name: "Quick info for Rejected Film" }).click();
-  await page.getByRole("button", { name: /Request/ }).click();
+  await page
+    .getByRole("dialog", { name: "Rejected Film quick info" })
+    .getByRole("button", { name: "↓ Request", exact: true })
+    .click();
   const dialog = page.getByRole("dialog", { name: "Request title", exact: true });
   await dialog.getByRole("button", { name: "Confirm request" }).click();
   await expect(dialog.getByRole("alert")).toBeVisible();

@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { tmdbImageUrl } from "@/integrations/seerr/images";
 
+import { QuickRequestButton } from "./QuickRequestButton";
+import { isRequestable, isRequested } from "./title";
 import { TitleHoverCard } from "./TitleHoverCard";
 import { decodeTitlePreview } from "./titlePreview";
 import { titleHref } from "./titleRoute";
@@ -83,7 +85,7 @@ const previewFootprint = 400;
 
 type TitleCardProperties = Readonly<{ title: Title; previewMode: PreviewMode }>;
 
-async function fetchPreview(title: Title): Promise<PreviewState> {
+async function fetchPreview(title: Title, revision: number): Promise<PreviewState> {
   try {
     const response = await fetch(`/api/titles/${title.mediaType}/${title.id}`);
 
@@ -95,7 +97,7 @@ async function fetchPreview(title: Title): Promise<PreviewState> {
     const decoded = decodeTitlePreview(body);
 
     return decoded._tag === "Success"
-      ? { kind: "ready", preview: decoded.success }
+      ? { kind: "ready", preview: decoded.success, revision }
       : { kind: "error" };
   } catch {
     return { kind: "error" };
@@ -103,11 +105,30 @@ async function fetchPreview(title: Title): Promise<PreviewState> {
 }
 
 export function TitleCard({ title, previewMode }: TitleCardProperties) {
-  const badge = availabilityBadges[title.availability];
+  const [served, setServed] = useState({ availability: title.availability, revision: 0 });
+  const [change, setChange] = useState<Readonly<{ revision: number; to: Availability }>>();
+  const [preview, setPreview] = useState<PreviewState>({ kind: "idle" });
+
+  const revision =
+    served.availability === title.availability ? served.revision : served.revision + 1;
+
+  if (revision !== served.revision) {
+    setServed({ availability: title.availability, revision });
+  }
+
+  const changedAvailability = change?.revision === revision ? change.to : undefined;
+  const availability = changedAvailability ?? title.availability;
+  const requested = changedAvailability !== undefined && isRequested(changedAvailability);
+
+  const previewAvailability =
+    preview.kind === "ready" && preview.revision === revision
+      ? preview.preview.availability
+      : undefined;
+
+  const badge = availabilityBadges[availability];
   const detail = captionDetail(title);
   const [open, setOpen] = useState(false);
   const [side, setSide] = useState<"right" | "left">("right");
-  const [preview, setPreview] = useState<PreviewState>({ kind: "idle" });
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const card = useRef<HTMLLIElement>(null);
 
@@ -128,7 +149,7 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
 
     if (preview.kind === "idle" || preview.kind === "error") {
       setPreview({ kind: "loading" });
-      void fetchPreview(title).then(setPreview);
+      void fetchPreview(title, revision).then(setPreview);
     }
   };
 
@@ -185,6 +206,10 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
     };
   }, [open]);
 
+  function changeAvailability(to: Availability) {
+    setChange({ revision, to });
+  }
+
   return (
     <li className={open ? `${styles.card} ${styles.open}` : styles.card} ref={card}>
       <div className={styles.hoverArea} {...hoverHandlers}>
@@ -223,6 +248,16 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
             <div className={styles.genres}>{title.genres.slice(0, 2).join(" · ")}</div>
           </div>
         </Link>
+        {isRequestable(availability) || requested ? (
+          <QuickRequestButton
+            className={styles.quickRequest}
+            id={title.id}
+            mediaType={title.mediaType}
+            onRequested={changeAvailability}
+            requested={requested}
+            title={title.name}
+          />
+        ) : null}
         <button
           aria-expanded={open}
           aria-label={`Quick info for ${title.name}`}
@@ -234,12 +269,16 @@ export function TitleCard({ title, previewMode }: TitleCardProperties) {
         </button>
         {open ? (
           <TitleHoverCard
-            onBlocklistChange={() => {
-              setPreview({ kind: "idle" });
+            availability={availability}
+            latestAvailability={changedAvailability ?? previewAvailability ?? title.availability}
+            onBlocklistChange={(blocklisted) => {
+              changeAvailability(blocklisted ? "blocklisted" : "not-in-library");
               hide();
             }}
             onClose={hide}
+            onRequested={changeAvailability}
             preview={preview}
+            requested={requested}
             side={side}
             title={title}
           />

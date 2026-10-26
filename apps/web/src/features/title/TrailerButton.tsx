@@ -104,8 +104,13 @@ export function TrailerButton({
   embedUrl,
   title,
   className,
-  label = "▶ Play trailer",
-}: Readonly<{ embedUrl: string; title: string; className: string | undefined; label?: string }>) {
+  compact = false,
+}: Readonly<{
+  embedUrl: string;
+  title: string;
+  className: string | undefined;
+  compact?: boolean;
+}>) {
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -122,6 +127,7 @@ export function TrailerButton({
   return (
     <>
       <button
+        aria-label={compact ? "Watch trailer" : undefined}
         className={className}
         onClick={() => {
           setOpen(true);
@@ -130,7 +136,7 @@ export function TrailerButton({
         ref={trigger}
         type="button"
       >
-        {label}
+        {compact ? "▶" : "▶ Play trailer"}
       </button>
       <dialog
         aria-label={`${title} trailer`}

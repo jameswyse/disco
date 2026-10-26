@@ -10,40 +10,40 @@ import stateStyles from "./ContentState.module.css";
 import styles from "./InfiniteList.module.css";
 
 export type PageItem = Readonly<{ id: string; content: ReactNode }>;
-export type PageBatch =
-  | Readonly<{
-      kind: "ok";
-      items: readonly PageItem[];
-      page: number;
-      totalPages: number;
-      summary: string;
-    }>
-  | Readonly<{ kind: "error"; message: string }>;
-type LoadedPage = Extract<PageBatch, { kind: "ok" }>;
+export type LoadedBatch<Cursor> = Readonly<{
+  kind: "ok";
+  items: readonly PageItem[];
+  next: Cursor | undefined;
+  summary: string;
+}>;
+export type PageBatch<Cursor> = LoadedBatch<Cursor> | Readonly<{ kind: "error"; message: string }>;
 
-function AccumulatedList({
+export function InfiniteList<Cursor>({
   initial,
-  loadPage,
+  loadMore,
   label,
   className,
   empty,
 }: Readonly<{
-  initial: LoadedPage;
-  loadPage: (page: number) => Promise<PageBatch>;
+  initial: LoadedBatch<Cursor>;
+  loadMore: (cursor: Cursor) => Promise<PageBatch<Cursor>>;
   label: string;
   className: string | undefined;
   empty?: ReactNode;
 }>) {
   const [data, setData] = useState(initial);
   const [error, setError] = useState<string>();
+  const [stalled, setStalled] = useState(initial.items.length === 0);
   const [pending, startTransition] = useTransition();
   const busy = useRef(false);
   const sentinel = useRef<HTMLDivElement>(null);
-  const hasMore = data.page < data.totalPages;
+  const hasMore = data.next !== undefined;
   const idleLabel = error ? "Try again" : "Load more";
 
   const load = useCallback(() => {
-    if (busy.current || !hasMore) {
+    const cursor = data.next;
+
+    if (busy.current || cursor === undefined) {
       return;
     }
 
@@ -51,7 +51,7 @@ function AccumulatedList({
     setError(undefined);
     startTransition(async () => {
       try {
-        const result = await loadPage(data.page + 1);
+        const result = await loadMore(cursor);
         busy.current = false;
 
         if (result.kind === "error") {
@@ -60,6 +60,7 @@ function AccumulatedList({
           return;
         }
 
+        setStalled(result.items.length === 0);
         setData((previous) => {
           const seen = new Set(previous.items.map((item) => item.id));
 
@@ -73,12 +74,12 @@ function AccumulatedList({
         busy.current = false;
       }
     });
-  }, [data.page, hasMore, loadPage]);
+  }, [data.next, loadMore]);
 
   useEffect(() => {
     const element = sentinel.current;
 
-    if (!element || error || !hasMore) {
+    if (!element || error || stalled || !hasMore) {
       return undefined;
     }
 
@@ -94,7 +95,7 @@ function AccumulatedList({
     observer.observe(element);
 
     return () => observer.disconnect();
-  }, [error, hasMore, load]);
+  }, [error, hasMore, load, stalled]);
 
   return (
     <>
@@ -134,14 +135,4 @@ function AccumulatedList({
       </footer>
     </>
   );
-}
-
-export function InfiniteList(properties: Parameters<typeof AccumulatedList>[0]) {
-  const [source, setSource] = useState({ initial: properties.initial, revision: 0 });
-
-  if (source.initial !== properties.initial) {
-    setSource({ initial: properties.initial, revision: source.revision + 1 });
-  }
-
-  return <AccumulatedList {...properties} key={source.revision} />;
 }

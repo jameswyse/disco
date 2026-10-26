@@ -90,28 +90,16 @@ export function BrowseEmptyState({
       <p className={styles.description}>{description}</p>
       <div className={styles.emptyActions}>
         {(filtered || hidden) && !unsupported ? (
-          <Link
-            className={styles.action}
-            href={browseHref({
-              ...location,
-              filters: resetFilters,
-              page: hidden ? location.page : 1,
-            })}
-          >
+          <Link className={styles.action} href={browseHref({ ...location, filters: resetFilters })}>
             {hidden ? "Show hidden titles" : "Clear filters"}
           </Link>
         ) : null}
         {location.listId !== "popular" ? (
           <Link
             className={styles.action}
-            href={browseHref({ ...location, listId: "popular", filters: defaultFilters, page: 1 })}
+            href={browseHref({ ...location, listId: "popular", filters: defaultFilters })}
           >
             Browse Popular
-          </Link>
-        ) : null}
-        {location.page > 1 ? (
-          <Link className={styles.action} href={browseHref({ ...location, page: 1 })}>
-            Back to first page
           </Link>
         ) : null}
       </div>

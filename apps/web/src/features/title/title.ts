@@ -35,6 +35,16 @@ export function isInLibrary(availability: Availability): boolean {
   );
 }
 
+export function isRequestable(availability: Availability): boolean {
+  return availability === "not-in-library" || availability === "not-yet-aired";
+}
+
+export type RequestedAvailability = Extract<Availability, "pending" | "processing">;
+
+export function isRequested(availability: Availability): availability is RequestedAvailability {
+  return availability === "pending" || availability === "processing";
+}
+
 export type Title = Readonly<{
   id: number;
   mediaType: MediaType;

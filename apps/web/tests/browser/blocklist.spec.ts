@@ -15,6 +15,14 @@ test("blocklist a browse result, find it in search, and restore it from details"
   await expect(preview.getByRole("button", { name: "Blocklist", exact: true })).toBeFocused();
   await preview.getByRole("button", { name: "Blocklist", exact: true }).press("Enter");
   await confirmation.getByRole("button", { name: "Blocklist", exact: true }).click();
+
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("link", { name: /Blocklist Film/ }) });
+
+  await expect(card.getByRole("img", { name: "Blocklisted" })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Request Blocklist Film" })).toHaveCount(0);
+  await page.reload();
   await expect(page.getByRole("button", { name: "Quick info for Blocklist Film" })).toHaveCount(0);
 
   await page.goto("/search?q=blocklist");

@@ -205,11 +205,31 @@
   font-weight: 500;
 }
 
+.headline {
+  min-height: 1lh;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 12px;
+  margin: 12px 0;
+}
+
+.primaryActions {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+}
+
+.iconActions {
+  display: flex;
+  flex: 0 0 calc(3 * 40px + 2 * 6px);
+  gap: 6px;
+  justify-content: flex-end;
 }
 
 .action {

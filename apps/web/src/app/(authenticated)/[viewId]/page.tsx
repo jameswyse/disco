@@ -11,7 +11,6 @@ import { loadSettings } from "@/features/settings/loadSettings";
 import { defaultPreviewMode } from "@/features/settings/settings";
 import { loadViews } from "@/features/views/loadViews";
 import { viewMediaTypes } from "@/features/views/views";
-import { parsePageNumber } from "@/platform/pageNumber";
 
 import Loading from "../loading";
 
@@ -60,7 +59,6 @@ async function ViewBrowse(properties: ViewPageProperties) {
       defaultLanguage={settings.defaultLanguage}
       filters={filters}
       listId={parseDiscoverListId(query.list)}
-      page={parsePageNumber(query.page)}
       previewMode={settings.previewMode ?? defaultPreviewMode}
       view={view}
     />

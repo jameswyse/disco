@@ -2,7 +2,7 @@ import { ContentState } from "@/features/feedback/ContentState";
 import { InfiniteList } from "@/features/feedback/InfiniteList";
 import { loadSettings } from "@/features/settings/loadSettings";
 import { defaultPreviewMode } from "@/features/settings/settings";
-import { decodePageNumber } from "@/platform/pageNumber";
+import { decodePageNumber, nextPage } from "@/platform/pageNumber";
 
 import { loadSearch } from "./loadSearch";
 import { SearchResultCard } from "./SearchResultCard";
@@ -16,16 +16,17 @@ export async function SearchPage({ query, page }: Readonly<{ query: string; page
   const previewMode = settings.previewMode ?? defaultPreviewMode;
 
   // oxlint-disable-next-line wyse/server-action-guard -- loadSearch verifies the session through runAuthenticated, and feature components can't import the guard.
-  async function loadPage(nextPage: number): Promise<PageBatch> {
+  async function loadPage(requestedPage: number): Promise<PageBatch<number>> {
     "use server";
-    const result = await loadSearch(query, decodePageNumber(nextPage));
+    const result = await loadSearch(query, decodePageNumber(requestedPage));
 
     if (result.kind === "error") {
       return result;
     }
 
     return {
-      ...result,
+      kind: "ok",
+      next: nextPage(result.page, result.totalPages),
       items: result.items.map((item) => ({
         id: `${item.mediaType}-${item.id}`,
         content: <SearchResultCard item={item} previewMode={previewMode} />,
@@ -62,7 +63,7 @@ export async function SearchPage({ query, page }: Readonly<{ query: string; page
           initial={result}
           key={`${query}:${page}`}
           label="Search results"
-          loadPage={loadPage}
+          loadMore={loadPage}
         />
       ) : null}
     </>

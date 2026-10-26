@@ -14,7 +14,8 @@ import styles from "./AccountMenu.module.css";
 export function AccountMenu({
   children,
   displayName,
-}: Readonly<{ children: ReactNode; displayName: string }>) {
+  version,
+}: Readonly<{ children: ReactNode; displayName: string; version: string }>) {
   const details = useRef<HTMLDetailsElement>(null);
   const trigger = useRef<HTMLElement>(null);
 
@@ -74,6 +75,7 @@ export function AccountMenu({
         <div className={styles.logout}>
           <LogoutButton className={styles.accountItem} icon={<AccountIcon name="logout" />} />
         </div>
+        <p className={styles.version}>Disco v{version}</p>
       </nav>
     </details>
   );

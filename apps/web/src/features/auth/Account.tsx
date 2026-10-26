@@ -4,6 +4,7 @@ import { Suspense } from "react";
 
 import { DiscoLoader } from "@/features/feedback/DiscoLoader";
 
+import packageJson from "../../../package.json" with { type: "json" };
 import { AccountMenu } from "./AccountMenu";
 import { loadAccount } from "./loadAccount";
 
@@ -23,7 +24,7 @@ async function AccountContent() {
   const { user } = account;
 
   return (
-    <AccountMenu displayName={user.displayName}>
+    <AccountMenu displayName={user.displayName} version={packageJson.version}>
       {user.avatarUrl ? (
         <Image
           alt=""

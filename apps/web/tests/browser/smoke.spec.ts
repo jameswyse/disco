@@ -1,3 +1,4 @@
+import packageJson from "../../package.json" with { type: "json" };
 import { expect, test } from "./authenticatedTest";
 
 test("the root redirects to the first view and renders titles from Seerr", async ({ page }) => {
@@ -29,7 +30,9 @@ test("list tabs change the selected discover list", async ({ page }) => {
   await expect(page.getByText(/Popular on Movies · 2 titles/)).toBeVisible();
 });
 
-test("the user menu supports keyboard navigation and dismissal", async ({ page }) => {
+test("the user menu shows the Disco version and supports keyboard navigation and dismissal", async ({
+  page,
+}) => {
   await page.goto("/movies");
   const trigger = page.getByLabel("User menu for Fixture User", { exact: true });
   const account = page.getByRole("navigation", { name: "User account" });
@@ -37,6 +40,7 @@ test("the user menu supports keyboard navigation and dismissal", async ({ page }
   await trigger.focus();
   await page.keyboard.press("Enter");
   await expect(account).toBeVisible();
+  await expect(account.getByText(`Disco v${packageJson.version}`, { exact: true })).toBeVisible();
   await page.keyboard.press("Tab");
   await expect(account.getByRole("link", { name: "Preferences" })).toBeFocused();
   await page.keyboard.press("Escape");

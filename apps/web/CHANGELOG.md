@@ -1,5 +1,15 @@
 # @disco/web
 
+## 1.4.0
+
+### Minor Changes
+
+- f556980: Show the running Disco version at the bottom of the user menu.
+
+### Patch Changes
+
+- 76dfd5a: Run the image on Next.js 16.4.3 and Effect 4.0.6.
+
 ## 1.3.0
 
 ### Minor Changes

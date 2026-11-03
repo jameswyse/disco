@@ -7,10 +7,10 @@ catalog:
   "@types/node": 24.19.2
   "@types/react": 19.3.0
   "@types/react-dom": 19.3.0
-  effect: 4.0.6
+  effect: 4.1.1
   next: 16.4.3
-  oxfmt: 0.74.0
-  oxlint: 1.89.0
+  oxfmt: 0.75.0
+  oxlint: 1.90.0
   react: 19.3.1
   react-dom: 19.3.1
   typescript: 7.0.2
